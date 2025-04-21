@@ -1,0 +1,98 @@
+#include "context.h"
+#include "type.h"
+//#include "unit.h"
+#include "../core/logger.h"
+
+using namespace meddle;
+
+void Context::addType(Type *T) {
+    if (Type *existing = m_Types[T->getName()]) {
+        // If a type exists with the same name already and is not a type
+        // reference, then the type is a duplicate.
+        TypeResult *TR = dynamic_cast<TypeResult *>(existing);
+        if (!TR) {
+            fatal(
+                "type already exists: " + existing->getName(), 
+                &TR->getMetadata()
+            );
+        }
+
+        // The referenced type has been declared, make the type result concrete.
+        TR->setUnderlying(T);
+        m_Results.push_back(TR);
+    }
+
+    m_Types[T->getName()] = T;
+}
+
+Type *Context::getType(const String &N) const {
+    auto it = m_Types.find(N);
+    if (it != m_Types.end())
+        return it->second;
+
+    //NamedDecl *D = m_Unit->getScope()->lookup(N);
+    // if (D and D is a type def)
+    //   return D's type
+
+    // check external types
+
+    /*
+    if (N.back() == '*') {
+        Type *pointee = getType(N.substr(0, N.size() - 1));
+        if (!pointee)
+            return nullptr;
+
+        return addType(new PointerType(pointee));
+    }
+    */
+
+    /*
+    auto LBrack = N.find('[');
+    auto RBrack = N.find(']');
+    if (LBrack && RBrack) {
+        Type *element = getType(N.substr(0, LBrack));
+        if (!element)
+            return nullptr;
+
+        return addType(new ArrayType(
+            element, 
+            std::stoul(N.substr(LBrack + 1, RBrack - LBrack - 1))
+        ));
+    }
+    */
+
+    return nullptr;
+}
+
+Type *Context::produceType(const String &N, const Metadata &M) {
+    if (Type *T = getType(N))
+        return T;
+
+    TypeResult *TR = new TypeResult(N, M);
+    m_Types[N] = TR;
+    return TR;
+}
+
+void Context::scrubRefs() {
+    // Move all type results from the main type pool to the designated results.
+    for (auto it = m_Types.begin(); it != m_Types.end(); ) {
+        if (TypeResult *TR = dynamic_cast<TypeResult *>(it->second)) {
+            m_Results.push_back(TR);
+            it = m_Types.erase(it);
+        } else
+            ++it;
+    }
+
+    // For each type result, try to resolve its concrete type from the pool.
+    for (auto *R : m_Results) {
+        Type *newTy = getType(R->getName());
+        if (!newTy) {
+            // If the type is not found, it is unresolved at this point.
+            fatal(
+                "unresolved type: " + R->getName(), &R->getMetadata()
+            );
+        }
+
+        R->setUnderlying(newTy);
+    }
+}

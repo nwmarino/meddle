@@ -8,8 +8,6 @@ struct Options final {
 
     unsigned Debug:1;
     unsigned Time:1;
-
-    Options() {};
 };
 
 } // namespace meddle
