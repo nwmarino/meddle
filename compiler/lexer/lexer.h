@@ -2,6 +2,7 @@
 #define MEDDLE_LEXER_H
 
 #include "tokenstream.h"
+#include "../core/options.h"
 
 using String = std::string;
 
@@ -35,7 +36,12 @@ class Lexer final {
 public:
     Lexer(const File &file);
 
-    TokenStream unwrap() const { return m_Stream; }
+    TokenStream unwrap(Options *opts = nullptr) const {
+        if (opts)
+            opts->lexedLines += m_Loc.line;
+
+        return m_Stream; 
+    }
 };
 
 } // namespace meddle
