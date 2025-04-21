@@ -1,10 +1,9 @@
 CXX := clang
 CXXFLAGS := -Wall -Wextra -std=c++20 -g -O0 -stdlib=libstdc++
-CXXTESTFLAGS := -Wall -Wextra -std=c++20 -stdlib=libstdc++ -O0
 LDFLAGS := -lstdc++
 
 MAIN := compiler/meddle.cpp
-SRC := $(filter-out $(MAIN), $(wildcard compiler/*.cpp))
+SRC := $(filter-out $(MAIN), $(shell find compiler -name "*.cpp"))
 TEST_SRC := $(wildcard test/*.cpp)
 
 TARGET := meddle
@@ -21,7 +20,7 @@ $(TARGET): $(SRC) $(MAIN)
 test: $(TEST_TARGET)
 
 $(TEST_TARGET): $(SRC) $(TEST_SRC)
-	$(CXX) $(CXXTESTFLAGS) -o $(TEST_TARGET) $(SRC) $(TEST_SRC) $(LDFLAGS) -I$(GTEST_DIR)/include $(GTEST_LIB)
+	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(SRC) $(TEST_SRC) $(LDFLAGS) -I$(GTEST_DIR)/include -Icompiler $(GTEST_LIB)
 
 clean:
 	rm -f $(TARGET) $(TEST_TARGET)
