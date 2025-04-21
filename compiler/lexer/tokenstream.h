@@ -4,6 +4,7 @@
 #include "token.h"
 
 #include <cassert>
+#include <iostream>
 #include <vector>
 
 namespace meddle {
@@ -18,11 +19,13 @@ public:
 
     const std::vector<Token> &getTokens() const { return m_Buffer; }
 
-    const Token *get() const { 
+    /// Get the current token and move the cursor.
+    const Token *get() {
         assert(m_Iter < m_Buffer.size());
-        return &m_Buffer.at(m_Iter);
+        return &m_Buffer.at(m_Iter++);
     }
 
+    /// Get the token at \p pos without moving the cursor.
     const Token *get(unsigned pos) const {
         assert(pos < m_Buffer.size());
         return &m_Buffer.at(pos);

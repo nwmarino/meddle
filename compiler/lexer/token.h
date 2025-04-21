@@ -118,6 +118,8 @@ enum class TokenKind {
     Quote,
     /// `
     Grave,
+    /// ;
+    Semi,
 
     /// ?
     Question,

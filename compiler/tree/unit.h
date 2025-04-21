@@ -31,11 +31,13 @@ public:
 
     const File &getFile() const { return m_File; }
 
-    Context const *getContext() const { return &m_Context; }
+    Context *getContext() { return &m_Context; }
 
-    Scope const *getScope() const { return m_Scope; }
+    Scope *getScope() const { return m_Scope; }
 
     const std::vector<Decl *> getDecls() const { return m_Decls; }
+
+    void addDecl(Decl *D) { m_Decls.push_back(D); }
 };
 
 } // namespace meddle

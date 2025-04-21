@@ -13,6 +13,8 @@ Lexer::Lexer(const File &file)
 
         m_Stream.add(lex());
     }
+
+    m_Stream.add(Token(m_Loc));
 }
 
 Token Lexer::lex() {
@@ -206,7 +208,7 @@ Token Lexer::lex() {
 
         case '~':
             kind = TokenKind::Tilde;
-            move(1);
+            move();
             break;
 
         case '(':
@@ -272,6 +274,11 @@ Token Lexer::lex() {
 
         case '$':
             kind = TokenKind::Sign;
+            move();
+            break;
+
+        case ';':
+            kind = TokenKind::Semi;
             move();
             break;
 

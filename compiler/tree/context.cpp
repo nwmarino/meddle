@@ -5,6 +5,14 @@
 
 using namespace meddle;
 
+Context::Context(TranslationUnit *U) : m_Unit(U) {
+    m_Types.reserve(10);
+    for (unsigned K = 0; K < 10; ++K) {
+        auto *T = new PrimitiveType(static_cast<PrimitiveType::Kind>(K));
+        m_Types[T->getName()] = T;
+    }
+}
+
 void Context::addType(Type *T) {
     if (Type *existing = m_Types[T->getName()]) {
         // If a type exists with the same name already and is not a type

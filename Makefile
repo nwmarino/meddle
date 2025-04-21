@@ -1,6 +1,6 @@
 CXX := clang
 CXXFLAGS := -Wall -Wextra -std=c++20 -g -O0 -stdlib=libstdc++
-LDFLAGS := -lstdc++
+LDFLAGS := -lstdc++ -lm
 
 MAIN := compiler/meddle.cpp
 SRC := $(filter-out $(MAIN), $(shell find compiler -name "*.cpp"))
