@@ -7,6 +7,7 @@
 #include "tree/unit.h"
 
 #include <chrono>
+#include <cstdlib>
 #include <vector>
 
 using namespace meddle;
@@ -17,8 +18,12 @@ int main(int argc, char **argv) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    Options opts;
+    Options opts {
+        .KeepCC = 1,
+        .Time = 1,
+    };
     std::vector<File> files;
+    std::vector<TranslationUnit *> units;
     files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { ret 0; }"));
 
     Lexer lexer = Lexer(files[0]);
@@ -27,16 +32,51 @@ int main(int argc, char **argv) {
     info("Lexed " + std::to_string(opts.lexedLines) + " lines across " + std::to_string(files.size()) + " file(s).");
 
     Parser parser = Parser(files[0], stream);
-    TranslationUnit *unit = parser.get();
+    units.push_back(parser.get());
 
-    NameResolution NR = NameResolution(opts, unit);
-    Sema sema = Sema(opts, unit);
-    CCGN ccgn = CCGN(opts, unit);
+    for (auto &unit : units) {
+        NameResolution NR = NameResolution(opts, unit);
+        Sema sema = Sema(opts, unit);
+        CCGN ccgn = CCGN(opts, unit);
+    }
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> totalDuration = end - start;
-    info("Finished compiling in " + std::to_string(totalDuration.count()) + " seconds.");
-    
-    delete unit;
+    if (opts.Time) {
+        auto frontend = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totalDuration = frontend - start;
+        info("Frontend took: " + std::to_string(totalDuration.count()) + "s.");
+    }
+
+    String clang = "clang -c ";
+    for (auto &unit : units)
+        clang += unit->getFile().filename + ".c";
+
+    std::system(clang.c_str());
+
+    String ld = "clang -o " + opts.output + " ";
+    for (auto &unit : units)
+        ld += unit->getFile().filename + ".o";
+
+    std::system(ld.c_str());
+
+    for (auto &unit : units) {
+        String file = unit->getFile().filename;
+        String rm = "rm " + file + ".o ";
+        if (!opts.KeepCC) 
+            rm += file + ".c " + file + ".h";
+
+        std::system(rm.c_str());
+    }
+
+    if (opts.Time) {
+        auto frontend = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totalDuration = frontend - start;
+        info("Backend took: " + std::to_string(totalDuration.count()) + "s.");
+    }
+
+    for (auto &unit : units)
+        delete unit;
+
+    files.clear();
+    units.clear();
     return 0;
 }

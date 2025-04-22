@@ -13,7 +13,7 @@ Stmt *Parser::parseStmt() {
 }
 
 CompoundStmt *Parser::parseCompoundStmt() {
-    CompoundStmt *C = new CompoundStmt(m_Current->md, m_Scope);
+    CompoundStmt *C = new CompoundStmt(m_Current->md, enterScope());
     next(); // '{'
 
     while (!match(TokenKind::EndBrace)) {

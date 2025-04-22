@@ -42,7 +42,7 @@ class Parser final {
             && m_Current->value == KW;
     }
 
-    Scope *enterScope() { return m_Scope = new Scope(m_Scope); }
+    Scope *enterScope() { m_Scope = new Scope(m_Scope); return m_Scope; }
 
     void exitScope() { m_Scope = m_Scope->getParent(); }
 

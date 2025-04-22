@@ -21,8 +21,8 @@ FunctionDecl::~FunctionDecl() {
     m_Params.clear();
     delete m_Body;
     m_Body = nullptr;
-    //delete m_Scope;
-    //m_Scope = nullptr;
+    delete m_Scope;
+    m_Scope = nullptr;
 }
 
 Type *FunctionDecl::getParamType(unsigned i) const {

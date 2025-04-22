@@ -23,8 +23,8 @@ public:
       : m_File(F), m_Context(this), m_Scope(new Scope) {}
 
     ~TranslationUnit() {
-        for (auto decl : m_Decls)
-            delete decl;
+        for (auto &D : m_Decls)
+            delete D;
 
         delete m_Scope;
     }
