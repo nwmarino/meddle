@@ -3,12 +3,30 @@
 
 namespace meddle {
 
-template<typename Derived>
+class TranslationUnit;
+
+class FunctionDecl;
+class VarDecl;
+class ParamDecl;
+
+class CompoundStmt;
+class RetStmt;
+
+class Expr;
+class IntegerLiteral;
+
 class Visitor {
-    template<typename nT>
-    void visit(nT *N) {
-        static_cast<Derived *>(this)->visit(N);
-    }
+public:
+    virtual void visit(TranslationUnit *unit) = 0;
+
+    virtual void visit(FunctionDecl *decl) = 0;
+    virtual void visit(VarDecl *decl) = 0;
+    virtual void visit(ParamDecl *decl) = 0;
+
+    virtual void visit(CompoundStmt *stmt) = 0;
+    virtual void visit(RetStmt *stmt) = 0;
+
+    virtual void visit(IntegerLiteral *expr) = 0;
 };
 
 } // namespace meddle

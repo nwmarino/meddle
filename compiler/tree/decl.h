@@ -2,7 +2,9 @@
 #define MEDDLE_DECL_H
 
 #include "expr.h"
+#include "nameres.h"
 #include "type.h"
+#include "visitor.h"
 
 #include <cassert>
 
@@ -25,6 +27,8 @@ public:
     Decl(const Attributes &A, const Metadata &M) : m_Attrs(A), m_Metadata(M) {}
     virtual ~Decl() = default;
 
+    virtual void accept(Visitor *V) = 0;
+
     const Attributes &getAttributes() const { return m_Attrs; }
 
     const Metadata &getMetadata() const { return m_Metadata; }
@@ -38,12 +42,14 @@ public:
     NamedDecl(const Attributes &A, const Metadata &M, const String &N) 
       : Decl(A, M), m_Name(N) {}
 
-    virtual ~NamedDecl() = default;
-
     String getName() const { return m_Name; }
 };
 
 class FunctionDecl final : public NamedDecl {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
     FunctionType *m_Type;
     Scope *m_Scope;
     std::vector<ParamDecl *> m_Params;
@@ -56,10 +62,7 @@ public:
 
     ~FunctionDecl() override;
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
+    void accept(Visitor *V) override { V->visit(this); }
 
     FunctionType *getType() const { return m_Type; }
 
@@ -80,6 +83,10 @@ public:
 };
 
 class VarDecl : public NamedDecl {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
 protected:
     Type *m_Type;
     Expr *m_Init;
@@ -92,10 +99,7 @@ public:
 
     ~VarDecl() override;
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
+    void accept(Visitor *V) override { V->visit(this); }
 
     Type *getType() const { return m_Type; }
 
@@ -107,6 +111,10 @@ public:
 };
 
 class ParamDecl final : public VarDecl {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
     unsigned m_Index;
     FunctionDecl *m_Parent;
 
@@ -114,10 +122,7 @@ public:
     ParamDecl(const Attributes &A, const Metadata &M, const String &N,
               Type *T, unsigned I);
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
+    void accept(Visitor *V) override { V->visit(this); }
 
     unsigned getIndex() const { return m_Index; }
 

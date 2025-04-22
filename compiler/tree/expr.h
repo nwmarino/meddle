@@ -1,7 +1,9 @@
 #ifndef MEDDLE_EXPR_H
 #define MEDDLE_EXPR_H
 
+#include "nameres.h"
 #include "type.h"
+#include "visitor.h"
 
 namespace meddle {
 
@@ -16,6 +18,8 @@ public:
       : m_Metadata(M), m_Type(T), m_IsLValue(LVal) {}
     virtual ~Expr() = default;
 
+    virtual void accept(Visitor *V) = 0;
+
     const Metadata &getMetadata() const { return m_Metadata; }
 
     Type *getType() const { return m_Type; }
@@ -26,16 +30,17 @@ public:
 };
 
 class IntegerLiteral final : public Expr {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+    
     long m_Value;
 
 public:
     IntegerLiteral(const Metadata &M, Type *T, long V) 
       : Expr(M, T), m_Value(V) {}
 	
-	template<typename vT>
-	void accept(vT &visitor) {
-		visitor.visit(this);
-	}
+    void accept(Visitor *V) override { V->visit(this); }
 	
     long getValue() const { return m_Value; }
 };

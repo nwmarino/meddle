@@ -1,5 +1,5 @@
 CXX := clang
-CXXFLAGS := -Wall -Wextra -std=c++20 -g -O0 -stdlib=libstdc++
+CXXFLAGS := -std=c++20 -g -O0 -stdlib=libstdc++
 LDFLAGS := -lstdc++ -lm
 
 MAIN := compiler/meddle.cpp

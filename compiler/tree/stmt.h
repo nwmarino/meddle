@@ -2,6 +2,7 @@
 #define MEDDLE_STMT_H
 
 #include "expr.h"
+#include "nameres.h"
 #include "scope.h"
 #include "../core/metadata.h"
 
@@ -17,10 +18,16 @@ public:
     Stmt(const Metadata &M) : m_Metadata(M) {}
     virtual ~Stmt() = default;
 
+    virtual void accept(Visitor *V) = 0;
+
     const Metadata &getMetadata() const { return m_Metadata; }
 };
 
 class CompoundStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
     Scope *m_Scope;
     std::vector<Stmt *> m_Stmts;
 
@@ -35,6 +42,8 @@ public:
         delete m_Scope;
     }
 
+    void accept(Visitor *V) override { V->visit(this); }
+
     void addStmt(Stmt *S) { m_Stmts.push_back(S); }
 
     template<typename vT>
@@ -46,6 +55,10 @@ public:
 };
 
 class RetStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+    
     Expr *m_Expr;
 
 public:
@@ -55,10 +68,7 @@ public:
         delete m_Expr;
     }
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
+    void accept(Visitor *V) override { V->visit(this); }
 
     Expr *getExpr() const { return m_Expr; }
 };

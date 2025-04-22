@@ -26,7 +26,7 @@ struct Metadata final {
     unsigned line;
     unsigned col;
 
-    Metadata(const File &file) : file(file), line(0), col(0) {}
+    Metadata(const File &file) : file(file), line(1), col(1) {}
     
     Metadata(const File &file, unsigned line, unsigned col) 
       : file(file), line(line), col(col) {}

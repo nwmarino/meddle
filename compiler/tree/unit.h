@@ -3,11 +3,16 @@
 
 #include "context.h"
 #include "decl.h"
+#include "nameres.h"
 #include "scope.h"
 
 namespace meddle {
 
 class TranslationUnit final {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+    
     File m_File;
     Context m_Context;
     Scope *m_Scope;
@@ -18,16 +23,13 @@ public:
       : m_File(F), m_Context(this), m_Scope(new Scope) {}
 
     ~TranslationUnit() {
-        delete m_Scope;
-
         for (auto decl : m_Decls)
             delete decl;
+
+        delete m_Scope;
     }
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
+    void accept(Visitor *V) { V->visit(this); }
 
     const File &getFile() const { return m_File; }
 

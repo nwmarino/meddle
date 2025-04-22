@@ -1,17 +1,17 @@
-#ifndef MEDDLE_NAME_RESOLUTION_H
-#define MEDDLE_NAME_RESOLUTION_H
+#ifndef MEDDLE_SEMA_H
+#define MEDDLE_SEMA_H
 
 #include "visitor.h"
 #include "../core/options.h"
 
 namespace meddle {
 
-class NameResolution : public Visitor {
+class Sema : public Visitor {
     Options m_Opts;
     TranslationUnit *m_Unit;
 
 public:
-    NameResolution(const Options &opts, TranslationUnit *U);
+    Sema(const Options &opts, TranslationUnit *U);
 
     void visit(TranslationUnit *unit) override;
 
@@ -27,4 +27,4 @@ public:
 
 } // namespace meddle
 
-#endif // MEDDLE_NAME_RESOLUTION_H
+#endif // MEDDLE_SEMA_H

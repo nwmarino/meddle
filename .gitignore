@@ -8,3 +8,5 @@ test_meddle
 proto.md
 MEDDLE.md
 .vscode/
+*.mdl.c
+*.mdl.h

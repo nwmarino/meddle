@@ -15,10 +15,14 @@ FunctionDecl::FunctionDecl(const Attributes &A, const Metadata &M,
 }
 
 FunctionDecl::~FunctionDecl() {
-    delete m_Scope;
-    delete m_Body;
     for (auto &P : m_Params)
         delete P;
+
+    m_Params.clear();
+    delete m_Body;
+    m_Body = nullptr;
+    //delete m_Scope;
+    //m_Scope = nullptr;
 }
 
 Type *FunctionDecl::getParamType(unsigned i) const {
