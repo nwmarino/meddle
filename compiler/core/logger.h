@@ -7,6 +7,10 @@
 
 namespace meddle {
 
+inline void log(const String &m) {
+    std::cout << "meddle: " << m << "\n";
+}
+
 inline void info(const String &m, const Metadata *md = nullptr) {
     if (md)
         std::cout << md->file.filename << ":" << md->line << ":" << md->col << ": ";

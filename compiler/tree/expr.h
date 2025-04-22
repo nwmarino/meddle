@@ -7,6 +7,8 @@
 
 namespace meddle {
 
+class NamedDecl;
+
 class Expr {
 protected:
     Metadata m_Metadata;
@@ -43,6 +45,25 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 	
     long getValue() const { return m_Value; }
+};
+
+class RefExpr final : public Expr {
+	friend class CCGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	String m_Name;
+	NamedDecl *m_Ref;
+
+public:
+	RefExpr(const Metadata &M, Type *T, String N, NamedDecl *R = nullptr)
+	  : Expr(M, T, true), m_Name(N), m_Ref(R) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	String getName() const { return m_Name;}
+
+	NamedDecl *getRef() const { return m_Ref; }
 };
 
 } // namespace meddle

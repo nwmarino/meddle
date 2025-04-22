@@ -10,13 +10,19 @@ Expr *Parser::parseExpr() {
 }
 
 Expr *Parser::parsePrimaryExpr() {
-    if (match(LiteralKind::Integer))
-        return parseIntLiteral();
+    if (match(TokenKind::Identifier))
+        return parseIdentExpr();
+    else if (match(LiteralKind::Integer))
+        return parseInteger();
 
     return nullptr;
 }
 
-IntegerLiteral *Parser::parseIntLiteral() {
+Expr *Parser::parseIdentExpr() {
+    return parseRef();
+}
+
+IntegerLiteral *Parser::parseInteger() {
     IntegerLiteral *I = new IntegerLiteral(
         m_Current->md, 
         m_Context->getI64Type(), 
@@ -24,4 +30,16 @@ IntegerLiteral *Parser::parseIntLiteral() {
     );
     next();
     return I;
+}
+
+RefExpr *Parser::parseRef() {
+    Metadata md = m_Current->md;
+    String name = m_Current->value;
+
+    NamedDecl *D = m_Scope->lookup(name);
+    if (!D)
+        fatal("unresolved reference: " + name, &md);
+
+    next();
+    return new RefExpr(md, nullptr, name, D);
 }

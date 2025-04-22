@@ -52,7 +52,7 @@ FunctionDecl *Parser::parseFunction(const Token &name) {
     FunctionType *ty = new FunctionType(paramTys, ret);
     m_Context->addType(ty);
 
-    return new FunctionDecl(
+    FunctionDecl *fn = new FunctionDecl(
         m_Attributes, 
         name.md, 
         name.value, 
@@ -61,4 +61,52 @@ FunctionDecl *Parser::parseFunction(const Token &name) {
         params, 
         body
     );
+    m_Scope->addDecl(fn);
+    return fn;
+}
+
+VarDecl *Parser::parseVariable(bool mut) {
+    Metadata md = m_Current->md;
+    String name;
+    Type *T = nullptr;
+    Expr *init = nullptr;
+    next(); // 'fix' or 'mut'
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected variable name", &m_Current->md);
+    name = m_Current->value;
+    next();
+
+    if (!match(TokenKind::Colon))
+        fatal("expected ':' after variable name", &m_Current->md);
+    next(); // ':'
+
+    T = parseType();
+    if (!T)
+        fatal("expected type after ':'", &m_Current->md);
+
+    if (match(TokenKind::Equals)) {
+        next(); // '='
+        init = parseExpr();
+        if (!init)
+            fatal("expected expression after '='", &m_Current->md);
+    } else if (!mut)
+        fatal("immutable variable must be initialized: " + name, &m_Current->md);
+
+    if (match(TokenKind::Semi))
+        next(); // ';'
+    else
+        fatal("expected ';' after variable declaration", &m_Current->md);
+
+    VarDecl *var = new VarDecl(
+        Attributes(),
+        md,
+        name,
+        T,
+        init,
+        mut,
+        false
+    );
+    m_Scope->addDecl(var);
+    return var;
 }

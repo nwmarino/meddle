@@ -1,4 +1,5 @@
 #include "ccgn.h"
+#include "expr.h"
 #include "stmt.h"
 #include "type.h"
 #include "unit.h"
@@ -48,6 +49,19 @@ CCGN::CCGN(const Options &opts, TranslationUnit *U) : m_Opts(opts), m_Unit(U) {
     m_Cout = std::ofstream(U->getFile().filename + ".c");
     m_Hout = std::ofstream(U->getFile().filename + ".h");
 
+    phase = Phase::Declare;
+    String noext = U->getFile().filename;
+    auto pos = noext.find_last_of('.');
+    if (pos != std::string::npos)
+        noext = noext.substr(0, pos);
+
+    emitHLn("#ifndef " + noext + "_H");
+    emitHLn("#define " + noext + "_H\n");
+    m_Unit->accept(this);
+    emitHLn("\n#endif // " + noext + "_H");
+
+    phase = Phase::Define;
+    emitCLn("#include \"" + U->getFile().filename + ".h\"\n");
     m_Unit->accept(this);
 
     m_Cout.close();
@@ -60,22 +74,49 @@ void CCGN::visit(TranslationUnit *U) {
 }
 
 void CCGN::visit(FunctionDecl *decl) {
-    emitCSeg(translateType(decl->getReturnType()) + " " + decl->getName() + "(");
+    if (phase == Phase::Declare) {
+        emitHSeg(translateType(decl->getReturnType()) + " " + decl->getName() + "(");
+        for (auto &P : decl->getParams()) {
+            P->accept(this);
+            if (P != decl->getParams().back())
+                emitHSeg(", ");
+        }
 
-    for (auto &P : decl->getParams())
-        P->accept(this);
+        emitHLn(");");
+    } else if (phase == Phase::Define) {
+        emitCSeg(translateType(decl->getReturnType()) + " " + decl->getName() + "(");
 
-    emitCLn(")");
+        for (auto &P : decl->getParams()) {
+            P->accept(this);
+            if (P != decl->getParams().back())
+                emitCSeg(", ");
+        }
 
-    decl->m_Body->accept(this);
+        emitCLn(")");
+
+        decl->m_Body->accept(this);
+    }
 }
 
 void CCGN::visit(VarDecl *decl) {
+    if (phase == Phase::Declare) {
+        
+    } else if (phase == Phase::Define) {
+        emitCSeg(translateType(decl->getType()) + " " + decl->getName());
+        if (decl->getInit()) {
+            emitCSeg(" = ");
+            decl->getInit()->accept(this);
+        }
 
+        emitCLn(";");
+    }
 }
 
 void CCGN::visit(ParamDecl *decl) {
-
+    if (phase == Phase::Define)
+        emitHSeg(translateType(decl->getType()) + " " + decl->getName());
+    else if (phase == Phase::Declare)
+        emitCSeg(translateType(decl->getType()) + " " + decl->getName());
 }
 
 void CCGN::visit(CompoundStmt *stmt) {
@@ -86,6 +127,10 @@ void CCGN::visit(CompoundStmt *stmt) {
     emitCLn("}");
 }
 
+void CCGN::visit(DeclStmt *stmt) {
+    stmt->getDecl()->accept(this);
+}
+
 void CCGN::visit(RetStmt *stmt) {
     emitCSeg("return ");
     stmt->m_Expr->accept(this);
@@ -94,4 +139,8 @@ void CCGN::visit(RetStmt *stmt) {
 
 void CCGN::visit(IntegerLiteral *expr) {
     emitCSeg(std::to_string(expr->getValue()));
+}
+
+void CCGN::visit(RefExpr *expr) {
+    emitCSeg(expr->getName());
 }

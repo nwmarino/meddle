@@ -1,4 +1,5 @@
 #include "nameres.h"
+#include "expr.h"
 #include "stmt.h"
 #include "unit.h"
 
@@ -34,10 +35,18 @@ void NameResolution::visit(CompoundStmt *stmt) {
         S->accept(this);
 }
 
+void NameResolution::visit(DeclStmt *stmt) {
+    stmt->getDecl()->accept(this);
+}
+
 void NameResolution::visit(RetStmt *stmt) {
 
 }
 
 void NameResolution::visit(IntegerLiteral *expr) {
+
+}
+
+void NameResolution::visit(RefExpr *expr) {
 
 }

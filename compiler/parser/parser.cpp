@@ -3,6 +3,17 @@
 
 using namespace meddle;
 
+void Parser::backtrack(unsigned n) {
+    m_Stream.setPos(m_Stream.getPos() - n);
+    m_Current = m_Stream.get(m_Stream.getPos());
+}
+
+void Parser::skip(unsigned n) {
+    m_Stream.setPos(m_Stream.getPos() + n);
+    m_Current = m_Stream.get(m_Stream.getPos());
+
+}
+
 Type *Parser::parseType(bool produce) {
     if (!match(TokenKind::Identifier))
         fatal("expected type identifier", &m_Current->md);

@@ -24,12 +24,12 @@ int main(int argc, char **argv) {
     };
     std::vector<File> files;
     std::vector<TranslationUnit *> units;
-    files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { ret 0; }"));
+    files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { fix x: i64 = 42; ret x; }"));
 
     Lexer lexer = Lexer(files[0]);
     TokenStream stream = lexer.unwrap(&opts);
 
-    info("Lexed " + std::to_string(opts.lexedLines) + " lines across " + std::to_string(files.size()) + " file(s).");
+    log("Lexed " + std::to_string(opts.lexedLines) + " lines across " + std::to_string(files.size()) + " file(s).");
 
     Parser parser = Parser(files[0], stream);
     units.push_back(parser.get());
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     if (opts.Time) {
         auto frontend = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totalDuration = frontend - start;
-        info("Frontend took: " + std::to_string(totalDuration.count()) + "s.");
+        log("Frontend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
     String clang = "clang -c ";
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     if (opts.Time) {
         auto frontend = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totalDuration = frontend - start;
-        info("Backend took: " + std::to_string(totalDuration.count()) + "s.");
+        log("Backend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
     for (auto &unit : units)

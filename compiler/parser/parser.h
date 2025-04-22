@@ -51,14 +51,18 @@ class Parser final {
 
     Decl *parseDecl();
     FunctionDecl *parseFunction(const Token &name);
+    VarDecl *parseVariable(bool mut);
 
     Stmt *parseStmt();
     CompoundStmt *parseCompoundStmt();
+    DeclStmt *parseDeclStmt();
     RetStmt *parseRetStmt();
 
     Expr *parseExpr();
     Expr *parsePrimaryExpr();
-    IntegerLiteral *parseIntLiteral();
+    Expr *parseIdentExpr();
+    IntegerLiteral *parseInteger();
+    RefExpr *parseRef();
 
 public:
     Parser(const File &F, const TokenStream &S);

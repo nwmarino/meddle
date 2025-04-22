@@ -6,6 +6,8 @@ using namespace meddle;
 Stmt *Parser::parseStmt() {
     if (match(TokenKind::SetBrace))
         return parseCompoundStmt();
+    else if (matchKeyword("fix") || matchKeyword("mut"))
+        return parseDeclStmt();
     else if (matchKeyword("ret"))
         return parseRetStmt();
 
@@ -30,6 +32,20 @@ CompoundStmt *Parser::parseCompoundStmt() {
     next(); // '}'
     exitScope();
     return C;
+}
+
+DeclStmt *Parser::parseDeclStmt() {
+    Decl *D = nullptr;
+
+    if (matchKeyword("fix"))
+        D = parseVariable(false);
+    else if (matchKeyword("mut"))
+        D = parseVariable(true);
+
+    if (!D)
+        fatal("expected variable declaration", &m_Current->md);
+
+    return new DeclStmt(D->getMetadata(), D);
 }
 
 RetStmt *Parser::parseRetStmt() {

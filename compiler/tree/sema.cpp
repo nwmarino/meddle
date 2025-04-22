@@ -1,4 +1,5 @@
 #include "sema.h"
+#include "expr.h"
 #include "stmt.h"
 #include "unit.h"
 
@@ -33,10 +34,20 @@ void Sema::visit(CompoundStmt *stmt) {
         S->accept(this);
 }
 
-void Sema::visit(RetStmt *stmt) {
+void Sema::visit(DeclStmt *stmt) {
+    stmt->getDecl()->accept(this);
+}
 
+void Sema::visit(RetStmt *stmt) {
+    stmt->getExpr()->accept(this);
 }
 
 void Sema::visit(IntegerLiteral *expr) {
 
+}
+
+void Sema::visit(RefExpr *expr) {
+    NamedDecl *ref = expr->getRef();
+    if (auto *VD = dynamic_cast<VarDecl *>(ref))
+        expr->m_Type = VD->getType();
 }

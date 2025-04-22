@@ -20,9 +20,11 @@ public:
     void visit(ParamDecl *decl) override;
 
     void visit(CompoundStmt *stmt) override;
+    void visit(DeclStmt *stmt) override;
     void visit(RetStmt *stmt) override; 
 
     void visit(IntegerLiteral *expr) override;
+    void visit(RefExpr *expr) override;
 };
 
 } // namespace meddle

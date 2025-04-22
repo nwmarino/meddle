@@ -166,6 +166,56 @@ TEST_F(LexerTest, LexFunctionReturnZero) {
     EXPECT_EQ(stream.get(9)->kind, TokenKind::Eof);
 }
 
+TEST_F(LexerTest, LexLocalVariableNoInit) {
+    Lexer lexer = Lexer(File("", "", "", "test::(){mut x: i64;}"));
+    TokenStream stream = lexer.unwrap();
+
+    EXPECT_EQ(stream.getTokens().size(), 12);
+    EXPECT_EQ(stream.get(0)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(0)->value, "test");
+    EXPECT_EQ(stream.get(1)->kind, TokenKind::Path);
+    EXPECT_EQ(stream.get(2)->kind, TokenKind::SetParen);
+    EXPECT_EQ(stream.get(3)->kind, TokenKind::EndParen);
+    EXPECT_EQ(stream.get(4)->kind, TokenKind::SetBrace);
+    EXPECT_EQ(stream.get(5)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(5)->value, "mut");
+    EXPECT_EQ(stream.get(6)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(6)->value, "x");
+    EXPECT_EQ(stream.get(7)->kind, TokenKind::Colon);
+    EXPECT_EQ(stream.get(8)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(8)->value, "i64");
+    EXPECT_EQ(stream.get(9)->kind, TokenKind::Semi);
+    EXPECT_EQ(stream.get(10)->kind, TokenKind::EndBrace);
+    EXPECT_EQ(stream.get(11)->kind, TokenKind::Eof);
+}
+
+TEST_F(LexerTest, LexLocalVariableInit) {
+    Lexer lexer = Lexer(File("", "", "", "test::(){mut x: i64 = 0;}"));
+    TokenStream stream = lexer.unwrap();
+
+    EXPECT_EQ(stream.getTokens().size(), 14);
+    EXPECT_EQ(stream.get(0)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(0)->value, "test");
+    EXPECT_EQ(stream.get(1)->kind, TokenKind::Path);
+    EXPECT_EQ(stream.get(2)->kind, TokenKind::SetParen);
+    EXPECT_EQ(stream.get(3)->kind, TokenKind::EndParen);
+    EXPECT_EQ(stream.get(4)->kind, TokenKind::SetBrace);
+    EXPECT_EQ(stream.get(5)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(5)->value, "mut");
+    EXPECT_EQ(stream.get(6)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(6)->value, "x");
+    EXPECT_EQ(stream.get(7)->kind, TokenKind::Colon);
+    EXPECT_EQ(stream.get(8)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(8)->value, "i64");
+    EXPECT_EQ(stream.get(9)->kind, TokenKind::Equals);
+    EXPECT_EQ(stream.get(10)->kind, TokenKind::Literal);
+    EXPECT_EQ(stream.get(10)->literal, LiteralKind::Integer);
+    EXPECT_EQ(stream.get(10)->value, "0");
+    EXPECT_EQ(stream.get(11)->kind, TokenKind::Semi);
+    EXPECT_EQ(stream.get(12)->kind, TokenKind::EndBrace);
+    EXPECT_EQ(stream.get(13)->kind, TokenKind::Eof);
+}
+
 } // namespace test
 
 } // namespace meddle

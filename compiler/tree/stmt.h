@@ -1,6 +1,7 @@
 #ifndef MEDDLE_STMT_H
 #define MEDDLE_STMT_H
 
+#include "decl.h"
 #include "expr.h"
 #include "nameres.h"
 #include "scope.h"
@@ -52,6 +53,24 @@ public:
     }
 
     const std::vector<Stmt *> &getStmts() const { return m_Stmts; }
+};
+
+class DeclStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+    
+    Decl *m_Decl;
+
+public:
+    DeclStmt(const Metadata &M, Decl *D) : Stmt(M), m_Decl(D) {}
+    ~DeclStmt() override {
+        delete m_Decl;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Decl *getDecl() const { return m_Decl; }
 };
 
 class RetStmt final : public Stmt {
