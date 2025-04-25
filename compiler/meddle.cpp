@@ -6,11 +6,44 @@
 #include "tree/sema.h"
 #include "tree/unit.h"
 
+#include <boost/filesystem.hpp>
+
 #include <chrono>
 #include <cstdlib>
 #include <vector>
 
 using namespace meddle;
+
+File parseInputFile(const String &path) {
+    String absol;
+
+    try {
+        absol = boost::filesystem::canonical(path).string();
+    } catch (const boost::filesystem::filesystem_error &e) {
+        fatal("file does not exist: " + path, nullptr);
+    }
+
+    String buffer;
+    try {
+        unsigned size = boost::filesystem::file_size(path);
+        buffer.resize(size);
+
+        std::ifstream file(path, std::ios::binary);
+        if (!file)
+            fatal("failed to open file: " + path, nullptr);
+
+        file.read(&buffer[0], size);
+        
+        if (file.gcount() != static_cast<std::streamsize>(size))
+            fatal("failed to read entire file: " + path, nullptr);
+    } catch (const std::exception &e) {
+        fatal("failed to parse input file: " + String(e.what()), nullptr);
+    }
+
+    String filename = boost::filesystem::path(path).filename().string();
+    String directory = boost::filesystem::path(path).parent_path().string();
+    return File(filename, absol, buffer, directory);
+}
 
 int main(int argc, char **argv) {
     //if (argc < 2)
@@ -24,7 +57,8 @@ int main(int argc, char **argv) {
     };
     std::vector<File> files;
     std::vector<TranslationUnit *> units;
-    files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { fix x: i64 = 42; ret x; }"));
+    files.push_back(parseInputFile("samples/return_zero.mdl"));
+    //files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { fix x: i64 = 42; ret x; }"));
 
     Lexer lexer = Lexer(files[0]);
     TokenStream stream = lexer.unwrap(&opts);

@@ -12,10 +12,13 @@ TEST_TARGET := test_meddle
 GTEST_DIR := /usr/include/gtest
 GTEST_LIB := -L/usr/lib64 -lgtest -pthread
 
+BOOST_DIR := /usr/include/boost
+BOOST_LIB := -L/usr/lib64 -lboost_filesystem
+
 all: $(TARGET)
 
 $(TARGET): $(SRC) $(MAIN)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(MAIN) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(MAIN) $(LDFLAGS) -I$(BOOST_DIR)/include -Icompiler $(BOOST_LIB)
 
 test: $(TEST_TARGET)
 

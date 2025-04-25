@@ -2,6 +2,5 @@ main :: () {
     fix x: i64 = 0;
     mut y: i64 = 1;
 
-
     ret 0;
 }
