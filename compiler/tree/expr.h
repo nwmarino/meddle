@@ -47,6 +47,38 @@ public:
     long getValue() const { return m_Value; }
 };
 
+class FloatLiteral final : public Expr {
+    friend class CCGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	double m_Value;
+
+public:
+	FloatLiteral(const Metadata &M, Type *T, double V) 
+	  : Expr(M, T), m_Value(V) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	double getValue() const { return m_Value; }
+};
+
+class CharLiteral final : public Expr {
+	friend class CCGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	char m_Value;
+
+public:
+	CharLiteral(const Metadata &M, Type *T, char V)
+	  : Expr(M, T), m_Value(V) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	char getValue() const { return m_Value; }
+};
+
 class RefExpr final : public Expr {
 	friend class CCGN;
 	friend class NameResolution;

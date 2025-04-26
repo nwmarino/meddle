@@ -46,7 +46,7 @@ public:
     Type *getU64Type() const { return m_Types.at("u64"); }
     Type *getF32Type() const { return m_Types.at("f32"); }
     Type *getF64Type() const { return m_Types.at("f64"); }
-
+    
     void addType(Type *T);
 
     void addType(FunctionType *T) { m_FunctionTypes.push_back(T); }

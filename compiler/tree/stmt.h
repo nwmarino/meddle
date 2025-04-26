@@ -64,6 +64,7 @@ class DeclStmt final : public Stmt {
 
 public:
     DeclStmt(const Metadata &M, Decl *D) : Stmt(M), m_Decl(D) {}
+
     ~DeclStmt() override {
         delete m_Decl;
     }
@@ -71,6 +72,34 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Decl *getDecl() const { return m_Decl; }
+};
+
+class IfStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Expr *m_Cond;
+    Stmt *m_Then;
+    Stmt *m_Else;
+
+public:
+    IfStmt(const Metadata &M, Expr *C, Stmt *T, Stmt *E)
+      : Stmt(M), m_Cond(C), m_Then(T), m_Else(E) {}
+
+    ~IfStmt() override {
+        delete m_Cond;
+        delete m_Then;
+        delete m_Else;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Expr *getCond() const { return m_Cond; }
+
+    Stmt *getThen() const { return m_Then; }
+
+    Stmt *getElse() const { return m_Else; }
 };
 
 class RetStmt final : public Stmt {

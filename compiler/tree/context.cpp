@@ -1,13 +1,12 @@
 #include "context.h"
 #include "type.h"
-//#include "unit.h"
 #include "../core/logger.h"
 
 using namespace meddle;
 
 Context::Context(TranslationUnit *U) : m_Unit(U) {
     m_Types.reserve(10);
-    for (unsigned K = 0; K < 10; ++K) {
+    for (unsigned K = 0; K <= 12; ++K) {
         auto *T = new PrimitiveType(static_cast<PrimitiveType::Kind>(K));
         m_Types[T->getName()] = T;
     }

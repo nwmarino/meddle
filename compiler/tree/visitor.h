@@ -11,10 +11,13 @@ class ParamDecl;
 
 class CompoundStmt;
 class DeclStmt;
+class IfStmt;
 class RetStmt;
 
 class Expr;
 class IntegerLiteral;
+class FloatLiteral;
+class CharLiteral;
 class RefExpr;
 
 class Visitor {
@@ -27,9 +30,12 @@ public:
 
     virtual void visit(CompoundStmt *stmt) = 0;
     virtual void visit(DeclStmt *stmt) = 0;
+    virtual void visit(IfStmt *stmt) = 0;
     virtual void visit(RetStmt *stmt) = 0;
 
     virtual void visit(IntegerLiteral *expr) = 0;
+    virtual void visit(FloatLiteral *expr) = 0;
+    virtual void visit(CharLiteral *expr) = 0;
     virtual void visit(RefExpr *expr) = 0;
 };
 

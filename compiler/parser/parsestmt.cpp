@@ -8,6 +8,8 @@ Stmt *Parser::parseStmt() {
         return parseCompoundStmt();
     else if (matchKeyword("fix") || matchKeyword("mut"))
         return parseDeclStmt();
+    else if (matchKeyword("if"))
+        return parseIfStmt();
     else if (matchKeyword("ret"))
         return parseRetStmt();
 
@@ -45,7 +47,35 @@ DeclStmt *Parser::parseDeclStmt() {
     if (!D)
         fatal("expected variable declaration", &m_Current->md);
 
+    if (match(TokenKind::Semi))
+        next();
+
     return new DeclStmt(D->getMetadata(), D);
+}
+
+IfStmt *Parser::parseIfStmt() {
+    Metadata md = m_Current->md;
+    Expr *C = nullptr;
+    Stmt *T = nullptr;
+    Stmt *E = nullptr;
+    next(); // 'if'
+
+    C = parseExpr();
+    if (!C)
+        fatal("expected expression after 'if'", &md);
+
+    T = parseStmt();
+    if (!T)
+        fatal("expected statement after 'if' condition", &m_Current->md);
+
+    if (matchKeyword("else")) {
+        next(); // 'else'
+        E = parseStmt();
+        if (!E)
+            fatal("expected statement after 'else'", &m_Current->md);
+    }
+
+    return new IfStmt(md, C, T, E);
 }
 
 RetStmt *Parser::parseRetStmt() {

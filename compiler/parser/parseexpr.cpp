@@ -14,6 +14,10 @@ Expr *Parser::parsePrimaryExpr() {
         return parseIdentExpr();
     else if (match(LiteralKind::Integer))
         return parseInteger();
+    else if (match(LiteralKind::Float))
+        return parseFloat();
+    else if (match(LiteralKind::Character))
+        return parseChar();
 
     return nullptr;
 }
@@ -30,6 +34,26 @@ IntegerLiteral *Parser::parseInteger() {
     );
     next();
     return I;
+}
+
+FloatLiteral *Parser::parseFloat() {
+    FloatLiteral *F = new FloatLiteral(
+        m_Current->md,
+        m_Context->getF64Type(),
+        std::stod(m_Current->value)
+    );
+    next();
+    return F;
+}
+
+CharLiteral *Parser::parseChar() {
+    CharLiteral *C = new CharLiteral(
+        m_Current->md,
+        m_Context->getCharType(),
+        m_Current->value[0]
+    );
+    next();
+    return C;
 }
 
 RefExpr *Parser::parseRef() {

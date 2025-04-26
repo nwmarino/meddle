@@ -39,6 +39,8 @@ String CCGN::translateType(Type *T) {
             case PrimitiveType::Kind::UInt16: return "unsigned short";
             case PrimitiveType::Kind::UInt32: return "unsigned int";
             case PrimitiveType::Kind::UInt64: return "unsigned long";
+            case PrimitiveType::Kind::Float32: return "float";
+            case PrimitiveType::Kind::Float64: return "double";
         }
     }
 
@@ -95,6 +97,7 @@ void CCGN::visit(FunctionDecl *decl) {
         emitCLn(")");
 
         decl->m_Body->accept(this);
+        emitCLn("");
     }
 }
 
@@ -102,6 +105,9 @@ void CCGN::visit(VarDecl *decl) {
     if (phase == Phase::Declare) {
         
     } else if (phase == Phase::Define) {
+        if (decl->isMutable())
+            emitCSeg("const ");
+
         emitCSeg(translateType(decl->getType()) + " " + decl->getName());
         if (decl->getInit()) {
             emitCSeg(" = ");
@@ -131,13 +137,36 @@ void CCGN::visit(DeclStmt *stmt) {
     stmt->getDecl()->accept(this);
 }
 
+void CCGN::visit(IfStmt *stmt) {
+    emitCSeg("if (");
+    stmt->getCond()->accept(this);
+    emitCSeg(") ");
+    stmt->getThen()->accept(this);
+    if (stmt->getElse()) {
+        emitCSeg("else ");
+        stmt->getElse()->accept(this);
+    }
+}
+
 void CCGN::visit(RetStmt *stmt) {
-    emitCSeg("return ");
-    stmt->m_Expr->accept(this);
+    if (stmt->getExpr()) {
+        emitCSeg("return ");
+        stmt->m_Expr->accept(this);
+    } else
+        emitCSeg("return");
+
     emitCLn(";");
 }
 
 void CCGN::visit(IntegerLiteral *expr) {
+    emitCSeg(std::to_string(expr->getValue()));
+}
+
+void CCGN::visit(FloatLiteral *expr) {
+    emitCSeg(std::to_string(expr->getValue()));
+}
+
+void CCGN::visit(CharLiteral *expr) {
     emitCSeg(std::to_string(expr->getValue()));
 }
 

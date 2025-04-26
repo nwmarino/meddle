@@ -15,6 +15,8 @@ static String getNameForPrimitiveType(PrimitiveType::Kind K) {
         case PrimitiveType::Kind::UInt16: return "u16";
         case PrimitiveType::Kind::UInt32: return "u32";
         case PrimitiveType::Kind::UInt64: return "u64";
+        case PrimitiveType::Kind::Float32: return "f32";
+        case PrimitiveType::Kind::Float64: return "f64";
     }
 }
 

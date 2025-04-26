@@ -56,12 +56,15 @@ class Parser final {
     Stmt *parseStmt();
     CompoundStmt *parseCompoundStmt();
     DeclStmt *parseDeclStmt();
+    IfStmt *parseIfStmt();
     RetStmt *parseRetStmt();
 
     Expr *parseExpr();
     Expr *parsePrimaryExpr();
     Expr *parseIdentExpr();
     IntegerLiteral *parseInteger();
+    FloatLiteral *parseFloat();
+    CharLiteral *parseChar();
     RefExpr *parseRef();
 
 public:

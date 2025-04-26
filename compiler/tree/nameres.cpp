@@ -23,7 +23,8 @@ void NameResolution::visit(FunctionDecl *decl) {
 }
 
 void NameResolution::visit(VarDecl *decl) {
-
+    if (decl->getInit())
+        decl->getInit()->accept(this);
 }
 
 void NameResolution::visit(ParamDecl *decl) {
@@ -39,12 +40,28 @@ void NameResolution::visit(DeclStmt *stmt) {
     stmt->getDecl()->accept(this);
 }
 
-void NameResolution::visit(RetStmt *stmt) {
+void NameResolution::visit(IfStmt *stmt) {
+    stmt->getCond()->accept(this);
+    stmt->getThen()->accept(this);
+    if (stmt->getElse())
+        stmt->getElse()->accept(this);
+}
 
+void NameResolution::visit(RetStmt *stmt) {
+    if (stmt->getExpr())
+        stmt->getExpr()->accept(this);
 }
 
 void NameResolution::visit(IntegerLiteral *expr) {
 
+}
+
+void NameResolution::visit(FloatLiteral *expr) {
+    
+}
+
+void NameResolution::visit(CharLiteral *expr) {
+    
 }
 
 void NameResolution::visit(RefExpr *expr) {

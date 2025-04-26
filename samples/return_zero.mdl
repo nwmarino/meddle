@@ -1,6 +1,15 @@
-main :: () {
+test :: () {
     fix x: i64 = 0;
     mut y: i64 = 1;
+    mut z: f32 = 1.45;
+    mut w: char = 'a';
+    if x 
+        ret;
+    else
+        ret;
+    
+}
 
-    ret 0;
+main :: () i32 {
+    ret 42;
 }

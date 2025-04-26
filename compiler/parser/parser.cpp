@@ -123,7 +123,7 @@ Parser::Parser(const File &F, const TokenStream &S) : m_Stream(S) {
     m_Scope = m_Unit->getScope();
     m_Current = m_Stream.get();
 
-    while (!m_Stream.isEnd()) {
+    while (!m_Stream.isEnd() && !match(TokenKind::Eof)) {
         Decl *D = parseDecl();
         if (!D)
             fatal("expected declaration", &m_Current->md);

@@ -42,7 +42,7 @@ File parseInputFile(const String &path) {
 
     String filename = boost::filesystem::path(path).filename().string();
     String directory = boost::filesystem::path(path).parent_path().string();
-    return File(filename, absol, buffer, directory);
+    return File(filename, directory, absol, buffer);
 }
 
 int main(int argc, char **argv) {
