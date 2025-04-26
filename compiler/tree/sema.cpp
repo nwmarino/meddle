@@ -60,9 +60,32 @@ void Sema::visit(IfStmt *stmt) {
     }
 }
 
+void Sema::visit(CaseStmt *stmt) {
+    stmt->getPattern()->accept(this);
+    checkCompoundedDeclStmt(stmt->getBody());
+    stmt->getBody()->accept(this);
+}
+
+void Sema::visit(MatchStmt *stmt) {
+    stmt->getPattern()->accept(this);
+    for (auto &C : stmt->getCases())
+        C->accept(this);
+
+    if (stmt->getDefault()) {
+        stmt->getDefault()->accept(this);
+        checkCompoundedDeclStmt(stmt->getDefault());
+    }
+}
+
 void Sema::visit(RetStmt *stmt) {
     if (stmt->getExpr())
         stmt->getExpr()->accept(this);
+}
+
+void Sema::visit(UntilStmt *stmt) {
+    stmt->getCond()->accept(this);
+    checkCompoundedDeclStmt(stmt->getBody());
+    stmt->getBody()->accept(this);
 }
 
 void Sema::visit(IntegerLiteral *expr) {

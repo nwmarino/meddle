@@ -5,18 +5,22 @@ using namespace meddle;
 
 Stmt *Parser::parseStmt() {
     if (match(TokenKind::SetBrace))
-        return parseCompoundStmt();
+        return parseCompound();
     else if (matchKeyword("fix") || matchKeyword("mut"))
         return parseDeclStmt();
     else if (matchKeyword("if"))
-        return parseIfStmt();
+        return parseIf();
+    else if (matchKeyword("match"))
+        return parseMatchStmt();
     else if (matchKeyword("ret"))
-        return parseRetStmt();
+        return parseRet();
+    else if (matchKeyword("until"))
+        return parseUntil();
 
     return nullptr;
 }
 
-CompoundStmt *Parser::parseCompoundStmt() {
+CompoundStmt *Parser::parseCompound() {
     CompoundStmt *C = new CompoundStmt(m_Current->md, enterScope());
     next(); // '{'
 
@@ -53,7 +57,7 @@ DeclStmt *Parser::parseDeclStmt() {
     return new DeclStmt(D->getMetadata(), D);
 }
 
-IfStmt *Parser::parseIfStmt() {
+IfStmt *Parser::parseIf() {
     Metadata md = m_Current->md;
     Expr *C = nullptr;
     Stmt *T = nullptr;
@@ -78,7 +82,66 @@ IfStmt *Parser::parseIfStmt() {
     return new IfStmt(md, C, T, E);
 }
 
-RetStmt *Parser::parseRetStmt() {
+MatchStmt *Parser::parseMatchStmt() {
+    Metadata md = m_Current->md;
+    Expr *P = nullptr;
+    std::vector<CaseStmt *> cases = {};
+    Stmt *D = nullptr;
+    next(); // 'match'
+
+    P = parseExpr();
+    if (!P)
+        fatal("expected expression after 'match'", &md);
+
+    if (!match(TokenKind::SetBrace))
+        fatal("expected '{' after match expression", &md);
+    next(); // '{'
+
+    while (!match(TokenKind::EndBrace)) {
+        if (matchKeyword("_")) {
+            if (D)
+                fatal("duplicate default case", &m_Current->md);
+            next(); // '_'
+
+            if (!match(TokenKind::Arrow))
+                fatal("expected '->' after default case", &m_Current->md);
+            next(); // '->'
+
+            D = parseStmt();
+            if (!D)
+                fatal("expected default statement", &m_Current->md);
+        } else {
+            Expr *CP = parseExpr();
+            if (!CP)
+                fatal("expected case expression", &m_Current->md);
+
+            if (!match(TokenKind::Arrow))
+                fatal("expected '->' after case expression", &m_Current->md);
+            next(); // '->'
+
+            Stmt *B = parseStmt();
+            if (!B)
+                fatal("expected statement after case expression", &m_Current->md);
+
+            cases.push_back(new CaseStmt(md, CP, B));
+        }
+
+        if (match(TokenKind::EndBrace))
+            break;
+
+        if (match(TokenKind::Comma))
+            next(); // ','
+    }
+
+    next(); // '}'
+
+    if (cases.empty())
+        fatal("match statement must have at least one case", &m_Current->md);
+
+    return new MatchStmt(md, P, cases, D);
+}
+
+RetStmt *Parser::parseRet() {
     Metadata md = m_Current->md;
     Expr *E = nullptr;
     next(); // 'ret'
@@ -94,4 +157,21 @@ RetStmt *Parser::parseRetStmt() {
 
     next(); // ';'
     return new RetStmt(md, E);    
+}
+
+UntilStmt *Parser::parseUntil() {
+    Metadata md = m_Current->md;
+    Expr *C = nullptr;
+    Stmt *B = nullptr;
+    next(); // 'until'
+
+    C = parseExpr();
+    if (!C)
+        fatal("expected expression after 'until'", &md);
+
+    B = parseStmt();
+    if (!B)
+        fatal("expected statement after 'until' condition", &m_Current->md);
+
+    return new UntilStmt(md, C, B);
 }

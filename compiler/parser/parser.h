@@ -54,10 +54,12 @@ class Parser final {
     VarDecl *parseVariable(bool mut);
 
     Stmt *parseStmt();
-    CompoundStmt *parseCompoundStmt();
+    CompoundStmt *parseCompound();
     DeclStmt *parseDeclStmt();
-    IfStmt *parseIfStmt();
-    RetStmt *parseRetStmt();
+    IfStmt *parseIf();
+    MatchStmt *parseMatchStmt();
+    RetStmt *parseRet();
+    UntilStmt *parseUntil();
 
     Expr *parseExpr();
     Expr *parsePrimaryExpr();

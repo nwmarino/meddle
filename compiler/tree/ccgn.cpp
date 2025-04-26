@@ -9,6 +9,12 @@
 
 using namespace meddle;
 
+static String multChar(char c, unsigned n) {
+    String str;
+    for (unsigned i = 0; i < n; ++i) str += c;
+    return str;
+}
+
 void CCGN::emitCSeg(const String &seg) {
     m_Cout << seg;
 }
@@ -44,6 +50,7 @@ String CCGN::translateType(Type *T) {
         }
     }
 
+    fatal("unknown type");
     return "";
 }
 
@@ -51,19 +58,22 @@ CCGN::CCGN(const Options &opts, TranslationUnit *U) : m_Opts(opts), m_Unit(U) {
     m_Cout = std::ofstream(U->getFile().filename + ".c");
     m_Hout = std::ofstream(U->getFile().filename + ".h");
 
-    phase = Phase::Declare;
+    // Get the file name without extension for use in the include guard.
     String noext = U->getFile().filename;
     auto pos = noext.find_last_of('.');
     if (pos != std::string::npos)
         noext = noext.substr(0, pos);
 
-    emitHLn("#ifndef " + noext + "_H");
-    emitHLn("#define " + noext + "_H\n");
+    // Emit the header file define guards and as part of the "declare" phase,
+    // all public declarations within the translation unit.
+    phase = Phase::Declare;
+    m_Hout << "#ifndef " << noext << "_H\n#define " << noext << "_H\n\n";
     m_Unit->accept(this);
-    emitHLn("\n#endif // " + noext + "_H");
+    m_Hout << "\n#endif // " << noext << "_H\n";
 
+    // Switch to the "define" phase, and emit actual C code for the package.
     phase = Phase::Define;
-    emitCLn("#include \"" + U->getFile().filename + ".h\"\n");
+    m_Cout << "#include \"" << U->getFile().filename << ".h\"\n\n";
     m_Unit->accept(this);
 
     m_Cout.close();
@@ -71,66 +81,60 @@ CCGN::CCGN(const Options &opts, TranslationUnit *U) : m_Opts(opts), m_Unit(U) {
 }
 
 void CCGN::visit(TranslationUnit *U) {
-    for (auto &D : U->getDecls())
-        D->accept(this);
+    for (auto &D : U->getDecls()) D->accept(this);
 }
 
 void CCGN::visit(FunctionDecl *decl) {
     if (phase == Phase::Declare) {
-        emitHSeg(translateType(decl->getReturnType()) + " " + decl->getName() + "(");
+        m_Hout << translateType(decl->getReturnType()) << " " << decl->m_Name 
+               << "(";
         for (auto &P : decl->getParams()) {
             P->accept(this);
-            if (P != decl->getParams().back())
-                emitHSeg(", ");
+            m_Hout << (P != decl->getParams().back() ? ", " : "");
         }
 
-        emitHLn(");");
+        m_Hout << ");\n";
     } else if (phase == Phase::Define) {
-        emitCSeg(translateType(decl->getReturnType()) + " " + decl->getName() + "(");
+        m_Cout << translateType(decl->getReturnType()) << " " << decl->m_Name 
+               << "(";
 
         for (auto &P : decl->getParams()) {
             P->accept(this);
-            if (P != decl->getParams().back())
-                emitCSeg(", ");
+            m_Cout << (P != decl->getParams().back() ? ", " : "");
         }
 
-        emitCLn(")");
-
+        m_Cout << ") ";
         decl->m_Body->accept(this);
-        emitCLn("");
+        m_Cout << "\n";
     }
 }
 
 void CCGN::visit(VarDecl *decl) {
-    if (phase == Phase::Declare) {
-        
-    } else if (phase == Phase::Define) {
-        if (decl->isMutable())
-            emitCSeg("const ");
+    m_Cout << multChar('\t', m_Indent);
+    if (decl->isMutable())
+        m_Cout << "const ";
 
-        emitCSeg(translateType(decl->getType()) + " " + decl->getName());
-        if (decl->getInit()) {
-            emitCSeg(" = ");
-            decl->getInit()->accept(this);
-        }
-
-        emitCLn(";");
+    m_Cout << translateType(decl->m_Type) << " " << decl->m_Name;
+    if (decl->m_Init) {
+        m_Cout << " = ";
+        decl->getInit()->accept(this);
     }
+
+    m_Cout << ";\n";
 }
 
 void CCGN::visit(ParamDecl *decl) {
     if (phase == Phase::Define)
-        emitHSeg(translateType(decl->getType()) + " " + decl->getName());
+        m_Hout << translateType(decl->m_Type) << " " << decl->m_Name;
     else if (phase == Phase::Declare)
-        emitCSeg(translateType(decl->getType()) + " " + decl->getName());
+        m_Cout << translateType(decl->m_Type) << " " << decl->m_Name;
 }
 
 void CCGN::visit(CompoundStmt *stmt) {
-    emitCLn("{");
-    for (auto &S : stmt->getStmts())
-        S->accept(this);
-
-    emitCLn("}");
+    m_Cout << "{\n";
+    m_Indent++;
+    for (auto &S : stmt->getStmts()) S->accept(this);
+    m_Cout << multChar('\t', --m_Indent) << "}\n";
 }
 
 void CCGN::visit(DeclStmt *stmt) {
@@ -138,38 +142,100 @@ void CCGN::visit(DeclStmt *stmt) {
 }
 
 void CCGN::visit(IfStmt *stmt) {
-    emitCSeg("if (");
+    m_Cout << multChar('\t', m_Indent) << "if (";
     stmt->getCond()->accept(this);
-    emitCSeg(") ");
-    stmt->getThen()->accept(this);
+    m_Cout << ") ";
+    if (dynamic_cast<CompoundStmt *>(stmt->getThen())) {
+        stmt->getThen()->accept(this);
+    } else {
+        m_Cout << "\n";
+        m_Indent++;
+        stmt->getThen()->accept(this);
+        m_Indent--;
+    }
+
     if (stmt->getElse()) {
-        emitCSeg("else ");
-        stmt->getElse()->accept(this);
+        m_Cout << multChar('\t', m_Indent) << "else ";
+        if (dynamic_cast<CompoundStmt *>(stmt->getElse())) {
+            stmt->getElse()->accept(this);
+        } else {
+            m_Cout << "\n";
+            m_Indent++;
+            stmt->getElse()->accept(this);
+            m_Indent--;
+        }
     }
 }
 
-void CCGN::visit(RetStmt *stmt) {
-    if (stmt->getExpr()) {
-        emitCSeg("return ");
-        stmt->m_Expr->accept(this);
-    } else
-        emitCSeg("return");
+void CCGN::visit(CaseStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "case ";
+    stmt->getPattern()->accept(this);
+    m_Cout << ": ";
+    if (dynamic_cast<CompoundStmt *>(stmt->getBody())) {
+        stmt->getBody()->accept(this);
+    } else {
+        m_Cout << "\n";
+        m_Indent++;
+        stmt->getBody()->accept(this);
+        m_Indent--;
+    }
 
-    emitCLn(";");
+    m_Cout << multChar('\t', m_Indent + 1) << "break;\n";
+}
+
+void CCGN::visit(MatchStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "switch (";
+    stmt->getPattern()->accept(this);
+    m_Cout << ") {\n";
+
+    for (auto &C : stmt->getCases()) C->accept(this);
+
+    if (stmt->getDefault()) {
+        m_Cout << multChar('\t', m_Indent) << "default:\n";
+        m_Indent++;
+        stmt->getDefault()->accept(this);
+        m_Cout << multChar('\t', m_Indent--) << "break;\n";
+    }
+
+    m_Cout << multChar('\t', m_Indent) << "}\n";
+}
+
+void CCGN::visit(RetStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "return";
+    if (stmt->getExpr()) {
+        m_Cout << " ";
+        stmt->m_Expr->accept(this);
+    }
+
+    m_Cout << ";\n";
+}
+
+void CCGN::visit(UntilStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "while (!(";
+    stmt->getCond()->accept(this);
+    m_Cout << ")) ";
+    if (dynamic_cast<CompoundStmt *>(stmt->getBody())) {
+        stmt->getBody()->accept(this);
+    } else {
+        m_Cout << "\n";
+        m_Indent++;
+        stmt->getBody()->accept(this);
+        m_Indent--;
+    }
 }
 
 void CCGN::visit(IntegerLiteral *expr) {
-    emitCSeg(std::to_string(expr->getValue()));
+    m_Cout << expr->getValue();
 }
 
 void CCGN::visit(FloatLiteral *expr) {
-    emitCSeg(std::to_string(expr->getValue()));
+    m_Cout << expr->getValue() << "f";
 }
 
 void CCGN::visit(CharLiteral *expr) {
-    emitCSeg(std::to_string(expr->getValue()));
+    m_Cout << "'" << expr->getValue() << "'";
 }
 
 void CCGN::visit(RefExpr *expr) {
-    emitCSeg(expr->getName());
+    m_Cout << expr->getName();
 }

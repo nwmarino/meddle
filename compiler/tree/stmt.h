@@ -102,6 +102,59 @@ public:
     Stmt *getElse() const { return m_Else; }
 };
 
+class CaseStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Expr *m_Pattern;
+    Stmt *m_Body;
+
+public:
+    CaseStmt(const Metadata &M, Expr *P, Stmt *B) 
+      : Stmt(M), m_Pattern(P), m_Body(B) {}
+
+    ~CaseStmt() override {
+        delete m_Pattern;
+        delete m_Body;
+    }
+    
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Expr *getPattern() const { return m_Pattern; }
+
+    Stmt *getBody() const { return m_Body; }
+};
+
+class MatchStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Expr *m_Pattern;
+    std::vector<CaseStmt *> m_Cases;
+    Stmt *m_Default;
+
+public:
+    MatchStmt(const Metadata &M, Expr *P, std::vector<CaseStmt *> C, Stmt *D)
+      : Stmt(M), m_Pattern(P), m_Cases(C), m_Default(D) {}
+
+    ~MatchStmt() override {
+        delete m_Pattern;
+        delete m_Default;
+        for (auto &C : m_Cases)
+            delete C;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Expr *getPattern() const { return m_Pattern; }
+
+    const std::vector<CaseStmt *> &getCases() const { return m_Cases; }
+
+    Stmt *getDefault() const { return m_Default; }
+};
+
 class RetStmt final : public Stmt {
     friend class CCGN;
     friend class NameResolution;
@@ -119,6 +172,30 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Expr *getExpr() const { return m_Expr; }
+};
+
+class UntilStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Expr *m_Cond;
+    Stmt *m_Body;
+
+public:
+    UntilStmt(const Metadata &M, Expr *C, Stmt *B) 
+      : Stmt(M), m_Cond(C), m_Body(B) {}
+
+    ~UntilStmt() override {
+        delete m_Cond;
+        delete m_Body;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Expr *getCond() const { return m_Cond; }
+
+    Stmt *getBody() const { return m_Body; }
 };
 
 } // namespace meddle

@@ -22,6 +22,8 @@ class CCGN : public Visitor {
     std::ofstream m_Cout;
     std::ofstream m_Hout;
 
+    unsigned m_Indent = 0;
+
     void emitCSeg(const String &seg);
     void emitCLn(const String &ln);
     void emitHSeg(const String &seg);
@@ -41,7 +43,10 @@ public:
     void visit(CompoundStmt *stmt) override;
     void visit(DeclStmt *stmt) override;
     void visit(IfStmt *stmt) override;
+    void visit(CaseStmt *stmt) override;
+    void visit(MatchStmt *stmt) override;
     void visit(RetStmt *stmt) override; 
+    void visit(UntilStmt *stmt) override;
 
     void visit(IntegerLiteral *expr) override;
     void visit(FloatLiteral *expr) override;

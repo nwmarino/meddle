@@ -22,7 +22,10 @@ public:
     void visit(CompoundStmt *stmt) override;
     void visit(DeclStmt *stmt) override;
     void visit(IfStmt *stmt) override;
+    void visit(CaseStmt *stmt) override;
+    void visit(MatchStmt *stmt) override;
     void visit(RetStmt *stmt) override; 
+    void visit(UntilStmt *stmt) override;
 
     void visit(IntegerLiteral *expr) override;
     void visit(FloatLiteral *expr) override;

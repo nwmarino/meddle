@@ -3,10 +3,37 @@ test :: () {
     mut y: i64 = 1;
     mut z: f32 = 1.45;
     mut w: char = 'a';
+
     if x 
         ret;
     else
         ret;
+
+    if x {
+        ret;
+    } else {
+        ret;
+    }
+
+    if x {
+        ret;
+    } else if y {
+        ret;
+    } else {
+        ret;
+    }
+
+    until x {
+        ret;
+    }
+
+    match x {
+        1 -> {
+            ret;
+        },
+        2 -> ret;
+        _ -> ret;
+    }
     
 }
 

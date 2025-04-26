@@ -475,6 +475,59 @@ TEST_F(ParserTest, ParseIfStatementElseCompound) {
     delete unit;
 }
 
+TEST_F(ParserTest, ParseUntilStatement) {
+    File file = File("test.mdl", "/", "/test.mdl", "test::(){until 1 { ret; }}");
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    UntilStmt *US = dynamic_cast<UntilStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(US, nullptr);
+    EXPECT_NE(US->getCond(), nullptr);
+    EXPECT_NE(US->getBody(), nullptr);
+
+    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(US->getCond());
+    EXPECT_NE(I, nullptr);
+    EXPECT_EQ(I->getValue(), 1);
+
+    CompoundStmt *CS2 = dynamic_cast<CompoundStmt *>(US->getBody());
+    EXPECT_NE(CS2, nullptr);
+    EXPECT_EQ(CS2->getStmts().size(), 1);
+
+    RetStmt *RS = dynamic_cast<RetStmt *>(CS2->getStmts()[0]);
+    EXPECT_NE(RS, nullptr);
+    EXPECT_EQ(RS->getExpr(), nullptr);
+
+    delete unit;
+}
+
+TEST_F(ParserTest, ParseMatchStatementOneCase) {
+    File file = File("test.mdl", "/", "/test.mdl", "test::(){match 1 { 1 -> { ret; } }}");
+}
+
+TEST_F(ParserTest, ParseMatchStatementTwoCases) {
+
+}
+
+TEST_F(ParserTest, ParseMatchStatementWithDefault) {
+
+}
+
+TEST_F(ParserTest, ParseMatchStatementManyWithDefault) {
+
+}
+
 } // namespace test
 
 } // namespace meddle

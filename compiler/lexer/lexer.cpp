@@ -59,6 +59,9 @@ Token Lexer::lex() {
             } else if (next() == '=') {
                 kind = TokenKind::MinusEquals;
                 move(2);
+            } else if (next() == '>') {
+                kind = TokenKind::Arrow;
+                move(2);
             } else {
                 kind = TokenKind::Minus;
                 move();
@@ -176,6 +179,9 @@ Token Lexer::lex() {
         case '=':
             if (next() == '=') {
                 kind = TokenKind::EqualsEquals;
+                move(2);
+            } else if (next() == '>') {
+                kind = TokenKind::FatArrow;
                 move(2);
             } else {
                 kind = TokenKind::Equals;

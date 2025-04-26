@@ -47,9 +47,27 @@ void NameResolution::visit(IfStmt *stmt) {
         stmt->getElse()->accept(this);
 }
 
+void NameResolution::visit(CaseStmt *stmt) {
+    stmt->getPattern()->accept(this);
+    stmt->getBody()->accept(this);
+}
+
+void NameResolution::visit(MatchStmt *stmt) {
+    stmt->getPattern()->accept(this);
+    for (auto &C : stmt->getCases())
+        C->accept(this);
+    if (stmt->getDefault())
+        stmt->getDefault()->accept(this);
+}
+
 void NameResolution::visit(RetStmt *stmt) {
     if (stmt->getExpr())
         stmt->getExpr()->accept(this);
+}
+
+void NameResolution::visit(UntilStmt *stmt) {
+    stmt->getCond()->accept(this);
+    stmt->getBody()->accept(this);
 }
 
 void NameResolution::visit(IntegerLiteral *expr) {

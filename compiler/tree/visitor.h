@@ -12,7 +12,10 @@ class ParamDecl;
 class CompoundStmt;
 class DeclStmt;
 class IfStmt;
+class CaseStmt;
+class MatchStmt;
 class RetStmt;
+class UntilStmt;
 
 class Expr;
 class IntegerLiteral;
@@ -31,7 +34,10 @@ public:
     virtual void visit(CompoundStmt *stmt) = 0;
     virtual void visit(DeclStmt *stmt) = 0;
     virtual void visit(IfStmt *stmt) = 0;
+    virtual void visit(CaseStmt *stmt) = 0;
+    virtual void visit(MatchStmt *stmt) = 0;
     virtual void visit(RetStmt *stmt) = 0;
+    virtual void visit(UntilStmt *stmt) = 0;
 
     virtual void visit(IntegerLiteral *expr) = 0;
     virtual void visit(FloatLiteral *expr) = 0;
