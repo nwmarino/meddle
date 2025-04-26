@@ -23,9 +23,9 @@ class Parser final {
 
     void skip(unsigned n = 1);
 
-    unsigned savePos() { return m_Saved = m_Stream.getPos(); }
+    unsigned save_pos() { return m_Saved = m_Stream.getPos(); }
 
-    void restorePos(unsigned pos) {
+    void restore_pos(unsigned pos) {
         m_Stream.setPos(pos);
         m_Current = m_Stream.get(pos);
     }
@@ -37,37 +37,40 @@ class Parser final {
             && m_Current->literal == K;
     }
 
-    bool matchKeyword(const char *KW) const {
+    bool match_keyword(const char *KW) const {
         return m_Current->kind == TokenKind::Identifier 
             && m_Current->value == KW;
     }
 
-    Scope *enterScope() { m_Scope = new Scope(m_Scope); return m_Scope; }
+    Scope *enter_scope() { m_Scope = new Scope(m_Scope); return m_Scope; }
 
-    void exitScope() { m_Scope = m_Scope->getParent(); }
+    void exit_scope() { m_Scope = m_Scope->getParent(); }
 
-    Type *parseType(bool produce = true);
-    void parseAttributes();
+    Type *parse_type(bool produce = true);
+    void parse_attributes();
 
-    Decl *parseDecl();
-    FunctionDecl *parseFunction(const Token &name);
-    VarDecl *parseVariable(bool mut);
+    Decl *parse_decl();
+    FunctionDecl *parse_function(const Token &name);
+    VarDecl *parse_var(bool mut);
 
-    Stmt *parseStmt();
-    CompoundStmt *parseCompound();
-    DeclStmt *parseDeclStmt();
-    IfStmt *parseIf();
-    MatchStmt *parseMatchStmt();
-    RetStmt *parseRet();
-    UntilStmt *parseUntil();
+    Stmt *parse_stmt();
+    BreakStmt *parse_break();
+    ContinueStmt *parse_continue();
+    CompoundStmt *parse_compound();
+    DeclStmt *parse_decl_stmt();
+    ExprStmt *parse_expr_stmt();
+    IfStmt *parse_if();
+    MatchStmt *parse_match();
+    RetStmt *parse_ret();
+    UntilStmt *parse_until();
 
-    Expr *parseExpr();
-    Expr *parsePrimaryExpr();
-    Expr *parseIdentExpr();
-    IntegerLiteral *parseInteger();
-    FloatLiteral *parseFloat();
-    CharLiteral *parseChar();
-    RefExpr *parseRef();
+    Expr *parse_expr();
+    Expr *parse_primary();
+    Expr *parse_ident();
+    IntegerLiteral *parse_int();
+    FloatLiteral *parse_fp();
+    CharLiteral *parse_char();
+    RefExpr *parse_ref();
 
 public:
     Parser(const File &F, const TokenStream &S);

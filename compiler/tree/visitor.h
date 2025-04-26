@@ -9,8 +9,11 @@ class FunctionDecl;
 class VarDecl;
 class ParamDecl;
 
+class BreakStmt;
+class ContinueStmt;
 class CompoundStmt;
 class DeclStmt;
+class ExprStmt;
 class IfStmt;
 class CaseStmt;
 class MatchStmt;
@@ -31,8 +34,11 @@ public:
     virtual void visit(VarDecl *decl) = 0;
     virtual void visit(ParamDecl *decl) = 0;
 
+    virtual void visit(BreakStmt *stmt) = 0;
+    virtual void visit(ContinueStmt *stmt) = 0;
     virtual void visit(CompoundStmt *stmt) = 0;
     virtual void visit(DeclStmt *stmt) = 0;
+    virtual void visit(ExprStmt *stmt) = 0;
     virtual void visit(IfStmt *stmt) = 0;
     virtual void visit(CaseStmt *stmt) = 0;
     virtual void visit(MatchStmt *stmt) = 0;

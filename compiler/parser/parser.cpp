@@ -14,7 +14,7 @@ void Parser::skip(unsigned n) {
 
 }
 
-Type *Parser::parseType(bool produce) {
+Type *Parser::parse_type(bool produce) {
     if (!match(TokenKind::Identifier))
         fatal("expected type identifier", &m_Current->md);
     
@@ -78,7 +78,7 @@ Type *Parser::parseType(bool produce) {
     return nullptr;
 }
 
-void Parser::parseAttributes() {
+void Parser::parse_attributes() {
     if (!match(TokenKind::Sign))
         return;
 
@@ -124,7 +124,7 @@ Parser::Parser(const File &F, const TokenStream &S) : m_Stream(S) {
     m_Current = m_Stream.get();
 
     while (!m_Stream.isEnd() && !match(TokenKind::Eof)) {
-        Decl *D = parseDecl();
+        Decl *D = parse_decl();
         if (!D)
             fatal("expected declaration", &m_Current->md);
 

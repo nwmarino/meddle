@@ -5,28 +5,28 @@
 
 using namespace meddle;
 
-Expr *Parser::parseExpr() {
-    return parsePrimaryExpr();
+Expr *Parser::parse_expr() {
+    return parse_primary();
 }
 
-Expr *Parser::parsePrimaryExpr() {
+Expr *Parser::parse_primary() {
     if (match(TokenKind::Identifier))
-        return parseIdentExpr();
+        return parse_ident();
     else if (match(LiteralKind::Integer))
-        return parseInteger();
+        return parse_int();
     else if (match(LiteralKind::Float))
-        return parseFloat();
+        return parse_fp();
     else if (match(LiteralKind::Character))
-        return parseChar();
+        return parse_char();
 
     return nullptr;
 }
 
-Expr *Parser::parseIdentExpr() {
-    return parseRef();
+Expr *Parser::parse_ident() {
+    return parse_ref();
 }
 
-IntegerLiteral *Parser::parseInteger() {
+IntegerLiteral *Parser::parse_int() {
     IntegerLiteral *I = new IntegerLiteral(
         m_Current->md, 
         m_Context->getI64Type(), 
@@ -36,7 +36,7 @@ IntegerLiteral *Parser::parseInteger() {
     return I;
 }
 
-FloatLiteral *Parser::parseFloat() {
+FloatLiteral *Parser::parse_fp() {
     FloatLiteral *F = new FloatLiteral(
         m_Current->md,
         m_Context->getF64Type(),
@@ -46,7 +46,7 @@ FloatLiteral *Parser::parseFloat() {
     return F;
 }
 
-CharLiteral *Parser::parseChar() {
+CharLiteral *Parser::parse_char() {
     CharLiteral *C = new CharLiteral(
         m_Current->md,
         m_Context->getCharType(),
@@ -56,7 +56,7 @@ CharLiteral *Parser::parseChar() {
     return C;
 }
 
-RefExpr *Parser::parseRef() {
+RefExpr *Parser::parse_ref() {
     Metadata md = m_Current->md;
     String name = m_Current->value;
 

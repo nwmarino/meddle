@@ -20,6 +20,38 @@ public:
     virtual ~Type() = default;
 
     String getName() const { return m_Name; }
+
+    bool isVoid() const { return m_Name == "void"; }
+
+    bool isBool() const { return m_Name == "bool"; }
+
+    bool isChar() const { return m_Name == "char"; }
+    
+    bool isArray() const { return m_Name.back() == ']'; }
+
+    bool isPointer() const { return m_Name.back() == '*'; }
+    
+    virtual bool isSInt() const { return false; }
+
+    virtual bool isSInt(unsigned N) const { return false; }
+
+    virtual bool isUInt() const { return false; }
+
+    virtual bool isUInt(unsigned N) const { return false; }
+
+    virtual bool isFloat() const { return false; }
+
+    virtual bool isFloat(unsigned N) const { return false; }
+
+    virtual bool canCastTo(Type *T) const { return false; }
+
+    virtual bool compare(Type *T) const { return false; }
+
+    virtual bool isQualified() const { return true; }
+
+    virtual unsigned getSizeInBits() const { return 0; }
+
+    unsigned getSizeInBytes() const { return getSizeInBits() / 8; }
 };
 
 class TypeResult final : public Type {
@@ -34,6 +66,14 @@ public:
     void setUnderlying(Type *T) { m_Underlying = T;}
 
     const Metadata &getMetadata() const { return m_Metadata; }
+
+    bool isQualified() const override { return m_Underlying != nullptr; }
+
+    bool canCastTo(Type *T) const override
+    { assert(false && "Cannot cast this non-concrete type."); }
+
+    bool compare(Type *T) const override 
+    { assert(false && "Cannot compare this non-concrete type."); }
 };
 
 class PrimitiveType final : public Type {
@@ -64,6 +104,25 @@ public:
     Kind getKind() const { return m_Kind; }
 
     bool isSigned() const { return m_Signed; }
+
+    bool isSInt() const override;
+
+    bool isSInt(unsigned N) const override;
+
+    bool isUInt() const override;
+
+    bool isUInt(unsigned N) const override;
+
+    bool isFloat() const override
+    { return m_Kind == Kind::Float32 || m_Kind == Kind::Float64; }
+
+    bool isFloat(unsigned N) const override;
+
+    bool canCastTo(Type *T) const override;
+
+    bool compare(Type *T) const override;
+
+    unsigned getSizeInBits() const override;
 };
 
 /*

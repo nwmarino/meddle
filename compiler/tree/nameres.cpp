@@ -31,6 +31,14 @@ void NameResolution::visit(ParamDecl *decl) {
 
 }
 
+void NameResolution::visit(BreakStmt *stmt) {
+
+}
+
+void NameResolution::visit(ContinueStmt *stmt) {
+
+}
+
 void NameResolution::visit(CompoundStmt *stmt) {
     for (auto &S : stmt->getStmts())
         S->accept(this);
@@ -38,6 +46,10 @@ void NameResolution::visit(CompoundStmt *stmt) {
 
 void NameResolution::visit(DeclStmt *stmt) {
     stmt->getDecl()->accept(this);
+}
+
+void NameResolution::visit(ExprStmt *stmt) {
+    stmt->getExpr()->accept(this);
 }
 
 void NameResolution::visit(IfStmt *stmt) {

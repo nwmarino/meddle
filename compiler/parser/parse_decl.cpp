@@ -3,8 +3,8 @@
 
 using namespace meddle;
 
-Decl *Parser::parseDecl() {
-    parseAttributes();
+Decl *Parser::parse_decl() {
+    parse_attributes();
 
     if (!match(TokenKind::Identifier))
         fatal("expected declaration identifier", &m_Current->md);
@@ -16,27 +16,27 @@ Decl *Parser::parseDecl() {
         next(); // '::'
 
     if (match(TokenKind::SetParen))
-        return parseFunction(name);
+        return parse_function(name);
 
     return nullptr;
 }
 
-FunctionDecl *Parser::parseFunction(const Token &name) {
+FunctionDecl *Parser::parse_function(const Token &name) {
     next(); // '('
     next(); // ')'
 
     Type *ret = nullptr;
     Stmt *body = nullptr;
-    Scope *scope = enterScope();
+    Scope *scope = enter_scope();
     std::vector<ParamDecl *> params = {};
 
     if (match(TokenKind::Identifier))
-        ret = parseType(true);
+        ret = parse_type(true);
     else
         ret = m_Context->getVoidType();
 
     if (match(TokenKind::SetBrace)) {
-        body = parseStmt();
+        body = parse_stmt();
         if (!body)
             fatal("expected function body", &m_Current->md);
     } else if (!match(TokenKind::Semi)) {
@@ -65,7 +65,7 @@ FunctionDecl *Parser::parseFunction(const Token &name) {
     return fn;
 }
 
-VarDecl *Parser::parseVariable(bool mut) {
+VarDecl *Parser::parse_var(bool mut) {
     Metadata md = m_Current->md;
     String name;
     Type *T = nullptr;
@@ -81,13 +81,13 @@ VarDecl *Parser::parseVariable(bool mut) {
         fatal("expected ':' after variable name", &m_Current->md);
     next(); // ':'
 
-    T = parseType();
+    T = parse_type();
     if (!T)
         fatal("expected type after ':'", &m_Current->md);
 
     if (match(TokenKind::Equals)) {
         next(); // '='
-        init = parseExpr();
+        init = parse_expr();
         if (!init)
             fatal("expected expression after '='", &m_Current->md);
     } else if (!mut)

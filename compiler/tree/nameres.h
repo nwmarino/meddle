@@ -19,8 +19,11 @@ public:
     void visit(VarDecl *decl) override;
     void visit(ParamDecl *decl) override;
 
+    void visit(BreakStmt *stmt) override;
+    void visit(ContinueStmt *stmt) override;
     void visit(CompoundStmt *stmt) override;
     void visit(DeclStmt *stmt) override;
+    void visit(ExprStmt *stmt) override;
     void visit(IfStmt *stmt) override;
     void visit(CaseStmt *stmt) override;
     void visit(MatchStmt *stmt) override;

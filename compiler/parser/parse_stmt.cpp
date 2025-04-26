@@ -3,29 +3,59 @@
 
 using namespace meddle;
 
-Stmt *Parser::parseStmt() {
+Stmt *Parser::parse_stmt() {
     if (match(TokenKind::SetBrace))
-        return parseCompound();
-    else if (matchKeyword("fix") || matchKeyword("mut"))
-        return parseDeclStmt();
-    else if (matchKeyword("if"))
-        return parseIf();
-    else if (matchKeyword("match"))
-        return parseMatchStmt();
-    else if (matchKeyword("ret"))
-        return parseRet();
-    else if (matchKeyword("until"))
-        return parseUntil();
+        return parse_compound();
+    else if (match_keyword("break"))
+        return parse_break();
+    else if (match_keyword("continue"))
+        return parse_continue();
+    else if (match_keyword("fix") || match_keyword("mut"))
+        return parse_decl_stmt();
+    else if (match_keyword("if"))
+        return parse_if();
+    else if (match_keyword("match"))
+        return parse_match();
+    else if (match_keyword("ret"))
+        return parse_ret();
+    else if (match_keyword("until"))
+        return parse_until();
 
+    if (Stmt *S = parse_expr_stmt())
+        return S;
+
+    fatal("expected statement", &m_Current->md);
     return nullptr;
 }
 
-CompoundStmt *Parser::parseCompound() {
-    CompoundStmt *C = new CompoundStmt(m_Current->md, enterScope());
+BreakStmt *Parser::parse_break() {
+    Metadata md = m_Current->md;
+    next(); // 'break'
+
+    if (!match(TokenKind::Semi))
+        fatal("expected ';' after break statement", &md);
+
+    next(); // ';'
+    return new BreakStmt(md);
+}
+
+ContinueStmt *Parser::parse_continue() {
+    Metadata md = m_Current->md;
+    next(); // 'continue'
+
+    if (!match(TokenKind::Semi))
+        fatal("expected ';' after continue statement", &md);
+
+    next(); // ';'
+    return new ContinueStmt(md);
+}
+
+CompoundStmt *Parser::parse_compound() {
+    CompoundStmt *C = new CompoundStmt(m_Current->md, enter_scope());
     next(); // '{'
 
     while (!match(TokenKind::EndBrace)) {
-        Stmt *S = parseStmt();
+        Stmt *S = parse_stmt();
         if (!S)
             fatal("expected statement", &m_Current->md);
 
@@ -36,17 +66,17 @@ CompoundStmt *Parser::parseCompound() {
     }
 
     next(); // '}'
-    exitScope();
+    exit_scope();
     return C;
 }
 
-DeclStmt *Parser::parseDeclStmt() {
+DeclStmt *Parser::parse_decl_stmt() {
     Decl *D = nullptr;
 
-    if (matchKeyword("fix"))
-        D = parseVariable(false);
-    else if (matchKeyword("mut"))
-        D = parseVariable(true);
+    if (match_keyword("fix"))
+        D = parse_var(false);
+    else if (match_keyword("mut"))
+        D = parse_var(true);
 
     if (!D)
         fatal("expected variable declaration", &m_Current->md);
@@ -57,24 +87,32 @@ DeclStmt *Parser::parseDeclStmt() {
     return new DeclStmt(D->getMetadata(), D);
 }
 
-IfStmt *Parser::parseIf() {
+ExprStmt *Parser::parse_expr_stmt() {
+    Expr *E = parse_expr();
+    if (!E)
+        return nullptr;
+
+    return new ExprStmt(E->getMetadata(), E);
+}
+
+IfStmt *Parser::parse_if() {
     Metadata md = m_Current->md;
     Expr *C = nullptr;
     Stmt *T = nullptr;
     Stmt *E = nullptr;
     next(); // 'if'
 
-    C = parseExpr();
+    C = parse_expr();
     if (!C)
         fatal("expected expression after 'if'", &md);
 
-    T = parseStmt();
+    T = parse_stmt();
     if (!T)
         fatal("expected statement after 'if' condition", &m_Current->md);
 
-    if (matchKeyword("else")) {
+    if (match_keyword("else")) {
         next(); // 'else'
-        E = parseStmt();
+        E = parse_stmt();
         if (!E)
             fatal("expected statement after 'else'", &m_Current->md);
     }
@@ -82,14 +120,14 @@ IfStmt *Parser::parseIf() {
     return new IfStmt(md, C, T, E);
 }
 
-MatchStmt *Parser::parseMatchStmt() {
+MatchStmt *Parser::parse_match() {
     Metadata md = m_Current->md;
     Expr *P = nullptr;
     std::vector<CaseStmt *> cases = {};
     Stmt *D = nullptr;
     next(); // 'match'
 
-    P = parseExpr();
+    P = parse_expr();
     if (!P)
         fatal("expected expression after 'match'", &md);
 
@@ -98,7 +136,7 @@ MatchStmt *Parser::parseMatchStmt() {
     next(); // '{'
 
     while (!match(TokenKind::EndBrace)) {
-        if (matchKeyword("_")) {
+        if (match_keyword("_")) {
             if (D)
                 fatal("duplicate default case", &m_Current->md);
             next(); // '_'
@@ -107,11 +145,11 @@ MatchStmt *Parser::parseMatchStmt() {
                 fatal("expected '->' after default case", &m_Current->md);
             next(); // '->'
 
-            D = parseStmt();
+            D = parse_stmt();
             if (!D)
                 fatal("expected default statement", &m_Current->md);
         } else {
-            Expr *CP = parseExpr();
+            Expr *CP = parse_expr();
             if (!CP)
                 fatal("expected case expression", &m_Current->md);
 
@@ -119,7 +157,7 @@ MatchStmt *Parser::parseMatchStmt() {
                 fatal("expected '->' after case expression", &m_Current->md);
             next(); // '->'
 
-            Stmt *B = parseStmt();
+            Stmt *B = parse_stmt();
             if (!B)
                 fatal("expected statement after case expression", &m_Current->md);
 
@@ -141,13 +179,13 @@ MatchStmt *Parser::parseMatchStmt() {
     return new MatchStmt(md, P, cases, D);
 }
 
-RetStmt *Parser::parseRet() {
+RetStmt *Parser::parse_ret() {
     Metadata md = m_Current->md;
     Expr *E = nullptr;
     next(); // 'ret'
 
     if (!match(TokenKind::Semi)) {
-        E = parseExpr();
+        E = parse_expr();
         if (!E)
             fatal("expected return expression", &md);
     }
@@ -159,17 +197,17 @@ RetStmt *Parser::parseRet() {
     return new RetStmt(md, E);    
 }
 
-UntilStmt *Parser::parseUntil() {
+UntilStmt *Parser::parse_until() {
     Metadata md = m_Current->md;
     Expr *C = nullptr;
     Stmt *B = nullptr;
     next(); // 'until'
 
-    C = parseExpr();
+    C = parse_expr();
     if (!C)
         fatal("expected expression after 'until'", &md);
 
-    B = parseStmt();
+    B = parse_stmt();
     if (!B)
         fatal("expected statement after 'until' condition", &m_Current->md);
 

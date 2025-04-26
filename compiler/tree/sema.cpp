@@ -39,6 +39,16 @@ void Sema::visit(ParamDecl *decl) {
 
 }
 
+void Sema::visit(BreakStmt *stmt) {
+    if (m_Loop == LoopKind::None)
+        fatal("'break' statement outside loop'", &stmt->getMetadata());
+}
+
+void Sema::visit(ContinueStmt *stmt) {
+    if (m_Loop == LoopKind::None)
+        fatal("'continue' statement outside loop'", &stmt->getMetadata());
+}
+
 void Sema::visit(CompoundStmt *stmt) {
     for (auto &S : stmt->getStmts())
         S->accept(this);
@@ -46,6 +56,10 @@ void Sema::visit(CompoundStmt *stmt) {
 
 void Sema::visit(DeclStmt *stmt) {
     stmt->getDecl()->accept(this);
+}
+
+void Sema::visit(ExprStmt *stmt) {
+    stmt->getExpr()->accept(this);
 }
 
 void Sema::visit(IfStmt *stmt) {
@@ -83,9 +97,12 @@ void Sema::visit(RetStmt *stmt) {
 }
 
 void Sema::visit(UntilStmt *stmt) {
+    LoopKind prev = m_Loop;
+    m_Loop = LoopKind::Until;
     stmt->getCond()->accept(this);
     checkCompoundedDeclStmt(stmt->getBody());
     stmt->getBody()->accept(this);
+    m_Loop = prev;
 }
 
 void Sema::visit(IntegerLiteral *expr) {

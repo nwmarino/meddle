@@ -130,6 +130,14 @@ void CCGN::visit(ParamDecl *decl) {
         m_Cout << translateType(decl->m_Type) << " " << decl->m_Name;
 }
 
+void CCGN::visit(BreakStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "break;\n";
+}
+
+void CCGN::visit(ContinueStmt *stmt) {
+    m_Cout << multChar('\t', m_Indent) << "continue;\n";
+}
+
 void CCGN::visit(CompoundStmt *stmt) {
     m_Cout << "{\n";
     m_Indent++;
@@ -139,6 +147,10 @@ void CCGN::visit(CompoundStmt *stmt) {
 
 void CCGN::visit(DeclStmt *stmt) {
     stmt->getDecl()->accept(this);
+}
+
+void CCGN::visit(ExprStmt *stmt) {
+    stmt->getExpr()->accept(this);
 }
 
 void CCGN::visit(IfStmt *stmt) {

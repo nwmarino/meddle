@@ -41,5 +41,86 @@ static String getNameForFunctionType(const std::vector<Type *> P, Type *R) {
 PrimitiveType::PrimitiveType(PrimitiveType::Kind K) 
   : Type(getNameForPrimitiveType(K)), m_Kind(K), m_Signed(hasSignedness(K)) {}
 
+bool PrimitiveType::isSInt() const {
+    return m_Kind == Kind::Int8 ||
+           m_Kind == Kind::Int16 ||
+           m_Kind == Kind::Int32 ||
+           m_Kind == Kind::Int64;
+}
+
+bool PrimitiveType::isSInt(unsigned N) const {
+    switch (m_Kind) {
+        case Kind::Int8: return N == 8;
+        case Kind::Int16: return N == 16;
+        case Kind::Int32: return N == 32;
+        case Kind::Int64: return N == 64;
+        default: return false;
+    }
+}
+
+bool PrimitiveType::isUInt() const {
+    return m_Kind == Kind::UInt8 ||
+           m_Kind == Kind::UInt16 ||
+           m_Kind == Kind::UInt32 ||
+           m_Kind == Kind::UInt64;
+}
+
+bool PrimitiveType::isUInt(unsigned N) const {
+    switch (m_Kind) {
+        case Kind::UInt8: return N == 8;
+        case Kind::UInt16: return N == 16;
+        case Kind::UInt32: return N == 32;
+        case Kind::UInt64: return N == 64;
+        default: return false;
+    }
+}
+
+bool PrimitiveType::isFloat(unsigned N) const {
+    switch (m_Kind) {
+        case Kind::Float32: return N == 32;
+        case Kind::Float64: return N == 64;
+        default: return false;
+    }
+}
+
+bool PrimitiveType::canCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    if (auto *PT = dynamic_cast<PrimitiveType *>(T))
+        return isVoid() == T->isVoid();
+
+    return false;
+}
+
+bool PrimitiveType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    if (auto *PT = dynamic_cast<PrimitiveType *>(T))
+        return m_Kind == PT->m_Kind;
+
+    return false;
+}
+
+unsigned PrimitiveType::getSizeInBits() const {
+    switch (m_Kind) {
+        case Kind::Void: 
+            return 0;
+        case Kind::Bool:
+        case Kind::Char:
+        case Kind::Int8:
+        case Kind::UInt8: 
+            return 8;
+        case Kind::Int16:
+        case Kind::UInt16: 
+            return 16;
+        case Kind::Int32:
+        case Kind::UInt32:
+        case Kind::Float32: 
+            return 32;
+        case Kind::Int64:
+        case Kind::UInt64:
+        case Kind::Float64: 
+            return 64;
+    }
+}
+
 FunctionType::FunctionType(std::vector<Type *> P, Type *R)
   : Type(getNameForFunctionType(P, R)), m_Params(P), m_Ret(R) {}

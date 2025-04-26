@@ -24,6 +24,30 @@ public:
     const Metadata &getMetadata() const { return m_Metadata; }
 };
 
+class BreakStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+public:
+    BreakStmt(const Metadata &M) : Stmt(M) {}
+    ~BreakStmt() override = default;
+
+    void accept(Visitor *V) override { V->visit(this); }
+};
+
+class ContinueStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+public:
+    ContinueStmt(const Metadata &M) : Stmt(M) {}
+    ~ContinueStmt() override = default;
+
+    void accept(Visitor *V) override { V->visit(this); }
+};
+
 class CompoundStmt final : public Stmt {
     friend class CCGN;
     friend class NameResolution;
@@ -72,6 +96,25 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Decl *getDecl() const { return m_Decl; }
+};
+
+class ExprStmt final : public Stmt {
+    friend class CCGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Expr *m_Expr;
+
+public:
+    ExprStmt(const Metadata &M, Expr *E) : Stmt(M), m_Expr(E) {}
+
+    ~ExprStmt() override {
+        delete m_Expr;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Expr *getExpr() const { return m_Expr; }
 };
 
 class IfStmt final : public Stmt {
