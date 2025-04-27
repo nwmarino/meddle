@@ -51,11 +51,11 @@ public:
 
     void addType(FunctionType *T) { m_FunctionTypes.push_back(T); }
 
-    Type *getType(const String &N) const;
+    Type *getType(const String &N);
 
-    //ArrayType *getArrayType(Type *E, unsigned long S);
+    ArrayType *getArrayType(Type *E, unsigned long S);
 
-    //PointerType *getPointerType(Type *P);
+    PointerType *getPointerType(Type *P);
 
     Type *produceType(const String &N, const Metadata &M);
 

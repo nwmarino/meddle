@@ -2,7 +2,6 @@
 #define MEDDLE_DECL_H
 
 #include "expr.h"
-#include "nameres.h"
 #include "type.h"
 #include "visitor.h"
 

@@ -831,6 +831,79 @@ TEST_F(ParserTest, ParseContinueStatementBasic) {
     delete unit;
 }
 
+TEST_F(ParserTest, ParseStringLiteralBasic) {
+    File file = File("test.mdl", "/", "/test.mdl", "test::(){fix x: i32 = cast<i32> 5;}");
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "i32");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    CastExpr *CE = dynamic_cast<CastExpr *>(VD->getInit());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getType()->getName(), "i32");
+    EXPECT_NE(CE->getExpr(), nullptr);
+
+    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(CE->getExpr());
+    EXPECT_NE(I, nullptr);
+    EXPECT_EQ(I->getValue(), 5);
+    EXPECT_EQ(I->getType()->getName(), "i64");
+
+    delete unit;
+}
+
+TEST_F(ParserTest, ParseExplicitCastBasic) {
+    File file = File("test.mdl", "/", "/test.mdl", "test::(){fix x: char[6] = \"hello\";}");
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+    
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "char[6]");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    StringLiteral *SL = dynamic_cast<StringLiteral *>(VD->getInit());
+    EXPECT_NE(SL, nullptr);
+    EXPECT_EQ(SL->getValue(), "hello");
+    EXPECT_EQ(SL->getType()->getName(), "char[6]");
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

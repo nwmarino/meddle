@@ -70,6 +70,8 @@ class Parser final {
     IntegerLiteral *parse_int();
     FloatLiteral *parse_fp();
     CharLiteral *parse_char();
+    StringLiteral *parse_str();
+    CastExpr *parse_cast();
     RefExpr *parse_ref();
 
 public:

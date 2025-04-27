@@ -1,7 +1,6 @@
 #ifndef MEDDLE_EXPR_H
 #define MEDDLE_EXPR_H
 
-#include "nameres.h"
 #include "type.h"
 #include "visitor.h"
 
@@ -77,6 +76,39 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	char getValue() const { return m_Value; }
+};
+
+class StringLiteral final : public Expr {
+	friend class CCGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	String m_Value;
+
+public:
+	StringLiteral(const Metadata &M, Type *T, String V)
+	  : Expr(M, T), m_Value(V) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	String getValue() const { return m_Value; }
+};
+
+class CastExpr final : public Expr {
+	friend class CCGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Expr;
+
+public:
+	CastExpr(const Metadata &M, Type *T, Expr *E) : Expr(M, T), m_Expr(E) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getExpr() const { return m_Expr; }
+
+	Type *getCast() const { return m_Type; }
 };
 
 class RefExpr final : public Expr {

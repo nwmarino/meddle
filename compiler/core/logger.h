@@ -29,6 +29,7 @@ inline void warn(const String &m, const Metadata *md = nullptr) {
     std::cout << "warning: " << m << "\n";
 }
 
+__attribute__((noreturn))
 inline void fatal(const String &m, const Metadata *md = nullptr) {
     if (md)
         std::cout << md->file.filename << ":" << md->line << ":" << md->col << ": ";

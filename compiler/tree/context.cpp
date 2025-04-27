@@ -32,7 +32,7 @@ void Context::addType(Type *T) {
     m_Types[T->getName()] = T;
 }
 
-Type *Context::getType(const String &N) const {
+Type *Context::getType(const String &N) {
     auto it = m_Types.find(N);
     if (it != m_Types.end())
         return it->second;
@@ -43,17 +43,16 @@ Type *Context::getType(const String &N) const {
 
     // check external types
 
-    /*
     if (N.back() == '*') {
         Type *pointee = getType(N.substr(0, N.size() - 1));
         if (!pointee)
             return nullptr;
 
-        return addType(new PointerType(pointee));
+        Type *T = new PointerType(pointee);
+        addType(T);
+        return T;
     }
-    */
 
-    /*
     auto LBrack = N.find('[');
     auto RBrack = N.find(']');
     if (LBrack && RBrack) {
@@ -61,14 +60,32 @@ Type *Context::getType(const String &N) const {
         if (!element)
             return nullptr;
 
-        return addType(new ArrayType(
-            element, 
-            std::stoul(N.substr(LBrack + 1, RBrack - LBrack - 1))
-        ));
+        Type *T = new ArrayType(element, std::stoul(N.substr(LBrack + 1, RBrack - LBrack - 1)));
+        addType(T);
+        return T;
     }
-    */
 
     return nullptr;
+}
+
+ArrayType *Context::getArrayType(Type *E, unsigned long S) {
+    String name = E->getName() + "[" + std::to_string(S) + "]";
+    if (Type *T = m_Types[name])
+        return static_cast<ArrayType *>(T);
+
+    ArrayType *AT = new ArrayType(E, S);
+    m_Types[name] = AT;
+    return AT;
+}
+
+PointerType *Context::getPointerType(Type *P) {
+    String name = P->getName() + "*";
+    if (Type *T = m_Types[name])
+        return static_cast<PointerType *>(T);
+
+    PointerType *PT = new PointerType(P);
+    m_Types[name] = PT;
+    return PT;
 }
 
 Type *Context::produceType(const String &N, const Metadata &M) {

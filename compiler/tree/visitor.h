@@ -24,6 +24,8 @@ class Expr;
 class IntegerLiteral;
 class FloatLiteral;
 class CharLiteral;
+class StringLiteral;
+class CastExpr;
 class RefExpr;
 
 class Visitor {
@@ -48,6 +50,8 @@ public:
     virtual void visit(IntegerLiteral *expr) = 0;
     virtual void visit(FloatLiteral *expr) = 0;
     virtual void visit(CharLiteral *expr) = 0;
+    virtual void visit(StringLiteral *expr) = 0;
+    virtual void visit(CastExpr *expr) = 0;
     virtual void visit(RefExpr *expr) = 0;
 };
 

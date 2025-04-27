@@ -58,7 +58,6 @@ int main(int argc, char **argv) {
     std::vector<File> files;
     std::vector<TranslationUnit *> units;
     files.push_back(parseInputFile("samples/return_zero.mdl"));
-    //files.push_back(File("test.mdl", "/", "/test.mdl", "main :: () i32 { fix x: i64 = 42; ret x; }"));
 
     Lexer lexer = Lexer(files[0]);
     TokenStream stream = lexer.unwrap(&opts);

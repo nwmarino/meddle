@@ -13,6 +13,7 @@ class Sema : public Visitor {
     } m_Loop = LoopKind::None;
     Options m_Opts;
     TranslationUnit *m_Unit;
+    FunctionDecl *m_Function;
 
 public:
     Sema(const Options &opts, TranslationUnit *U);
@@ -37,6 +38,8 @@ public:
     void visit(IntegerLiteral *expr) override;
     void visit(FloatLiteral *expr) override;
     void visit(CharLiteral *expr) override;
+    void visit(StringLiteral *expr) override;
+    void visit(CastExpr *expr) override;
     void visit(RefExpr *expr) override;
 };
 

@@ -125,16 +125,41 @@ public:
     unsigned getSizeInBits() const override;
 };
 
-/*
 class ArrayType final : public Type {
     Type *m_Element;
     unsigned m_Size;
+
+public: 
+    ArrayType(Type *E, unsigned S)
+      : Type(E->getName() + "[" + std::to_string(S) + "]"), m_Element(E), 
+        m_Size(S) {}
+
+    Type *getElement() const { return m_Element; }
+
+    unsigned getSize() const { return m_Size; }
+
+    bool canCastTo(Type *T) const override;
+
+    bool compare(Type *T) const override;
+
+    unsigned getSizeInBits() const override 
+    { return m_Element->getSizeInBits() * m_Size; }
 };
 
 class PointerType final : public Type {
     Type *m_Pointee;
+
+public:
+    PointerType(Type *P) : Type(P->getName() + "*"), m_Pointee(P) {}
+
+    Type *getPointee() const { return m_Pointee; }
+
+    bool canCastTo(Type *T) const override;
+
+    bool compare(Type *T) const override;
+
+    unsigned getSizeInBits() const override { return 64; }
 };
-*/
 
 class FunctionType final : public Type {
     std::vector<Type *> m_Params;
@@ -156,6 +181,8 @@ public:
     Type *getReturnType() const { return m_Ret; }
 
     void setReturnType(Type *T) { m_Ret = T; }
+
+    bool compare(Type *T) const override;
 };
 
 /*

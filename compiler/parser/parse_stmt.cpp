@@ -21,11 +21,7 @@ Stmt *Parser::parse_stmt() {
     else if (match_keyword("until"))
         return parse_until();
 
-    if (Stmt *S = parse_expr_stmt())
-        return S;
-
-    fatal("expected statement", &m_Current->md);
-    return nullptr;
+    return parse_expr_stmt();
 }
 
 BreakStmt *Parser::parse_break() {

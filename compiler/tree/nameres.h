@@ -1,6 +1,7 @@
 #ifndef MEDDLE_NAME_RESOLUTION_H
 #define MEDDLE_NAME_RESOLUTION_H
 
+#include "scope.h"
 #include "visitor.h"
 #include "../core/options.h"
 
@@ -9,6 +10,7 @@ namespace meddle {
 class NameResolution : public Visitor {
     Options m_Opts;
     TranslationUnit *m_Unit;
+    Scope *m_Scope;
 
 public:
     NameResolution(const Options &opts, TranslationUnit *U);
@@ -33,6 +35,8 @@ public:
     void visit(IntegerLiteral *expr) override;
     void visit(FloatLiteral *expr) override;
     void visit(CharLiteral *expr) override;
+    void visit(StringLiteral *expr) override;
+    void visit(CastExpr *expr) override;
     void visit(RefExpr *expr) override;
 };
 

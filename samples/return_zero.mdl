@@ -24,7 +24,10 @@ test :: () {
     }
 
     until x {
-        ret;
+        if x {
+            continue;
+        } else
+            break;
     }
 
     match x {

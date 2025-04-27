@@ -122,5 +122,51 @@ unsigned PrimitiveType::getSizeInBits() const {
     }
 }
 
+bool ArrayType::canCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    if (auto *AT = dynamic_cast<ArrayType *>(T))
+        return m_Element->canCastTo(AT->m_Element) && m_Size == AT->m_Size;
+    else if (auto *PT = dynamic_cast<PointerType *>(T))
+        return m_Element->canCastTo(PT->getPointee());
+    else
+        return false;
+}
+
+bool ArrayType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    if (auto *AT = dynamic_cast<ArrayType *>(T))
+        return m_Element->compare(AT->m_Element) && m_Size == AT->m_Size;
+
+    return false;
+}
+
+bool PointerType::canCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return T->isPointer();
+}
+
+bool PointerType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    if (auto *PT = dynamic_cast<PointerType *>(T))
+        return m_Pointee->compare(PT->getPointee());
+    return false;
+}
+
 FunctionType::FunctionType(std::vector<Type *> P, Type *R)
   : Type(getNameForFunctionType(P, R)), m_Params(P), m_Ret(R) {}
+
+bool FunctionType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    FunctionType *FT = dynamic_cast<FunctionType *>(T);
+    if (!FT)
+        return false;
+
+    if (m_Params.size() != FT->m_Params.size())
+        return false;
+
+    for (unsigned i = 0; i < m_Params.size(); ++i)
+        if (!m_Params[i]->compare(FT->m_Params[i]))
+            return false;
+
+    return m_Ret->compare(FT->m_Ret);
+}

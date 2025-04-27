@@ -71,12 +71,9 @@ public:
 
     void addStmt(Stmt *S) { m_Stmts.push_back(S); }
 
-    template<typename vT>
-    void accept(vT &visitor) {
-        visitor.visit(this);
-    }
-
     const std::vector<Stmt *> &getStmts() const { return m_Stmts; }
+
+    Scope *getScope() const { return m_Scope; }
 };
 
 class DeclStmt final : public Stmt {

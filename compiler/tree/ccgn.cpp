@@ -248,6 +248,15 @@ void CCGN::visit(CharLiteral *expr) {
     m_Cout << "'" << expr->getValue() << "'";
 }
 
+void CCGN::visit(StringLiteral *expr) {
+    m_Cout << "\"" << expr->getValue() << "\"";
+}
+
+void CCGN::visit(CastExpr *expr) {
+    m_Cout << "(" << translateType(expr->getCast()) << ") ";
+    expr->getExpr()->accept(this);
+}
+
 void CCGN::visit(RefExpr *expr) {
     m_Cout << expr->getName();
 }

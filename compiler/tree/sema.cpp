@@ -14,25 +14,52 @@ static void checkCompoundedDeclStmt(Stmt *S) {
         fatal("declarations must be in a compound statement", &S->getMetadata());
 }
 
+/// Perform a type check between an expected type and the actual one.
+///
+/// \returns `true` if the types mismatched but a cast is possible.
+static bool typeCheck(Type *actual, Type *expected, const Metadata *md) {
+    if (actual->compare(expected))
+        return false;
+
+    if (actual->canCastTo(expected))
+        return true;
+
+    fatal("type mismatch, got '" + actual->getName() + "', expected '" + 
+          expected->getName() + "'", md);
+}
+
 Sema::Sema(const Options &opts, TranslationUnit *U) : m_Opts(opts), m_Unit(U) {
     m_Unit->accept(this);
 }
 
 void Sema::visit(TranslationUnit *U) {
-    for (auto &D : U->getDecls())
-        D->accept(this);
+    for (auto &D : U->getDecls()) D->accept(this);
 }
 
 void Sema::visit(FunctionDecl *decl) {
+    m_Function = decl;
     for (auto &P : decl->getParams())
         P->accept(this);
-
-    decl->m_Body->accept(this);
+    if (decl->getBody())
+        decl->getBody()->accept(this);
+    m_Function = nullptr;
 }
 
 void Sema::visit(VarDecl *decl) {
     if (decl->getInit())
         decl->getInit()->accept(this);
+
+    if (typeCheck(
+        decl->getInit()->getType(), 
+        decl->getType(),
+        &decl->getInit()->getMetadata() 
+    )) {
+        decl->m_Init = new CastExpr(
+            decl->getInit()->getMetadata(), 
+            decl->getType(), 
+            decl->getInit()
+        );
+    }
 }
 
 void Sema::visit(ParamDecl *decl) {
@@ -92,8 +119,25 @@ void Sema::visit(MatchStmt *stmt) {
 }
 
 void Sema::visit(RetStmt *stmt) {
-    if (stmt->getExpr())
+    if (!m_Function)
+        fatal("'ret' statement outside function", &stmt->getMetadata());
+
+    if (stmt->getExpr()) {
         stmt->getExpr()->accept(this);
+
+        if (typeCheck(stmt->getExpr()->getType(), 
+            m_Function->getReturnType(), 
+            &stmt->getMetadata())
+        ) {
+            stmt->m_Expr = new CastExpr(
+                stmt->m_Expr->getMetadata(), 
+                m_Function->getReturnType(), 
+                stmt->m_Expr
+            );  
+        }
+    } else if (!m_Function->getReturnType()->isVoid()) {
+        fatal("function does not return 'void'", &stmt->getMetadata());
+    }
 }
 
 void Sema::visit(UntilStmt *stmt) {
@@ -105,20 +149,19 @@ void Sema::visit(UntilStmt *stmt) {
     m_Loop = prev;
 }
 
-void Sema::visit(IntegerLiteral *expr) {
+void Sema::visit(IntegerLiteral *expr) {}
 
+void Sema::visit(FloatLiteral *expr) {}
+
+void Sema::visit(CharLiteral *expr) {}
+
+void Sema::visit(StringLiteral *expr) {}
+
+void Sema::visit(CastExpr *expr) {
+    if (!expr->m_Expr->getType()->canCastTo(expr->getCast())) {
+        fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 
+              "' to '" + expr->getCast()->getName() + "'", &expr->getMetadata());
+    }
 }
 
-void Sema::visit(FloatLiteral *expr) {
-
-}
-
-void Sema::visit(CharLiteral *expr) {
-    
-}
-
-void Sema::visit(RefExpr *expr) {
-    NamedDecl *ref = expr->getRef();
-    if (auto *VD = dynamic_cast<VarDecl *>(ref))
-        expr->m_Type = VD->getType();
-}
+void Sema::visit(RefExpr *expr) {}

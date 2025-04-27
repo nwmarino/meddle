@@ -1,12 +1,14 @@
 #include "nameres.h"
+#include "decl.h"
 #include "expr.h"
 #include "stmt.h"
 #include "unit.h"
+#include "../core/logger.h"
 
 using namespace meddle;
 
 NameResolution::NameResolution(const Options &opts, TranslationUnit *U) 
-  : m_Opts(opts), m_Unit(U) {
+  : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()) {
     U->accept(this);
 }
 
@@ -16,10 +18,12 @@ void NameResolution::visit(TranslationUnit *U) {
 }
 
 void NameResolution::visit(FunctionDecl *decl) {
+    m_Scope = decl->getScope();
     for (auto &P : decl->getParams())
         P->accept(this);
 
     decl->m_Body->accept(this);
+    m_Scope = m_Scope->getParent();
 }
 
 void NameResolution::visit(VarDecl *decl) {
@@ -31,17 +35,15 @@ void NameResolution::visit(ParamDecl *decl) {
 
 }
 
-void NameResolution::visit(BreakStmt *stmt) {
+void NameResolution::visit(BreakStmt *stmt) {}
 
-}
-
-void NameResolution::visit(ContinueStmt *stmt) {
-
-}
+void NameResolution::visit(ContinueStmt *stmt) {}
 
 void NameResolution::visit(CompoundStmt *stmt) {
+    m_Scope = stmt->getScope();
     for (auto &S : stmt->getStmts())
         S->accept(this);
+    m_Scope = m_Scope->getParent();
 }
 
 void NameResolution::visit(DeclStmt *stmt) {
@@ -82,18 +84,24 @@ void NameResolution::visit(UntilStmt *stmt) {
     stmt->getBody()->accept(this);
 }
 
-void NameResolution::visit(IntegerLiteral *expr) {
+void NameResolution::visit(IntegerLiteral *expr) {}
 
-}
+void NameResolution::visit(FloatLiteral *expr) {}
 
-void NameResolution::visit(FloatLiteral *expr) {
-    
-}
+void NameResolution::visit(CharLiteral *expr) {}
 
-void NameResolution::visit(CharLiteral *expr) {
-    
+void NameResolution::visit(StringLiteral *expr) {}
+
+void NameResolution::visit(CastExpr *expr) {
+    expr->m_Expr->accept(this);
 }
 
 void NameResolution::visit(RefExpr *expr) {
+    NamedDecl *ND = expr->getRef();
+    assert(ND && "Reference not resolved.");
 
+    if (auto *VD = dynamic_cast<VarDecl *>(ND))
+        expr->m_Type = VD->getType();
+    else
+        fatal("bad reference", &expr->getMetadata());
 }
