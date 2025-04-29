@@ -1,38 +1,46 @@
-#ifndef MEDDLE_CCODEGEN_H
-#define MEDDLE_CCODEGEN_H
+#ifndef MEDDLE_CODEGEN_H
+#define MEDDLE_CODEGEN_H
 
-#include "stmt.h"
-#include "type.h"
-#include "unit.h"
-#include "visitor.h"
+#include "../tree/decl.h"
+#include "../tree/expr.h"
+#include "../tree/stmt.h"
+#include "../tree/type.h"
+#include "../tree/visitor.h"
 #include "../core/options.h"
+#include "../mir/builder.h"
+#include "../mir/segment.h"
+#include "../mir/value.h"
 
-#include <fstream>
+#include <unordered_map>
 
 namespace meddle {
 
-class CCGN : public Visitor {
+class CGN final : public Visitor {
+    enum class ValueContext {
+        LValue, RValue
+    } m_VC;
+
     enum class Phase {
-        Declare,
-        Define,
-    } phase;
+        Define, Declare
+    } m_Phase;
 
     Options m_Opts;
     TranslationUnit *m_Unit;
-    std::ofstream m_Cout;
-    std::ofstream m_Hout;
+    mir::Segment *m_Segment;
+    mir::Builder m_Builder;
+    mir::Function *m_Function = nullptr;
+    mir::Value *m_Value = nullptr;
+    std::unordered_map<NamedDecl *, String> m_Mangled = {};
 
-    unsigned m_Indent = 0;
+    String mangle_name(NamedDecl *D);
 
-    void emitCSeg(const String &seg);
-    void emitCLn(const String &ln);
-    void emitHSeg(const String &seg);
-    void emitHLn(const String &ln);
+    mir::Type *cgn_type(Type *T);
 
-    String translateType(Type *T);
+    void declare_function(FunctionDecl *FD);
+    void define_function(FunctionDecl *FD);
 
 public:
-    CCGN(const Options &opts, TranslationUnit *U);
+    CGN(const Options &opts, TranslationUnit *U, mir::Segment *S);
 
     void visit(TranslationUnit *unit) override;
 
@@ -48,7 +56,7 @@ public:
     void visit(IfStmt *stmt) override;
     void visit(CaseStmt *stmt) override;
     void visit(MatchStmt *stmt) override;
-    void visit(RetStmt *stmt) override; 
+    void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
 
     void visit(IntegerLiteral *expr) override;
@@ -61,4 +69,4 @@ public:
 
 } // namespace meddle
 
-#endif // MEDDLE_CCODEGEN_H
+#endif // MEDDLE_CODEGEN_H

@@ -6,7 +6,7 @@
 
 namespace meddle {
 
-class Sema : public Visitor {
+class Sema final : public Visitor {
     enum class LoopKind {
         None = 0,
         Until,

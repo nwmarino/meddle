@@ -1,7 +1,8 @@
+#include "cgn/codegen.h"
 #include "core/logger.h"
 #include "lexer/lexer.h"
+#include "mir/segment.h"
 #include "parser/parser.h"
-#include "tree/ccgn.h"
 #include "tree/nameres.h"
 #include "tree/sema.h"
 #include "tree/unit.h"
@@ -10,9 +11,11 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <vector>
 
 using namespace meddle;
+using mir::Target;
 
 File parseInputFile(const String &path) {
     String absol;
@@ -57,12 +60,14 @@ int main(int argc, char **argv) {
     };
     std::vector<File> files;
     std::vector<TranslationUnit *> units;
+    std::vector<mir::Segment *> segments;
     files.push_back(parseInputFile("samples/return_zero.mdl"));
 
     Lexer lexer = Lexer(files[0]);
     TokenStream stream = lexer.unwrap(&opts);
 
-    log("Lexed " + std::to_string(opts.lexedLines) + " lines across " + std::to_string(files.size()) + " file(s).");
+    log("Lexed " + std::to_string(opts.lexedLines) + " lines across " + 
+        std::to_string(files.size()) + " file(s).");
 
     Parser parser = Parser(files[0], stream);
     units.push_back(parser.get());
@@ -70,7 +75,6 @@ int main(int argc, char **argv) {
     for (auto &unit : units) {
         NameResolution NR = NameResolution(opts, unit);
         Sema sema = Sema(opts, unit);
-        CCGN ccgn = CCGN(opts, unit);
     }
 
     if (opts.Time) {
@@ -79,6 +83,22 @@ int main(int argc, char **argv) {
         log("Frontend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
+    Target target = Target(
+        Target::Arch::X86_64, 
+        Target::OS::Linux, 
+        Target::ABI::SysV
+    );
+
+    for (auto &unit : units) {
+        mir::Segment *seg = new mir::Segment(target);
+        CGN cgn = CGN(opts, unit, seg);
+        segments.push_back(seg);
+
+        std::ofstream OS = std::ofstream(unit->getFile().filename + ".mir");
+        seg->print(OS);
+    }
+
+    /*
     String clang = "clang -c ";
     for (auto &unit : units)
         clang += unit->getFile().filename + ".c";
@@ -105,6 +125,7 @@ int main(int argc, char **argv) {
         std::chrono::duration<double> totalDuration = frontend - start;
         log("Backend took: " + std::to_string(totalDuration.count()) + "s.");
     }
+    */
 
     for (auto &unit : units)
         delete unit;

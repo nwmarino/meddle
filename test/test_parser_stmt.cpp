@@ -9,318 +9,15 @@ namespace meddle {
 
 namespace test {
 
-class ParserTest : public ::testing::Test {
+class ParseStmtTest : public ::testing::Test {
 protected:
-    void SetUp() override {
-        
-    }
-
-    void TearDown() override {
-
-    }
+    void SetUp() override {}
+    void TearDown() override {}
 };
 
-TEST_F(ParserTest, ParseEmptyFunction) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::();");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-
-    EXPECT_EQ(FN->getName(), "test");
-    EXPECT_EQ(FN->getReturnType()->getName(), "void");
-    EXPECT_EQ(FN->getParams().size(), 0);
-    EXPECT_EQ(FN->getBody(), nullptr);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseFunctionReturnZero) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){ret 0;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_EQ(FN->getName(), "test");
-    EXPECT_EQ(FN->getReturnType()->getName(), "void");
-    EXPECT_EQ(FN->getParams().size(), 0);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(RS, nullptr);
-    EXPECT_NE(RS->getExpr(), nullptr);
-
-    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(RS->getExpr());
-    EXPECT_NE(I, nullptr);
-    EXPECT_EQ(I->getValue(), 0);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseFunctionLocalMutVarNoInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: i64;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-    
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i64");
-    EXPECT_EQ(VD->getInit(), nullptr);
-    EXPECT_TRUE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseFunctionLocalMutVarInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: i64 = 0;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-    
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i64");
-    EXPECT_NE(VD->getInit(), nullptr);
-    EXPECT_TRUE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(VD->getInit());
-    EXPECT_NE(I, nullptr);
-    EXPECT_EQ(I->getValue(), 0);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseFunctionLocalImmutVarInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){fix x: i64 = 0;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i64");
-    EXPECT_NE(VD->getInit(), nullptr);
-    EXPECT_FALSE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(VD->getInit());
-    EXPECT_NE(I, nullptr);
-    EXPECT_EQ(I->getValue(), 0);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseLocalVarRef) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: i64 = 0; ret x;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 2);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-    
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i64");
-    EXPECT_NE(VD->getInit(), nullptr);
-    EXPECT_TRUE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(VD->getInit());
-    EXPECT_NE(I, nullptr);
-    EXPECT_EQ(I->getValue(), 0);
-
-    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[1]);
-    EXPECT_NE(RS, nullptr);
-    
-    RefExpr *RE = dynamic_cast<RefExpr *>(RS->getExpr());
-    EXPECT_NE(RE, nullptr);
-    
-    NamedDecl *ND = RE->getRef();
-    EXPECT_EQ(ND, VD);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseDoubleLocalVarInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: i64 = 0; fix y: i64 = 0;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 2);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i64");
-    EXPECT_TRUE(VD->isMutable());
-
-    DeclStmt *DS2 = dynamic_cast<DeclStmt *>(CS->getStmts()[1]);
-    EXPECT_NE(DS2, nullptr);
-
-    VarDecl *VD2 = dynamic_cast<VarDecl *>(DS2->getDecl());
-    EXPECT_NE(VD2, nullptr);
-    EXPECT_EQ(VD2->getName(), "y");
-    EXPECT_EQ(VD2->getType()->getName(), "i64");
-    EXPECT_FALSE(VD2->isMutable());
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseFPLocalVarInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: f32 = 3.14;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "f32");
-    EXPECT_NE(VD->getInit(), nullptr);
-    EXPECT_TRUE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    FloatLiteral *F = dynamic_cast<FloatLiteral *>(VD->getInit());
-    EXPECT_NE(F, nullptr);
-    EXPECT_EQ(F->getValue(), 3.14);
-    EXPECT_EQ(F->getType()->getName(), "f64");
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseCharLocalVarInit) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: char = 'a';}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "char");
-    EXPECT_NE(VD->getInit(), nullptr);
-    EXPECT_TRUE(VD->isMutable());
-    EXPECT_FALSE(VD->isGlobal());
-
-    CharLiteral *C = dynamic_cast<CharLiteral *>(VD->getInit());
-    EXPECT_NE(C, nullptr);
-    EXPECT_EQ(C->getValue(), 'a');
-    EXPECT_EQ(C->getType()->getName(), "char");
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseIfStatementOnlyThenCompound) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){if 1 {ret;}}");
+#define IF_1 R"(test::() { if 1 { ret; }})"
+TEST_F(ParseStmtTest, If_Only_Then_Compound) {
+    File file = File("", "", "", IF_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -357,8 +54,9 @@ TEST_F(ParserTest, ParseIfStatementOnlyThenCompound) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseIfStatementOnlyThenNoCompound) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){if 1 ret;}");
+#define IF_2 R"(test::() { if 1 ret; })"
+TEST_F(ParseStmtTest, If_Only_Then) {
+    File file = File("", "", "", IF_2);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -391,8 +89,9 @@ TEST_F(ParserTest, ParseIfStatementOnlyThenNoCompound) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseIfStatementElseNoCompound) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){if 1 ret; else ret;}");
+#define IF_3 R"(test::() { if 1 ret; else ret; })"
+TEST_F(ParseStmtTest, If_Then_Else) {
+    File file = File("", "", "", IF_3);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -429,8 +128,9 @@ TEST_F(ParserTest, ParseIfStatementElseNoCompound) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseIfStatementElseCompound) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){if 1 { ret; } else { ret; } }");
+#define IF_4 R"(test::() { if 1 { ret; } else { ret; } })"
+TEST_F(ParseStmtTest, If_Then_Compound_Else_Compound) {
+    File file = File("", "", "", IF_4);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -475,8 +175,9 @@ TEST_F(ParserTest, ParseIfStatementElseCompound) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseUntilStatement) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){until 1 { ret; }}");
+#define UNTIL_1 R"(test::() { until 1 { ret; } })"
+TEST_F(ParseStmtTest, Until_Basic) {
+    File file = File("", "", "", UNTIL_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -512,11 +213,9 @@ TEST_F(ParserTest, ParseUntilStatement) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseMatchStatementOneCase) {
-    File file = File(
-        "test.mdl", "/", "/test.mdl", 
-        "test::(){match 1 { 1 -> { ret; } }}"
-    );
+#define MATCH_1 R"(test::() { match 1 { 1 -> { ret; } } })"
+TEST_F(ParseStmtTest, Match_One_Case) {
+    File file = File("", "", "", MATCH_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -562,11 +261,9 @@ TEST_F(ParserTest, ParseMatchStatementOneCase) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseMatchStatementTwoCases) {
-    File file = File(
-        "test.mdl", "/", "/test.mdl", 
-        "test::(){match 1 { 1 -> { ret; } 2 -> ret; }}"
-    );
+#define MATCH_2 R"(test::() { match 1 { 1 -> { ret; } 2 -> ret; } })"
+TEST_F(ParseStmtTest, Match_Two_Cases) {
+    File file = File("", "", "", MATCH_2);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -625,11 +322,9 @@ TEST_F(ParserTest, ParseMatchStatementTwoCases) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseMatchStatementWithDefault) {
-    File file = File(
-        "test.mdl", "/", "/test.mdl", 
-        "test::(){match 1 { 1 -> { ret; } _ -> ret; }}"
-    );
+#define MATCH_3 R"(test::() { match 1 { 1 -> { ret; } _ -> ret; } })"
+TEST_F(ParseStmtTest, Match_Case_Default) {
+    File file = File("", "", "", MATCH_3);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -679,11 +374,9 @@ TEST_F(ParserTest, ParseMatchStatementWithDefault) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseMatchStatementManyWithDefault) {
-    File file = File(
-        "test.mdl", "/", "/test.mdl", 
-        "test::(){match 1 { 1 -> { ret; } 2 -> ret; _ -> { ret; }}}"
-    );
+#define MATCH_4 R"(test::() { match 1 { 1 -> { ret; } 2 -> ret; _ -> { ret; } } })"
+TEST_F(ParseStmtTest, Match_Cases_Default) {
+    File file = File("", "", "", MATCH_4);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -750,8 +443,9 @@ TEST_F(ParserTest, ParseMatchStatementManyWithDefault) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseExpressionStatementBasic) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){mut x: i64; x;}");
+#define EXPR_1 R"(test::() { mut x: i64; x; })"
+TEST_F(ParseStmtTest, Expr_Basic) {
+    File file = File("", "", "", EXPR_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -785,8 +479,9 @@ TEST_F(ParserTest, ParseExpressionStatementBasic) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseBreakStatementBasic) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){break;}");
+#define BREAK_1 R"(test::() { break; })"
+TEST_F(ParseStmtTest, Break_Basic) {
+    File file = File("", "", "", BREAK_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -808,8 +503,9 @@ TEST_F(ParserTest, ParseBreakStatementBasic) {
     delete unit;
 }
 
-TEST_F(ParserTest, ParseContinueStatementBasic) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){continue;}");
+#define CONTINUE_1 R"(test::() { continue; })"
+TEST_F(ParseStmtTest, Continue_Basic) {
+    File file = File("", "", "", CONTINUE_1);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -827,79 +523,6 @@ TEST_F(ParserTest, ParseContinueStatementBasic) {
 
     ContinueStmt *BS = dynamic_cast<ContinueStmt *>(CS->getStmts()[0]);
     EXPECT_NE(BS, nullptr);
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseStringLiteralBasic) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){fix x: i32 = cast<i32> 5;}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "i32");
-    EXPECT_NE(VD->getInit(), nullptr);
-
-    CastExpr *CE = dynamic_cast<CastExpr *>(VD->getInit());
-    EXPECT_NE(CE, nullptr);
-    EXPECT_EQ(CE->getType()->getName(), "i32");
-    EXPECT_NE(CE->getExpr(), nullptr);
-
-    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(CE->getExpr());
-    EXPECT_NE(I, nullptr);
-    EXPECT_EQ(I->getValue(), 5);
-    EXPECT_EQ(I->getType()->getName(), "i64");
-
-    delete unit;
-}
-
-TEST_F(ParserTest, ParseExplicitCastBasic) {
-    File file = File("test.mdl", "/", "/test.mdl", "test::(){fix x: char[6] = \"hello\";}");
-    Lexer lexer = Lexer(file);
-    TokenStream stream = lexer.unwrap();
-    Parser parser = Parser(file, stream);
-    TranslationUnit *unit = parser.get();
-
-    EXPECT_EQ(unit->getDecls().size(), 1);
-
-    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
-    EXPECT_NE(FN, nullptr);
-    EXPECT_NE(FN->getBody(), nullptr);
-
-    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
-    EXPECT_NE(CS, nullptr);
-    EXPECT_EQ(CS->getStmts().size(), 1);
-
-    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
-    EXPECT_NE(DS, nullptr);
-    
-    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
-    EXPECT_NE(VD, nullptr);
-    EXPECT_EQ(VD->getName(), "x");
-    EXPECT_EQ(VD->getType()->getName(), "char[6]");
-    EXPECT_NE(VD->getInit(), nullptr);
-
-    StringLiteral *SL = dynamic_cast<StringLiteral *>(VD->getInit());
-    EXPECT_NE(SL, nullptr);
-    EXPECT_EQ(SL->getValue(), "hello");
-    EXPECT_EQ(SL->getType()->getName(), "char[6]");
 
     delete unit;
 }

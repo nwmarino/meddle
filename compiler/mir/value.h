@@ -1,0 +1,146 @@
+#ifndef MEDDLE_VALUE_H
+#define MEDDLE_VALUE_H
+
+#include "segment.h"
+
+#include <algorithm>
+#include <cassert>
+#include <fstream>
+#include <string>
+#include <vector>
+
+using String = std::string;
+
+namespace mir {
+
+class Inst;
+class Segment;
+class Type;
+
+class Value {
+protected:
+    String m_Name;
+    Type *m_Type;
+    std::vector<Inst *> m_Uses = {};
+
+public:
+    Value(String N, Type *T) : m_Name(N), m_Type(T) {}
+    virtual ~Value() = default;
+
+    virtual bool is_constant() const { return false; }
+
+    bool is_named() const { return !m_Name.empty(); }
+
+    String get_name() const { return m_Name; }
+
+    Type *get_type() const { return m_Type; }
+
+    bool is_used() const { return m_Uses.size() != 0; }
+
+    bool is_used_by(Inst *user) const 
+    { return std::find(m_Uses.begin(), m_Uses.end(), user) != m_Uses.end(); }
+
+    void add_use(Inst *user) { m_Uses.push_back(user); }
+
+    void del_use(Inst *user) { 
+        m_Uses.erase(
+            std::remove(m_Uses.begin(), m_Uses.end(), user), 
+            m_Uses.end()
+        ); 
+    }
+
+    virtual void print(std::ofstream &OS) const = 0;
+};
+
+class Data final : public Value {
+    Segment *m_Parent;
+    Value *m_Value;
+    unsigned m_Align;
+    bool m_ReadOnly;
+
+public:
+    Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R)
+      : Value(N, T), m_Parent(P), m_Value(V), m_Align(A), m_ReadOnly(R) {}
+    
+    ~Data() override {
+        delete m_Value;
+    }
+
+    Value *get_value() const { return m_Value; }
+
+    unsigned get_align() const { return m_Align; }
+
+    bool is_read_only() const { return m_ReadOnly; }
+
+    /// Detach this data from its parent segment and delete it.
+    void detach() {
+        assert(m_Parent && "Data has no parent.");
+        m_Parent->remove_data(this);
+    }
+
+    void print(std::ofstream &OS) const override;
+};
+
+class Constant : public Value {
+public:
+    Constant(Type *T) : Value("", T) {}
+    virtual ~Constant() = default;
+
+    bool is_constant() const override { return true; }
+};
+
+class ConstantInt final : public Constant {
+    long m_Value;
+
+public:
+    ConstantInt(Type *T, long V) : Constant(T), m_Value(V) {}
+
+    long get_value() const { return m_Value; }
+
+    void print(std::ofstream &OS) const override;
+};
+
+class ConstantFP final : public Constant {
+    double m_Value;
+
+public:
+    ConstantFP(Type *T, double V) : Constant(T), m_Value(V) {}
+
+    double get_value() const { return m_Value; }
+
+    void print(std::ofstream &OS) const override;
+};
+
+class ConstantNil final : public Constant {
+public:
+    ConstantNil(Type *T) : Constant(T) {}
+
+    void print(std::ofstream &OS) const override;
+};
+
+class ConstantString final : public Constant {
+    String m_Value;
+
+public:
+    ConstantString(Type *T, String V) : Constant(T), m_Value(V) {}
+
+    String get_value() const { return m_Value; }
+
+    void print(std::ofstream &OS) const override;
+};
+
+class ConstantAggregate final : public Constant {
+    std::vector<Value *> m_Values;
+
+public:
+    ConstantAggregate(Type *T, std::vector<Value *> V) 
+        : Constant(T), m_Values(V) {}
+
+    const std::vector<Value *> &get_values() const { return m_Values; }
+
+    void print(std::ofstream &OS) const override;
+};
+
+} // namespace mir
+
+#endif // MEDDLE_VALUE_H

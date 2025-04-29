@@ -1,0 +1,6 @@
+target :: x86_64 linux system_v 
+
+main :: () {
+entry:
+	ret i64 42
+}

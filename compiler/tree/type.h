@@ -173,6 +173,10 @@ public:
         return m_Params[i];
     }
 
+    const std::vector<Type *> &getParams() const { return m_Params; } 
+
+    unsigned getNumParams() const { return m_Params.size(); }
+
     void setParamType(Type *T, unsigned i) {
         assert(i <= m_Params.size());
         m_Params[i] = T;

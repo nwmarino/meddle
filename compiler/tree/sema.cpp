@@ -6,6 +6,12 @@
 
 using namespace meddle;
 
+/// Check that if a statement is not compounded then it is not declarative.
+///
+/// Specifically, this crashes on behaviour like:
+///
+/// if ...
+///     mut x: ... = ... ;
 static void checkCompoundedDeclStmt(Stmt *S) {
     if (dynamic_cast<CompoundStmt *>(S))
         return;

@@ -7,7 +7,7 @@
 
 namespace meddle {
 
-class NameResolution : public Visitor {
+class NameResolution final : public Visitor {
     Options m_Opts;
     TranslationUnit *m_Unit;
     Scope *m_Scope;

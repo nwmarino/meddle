@@ -71,6 +71,8 @@ public:
 
     const std::vector<ParamDecl *> &getParams() const { return m_Params; }
 
+    unsigned getNumParams() const { return m_Params.size(); }
+
     ParamDecl *getParam(unsigned i) const {
         assert(i < m_Params.size());
         return m_Params[i];
@@ -79,6 +81,8 @@ public:
     Type *getParamType(unsigned i) const;
 
     Stmt *getBody() const { return m_Body; }
+
+    bool empty() const { return m_Body == nullptr; }
 };
 
 class VarDecl : public NamedDecl {
@@ -103,6 +107,8 @@ public:
     Type *getType() const { return m_Type; }
 
     Expr *getInit() const { return m_Init; }
+
+    bool hasInit() const { return m_Init != nullptr; }
 
     bool isMutable() const { return m_Mut; }
 

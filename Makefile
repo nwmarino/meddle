@@ -1,31 +1,33 @@
-CXX := clang
-CXXFLAGS := -std=c++20 -g -O0 -stdlib=libstdc++
+CXX := clang++
+CXXFLAGS := -std=c++20 -g -O0 -stdlib=libstdc++ -Icompiler -I$(BOOST_DIR) -I$(GTEST_DIR)
 LDFLAGS := -lstdc++ -lm
 
 MAIN := compiler/meddle.cpp
+MAIN_OBJ := $(MAIN:.cpp=.o)
 SRC := $(filter-out $(MAIN), $(shell find compiler -name "*.cpp"))
+OBJ := $(SRC:.cpp=.o)
+
 TEST_SRC := $(wildcard test/*.cpp)
+TEST_OBJ := $(TEST_SRC:.cpp=.o)
 
 TARGET := meddle
 TEST_TARGET := test_meddle
 
-GTEST_DIR := /usr/include/gtest
 GTEST_LIB := -L/usr/lib64 -lgtest -pthread
-
-BOOST_DIR := /usr/include/boost
 BOOST_LIB := -L/usr/lib64 -lboost_filesystem
 
 all: $(TARGET)
 
-$(TARGET): $(SRC) $(MAIN)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(MAIN) $(LDFLAGS) -I$(BOOST_DIR)/include -Icompiler $(BOOST_LIB)
+$(TARGET): $(OBJ) $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(BOOST_LIB)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 test: $(TEST_TARGET)
 
-$(TEST_TARGET): $(SRC) $(TEST_SRC)
-	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(SRC) $(TEST_SRC) $(LDFLAGS) -I$(GTEST_DIR)/include -Icompiler $(GTEST_LIB)
+$(TEST_TARGET): $(OBJ) $(TEST_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(BOOST_LIB) $(GTEST_LIB)
 
 clean:
-	rm -f $(TARGET) $(TEST_TARGET)
-
-.PHONY: all clean test
+	rm -f $(OBJ) $(TEST_OBJ) $(TARGET) $(TEST_TARGET)
