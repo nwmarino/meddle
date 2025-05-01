@@ -247,6 +247,42 @@ public:
     void print(std::ostream &OS) const override;
 };
 
+class CMPInst final : public Inst {
+    friend class Builder;
+
+public:
+    enum class Kind {
+        CMP_IEQ,
+        CMP_INE,
+        CMP_FOEQ,
+        CMP_FONE,
+    };
+
+private:
+    Kind m_Kind;
+    Value *m_LVal;
+    Value *m_RVal;
+
+    CMPInst(String N, Type *T, BasicBlock *P, Kind K, Value *LV, Value *RV)
+      : Inst(N, T, P), m_Kind(K), m_LVal(LV), m_RVal(RV) {}
+
+public:
+    ~CMPInst() override {
+        if (m_LVal->is_constant())
+            delete m_LVal;
+        if (m_RVal->is_constant())
+            delete m_RVal;
+    }
+
+    Kind get_kind() const { return m_Kind; }
+
+    Value *get_lval() const { return m_LVal; }
+
+    Value *get_rval() const { return m_RVal; }
+
+    void print(std::ostream &OS) const override;
+};
+
 void clear_inst_dict();
 
 } // namespace mir

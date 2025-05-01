@@ -55,3 +55,7 @@ void RetInst::print(std::ostream &OS) const {
 void UnopInst::print(std::ostream &OS) const {
     OS << get_type()->get_name() << " %" << get_name();
 }
+
+void CMPInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " %" << get_name();
+}

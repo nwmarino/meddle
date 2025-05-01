@@ -38,6 +38,8 @@ class CGN final : public Visitor {
 
     mir::Type *cgn_type(Type *T);
 
+    mir::Value *inject_cmp(mir::Value *V);
+
     void declare_function(FunctionDecl *FD);
     void define_function(FunctionDecl *FD);
 

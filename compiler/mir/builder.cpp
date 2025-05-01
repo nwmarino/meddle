@@ -261,3 +261,67 @@ Value *Builder::build_reint(Value *V, Type *D, String N) {
     V->add_use(ext);
     return ext;
 }
+
+Value *Builder::build_cmp_ieq(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert((LV->get_type()->is_integer_ty() || LV->get_type()->is_pointer_ty()) 
+           && "Compare 'ieq' left value must be an integer.");
+    assert((RV->get_type()->is_integer_ty() || RV->get_type()->is_pointer_ty()) 
+           && "Compare 'ieq' right value must be an integer.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::CMP_IEQ, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}
+
+Value *Builder::build_cmp_ine(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert((LV->get_type()->is_integer_ty() || LV->get_type()->is_pointer_ty()) 
+           && "Compare 'ine' left value must be an integer.");
+    assert((RV->get_type()->is_integer_ty() || RV->get_type()->is_pointer_ty()) 
+           && "Compare 'ine' right value must be an integer.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::CMP_INE, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}
+
+Value *Builder::build_cmp_foeq(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert(LV->get_type()->is_float_ty() && 
+           "Compare 'foeq' left value must be a floating point type.");
+    assert(RV->get_type()->is_float_ty() && 
+           "Compare 'foeq' right value must be a floating point type.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::CMP_FOEQ, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}
+
+Value *Builder::build_cmp_fone(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert(LV->get_type()->is_float_ty() && 
+           "Compare 'fone' left value must be a floating point type.");
+    assert(RV->get_type()->is_float_ty() && 
+           "Compare 'fone' right value must be a floating point type.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::CMP_FONE, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}

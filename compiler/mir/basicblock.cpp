@@ -3,6 +3,7 @@
 #include "inst.h"
 
 #include <map>
+#include <ostream>
 
 using namespace mir;
 
@@ -207,6 +208,29 @@ static void print_unop(std::ostream &OS, UnopInst *I) {
         OS << " -> " << I->get_type()->get_name();
 }
 
+static void print_cmp(std::ostream &OS, CMPInst *I) {
+    OS << "%" << I->get_name() << " := ";
+
+    switch (I->get_kind()) {
+    case CMPInst::Kind::CMP_IEQ:
+        OS << "cmp_ieq ";
+        break;
+    case CMPInst::Kind::CMP_INE:
+        OS << "cmp_ine ";
+        break;
+    case CMPInst::Kind::CMP_FOEQ:
+        OS << "cmp_foeq ";
+        break;
+    case CMPInst::Kind::CMP_FONE:
+        OS << "cmp_fone ";
+        break;
+    }
+
+    I->get_lval()->print(OS);
+    OS << ", ";
+    I->get_rval()->print(OS);
+}
+
 void BasicBlock::print(std::ostream &OS) const {
     OS << get_name() << ":\n";
     for (Inst *curr = m_Head; curr != nullptr; curr = curr->get_next()) {
@@ -225,6 +249,8 @@ void BasicBlock::print(std::ostream &OS) const {
             print_ret(OS, I);
         else if (auto *I = dynamic_cast<UnopInst *>(curr))
             print_unop(OS, I);
+        else if (auto *I = dynamic_cast<CMPInst *>(curr))
+            print_cmp(OS, I);
 
         OS << "\n";
     }

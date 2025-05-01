@@ -24,6 +24,37 @@ String CGN::mangle_name(NamedDecl *D) {
 	return D->getName();
 }
 
+mir::Value *CGN::inject_cmp(mir::Value *V) {
+	if (V->get_type()->is_integer_ty(1))
+        return V;
+
+    if (V->get_type()->is_pointer_ty()) {
+		return m_Builder.build_cmp_ine(
+			V, 
+			new mir::ConstantNil(V->get_type()), 
+			"ptr.cmp"
+		);
+	}
+
+    if (V->get_type()->is_integer_ty()) {
+        return m_Builder.build_cmp_ine(
+            V,
+            new mir::ConstantInt(V->get_type(), 0),
+            "int.cmp"
+        );
+    }
+
+    if (V->get_type()->is_float_ty()) {
+        return m_Builder.build_cmp_fone(
+			V,
+            new mir::ConstantFP(V->get_type(), 0.0),
+            "fp.cmp"
+        );
+    }
+
+    assert(false && "Unsupported conditional value.");
+}
+
 mir::Type *CGN::cgn_type(Type *T) {
     assert(T && "Cannot generate from a null type.");
 
@@ -204,6 +235,7 @@ void CGN::visit(IfStmt *stmt) {
 	stmt->getCond()->accept(this);
 	mir::Value *cond = m_Value;
 	assert(cond && "'if' condition does not produce a value.");
+	cond = inject_cmp(cond);
 
 	mir::BasicBlock *thenBB = new mir::BasicBlock("if.then", m_Function);
 	mir::BasicBlock *mergeBB = new mir::BasicBlock("if.merge");
@@ -237,12 +269,99 @@ void CGN::visit(IfStmt *stmt) {
 	}
 }
 
-void CGN::visit(CaseStmt *stmt) {
-
-}
+void CGN::visit(CaseStmt *stmt) {}
 
 void CGN::visit(MatchStmt *stmt) {
+	// Lower the match expression as an rvalue.
+    m_VC = ValueContext::RValue;
+    stmt->getPattern()->accept(this);
+    mir::Value *matchV = m_Value;
+    assert(matchV && "'match' expression does not produce a value.");
 
+    // Create a merge block, without inserting it since it should come last.
+    mir::BasicBlock *mergeBB = new mir::BasicBlock("match.merge");
+    mir::BasicBlock *defBB = nullptr;
+    if (stmt->getDefault())
+        defBB = new mir::BasicBlock("match.def");
+
+    // Create a "chain" block for every case in the statement.
+    //
+    // This should ideally be optimized instead with a jump table, but that
+    // can come later...
+	const std::vector<CaseStmt *> cases = stmt->getCases();
+    std::vector<mir::BasicBlock *> chains;
+    for (auto &C : cases)
+        chains.push_back(new mir::BasicBlock("match.chain"));
+
+    // Begin at the first case.
+    assert(chains.size() > 0 && "'match' statement has no cases.");
+    m_Builder.build_jmp(chains[0]);
+
+    // For each case in the statement, lower its pattern value in the chain
+    // block, and try to compare it to the match value.
+    //
+    // If the comparison succeeds, control flow is passed to the body of the 
+    // case. Otherwise, it goes to either the next chain block, the default
+    // block (if it exists), or the merge block if there are no more chains.
+    for (unsigned i = 0, n = chains.size(); i != n; ++i) {
+        CaseStmt *C = cases.at(i);
+        mir::BasicBlock *chain = chains[i];
+
+		m_Function->append(chain);
+        m_Builder.set_insert(chain);
+
+        // Lower the case pattern value.
+        C->getPattern()->accept(this);
+        assert(m_Value && "Case pattern does not produce a value.");
+        mir::Value *patternV = m_Value;
+
+        // Compare the pattern value with main match expression.
+        mir::Value *cmpV = nullptr;
+        if (matchV->get_type()->is_float_ty())
+            cmpV = m_Builder.build_cmp_foeq(matchV, patternV, "match.cmp");
+        else
+            cmpV = m_Builder.build_cmp_ieq(matchV, patternV, "match.cmp");
+        
+        mir::BasicBlock *body = new mir::BasicBlock("match.case", m_Function);
+
+        // Branch to the case block if the comparison succeeded, otherwise
+        // the next chain if there is one, the default if there is one, or the
+        // merge block if no options exist.
+        if (i + 1 != n)
+            m_Builder.build_brif(cmpV, body, chains[i + 1]);
+        else if (stmt->getDefault())
+            m_Builder.build_brif(cmpV, body, defBB);
+        else
+            m_Builder.build_brif(cmpV, body, mergeBB);
+
+        m_Builder.set_insert(body);
+        C->getBody()->accept(this);
+
+        if (!m_Builder.get_insert()->has_terminator()) {
+            // If the body of the case does not terminate on its own, then the
+            // case must branch to the merge block.
+            m_Builder.build_jmp(mergeBB);
+        }
+    }
+    
+    // Pass over the default body, if it exists.
+    if (stmt->getDefault()) {
+		m_Function->append(defBB);
+        m_Builder.set_insert(defBB);
+        stmt->getDefault()->accept(this);
+        if (!m_Builder.get_insert()->has_terminator()) {
+            // Similar to the case bodies, control flow goes to merge if the
+            // block does not terminate on its own.
+            m_Builder.build_jmp(mergeBB);
+        }
+    }
+
+    if (mergeBB->has_preds()) {
+        // If the merge block is actually used, then emit it.
+        m_Function->append(mergeBB);
+		m_Builder.set_insert(mergeBB);
+    } else
+		delete mergeBB;
 }
 
 void CGN::visit(RetStmt *stmt) {
@@ -274,7 +393,7 @@ void CGN::visit(UntilStmt *stmt) {
     stmt->getCond()->accept(this);
     mir::Value *cond = m_Value;
     assert(cond && "'until' condition does not produce a value.");
-    //cond = injectCMP(cond);
+    cond = inject_cmp(cond);
     m_Builder.build_brif(cond, mergeBB, bodyBB);
 
 	m_Function->append(bodyBB);

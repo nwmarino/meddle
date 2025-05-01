@@ -121,7 +121,8 @@ TEST_F(IntegratedCodegenTest, If_Then) {
 
 test :: () -> void {
 entry:
-    brif i64 1, if.then, if.merge
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, if.then, if.merge
 
 if.then:
     ret
@@ -160,7 +161,8 @@ TEST_F(IntegratedCodegenTest, If_Then_Else) {
 
 test :: () -> void {
 entry:
-    brif i64 1, if.then, if.else
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, if.then, if.else
 
 if.then:
     ret
@@ -199,13 +201,15 @@ TEST_F(IntegratedCodegenTest, If_Then_ElseIf_Else) {
 
 test :: () -> void {
 entry:
-    brif i64 1, if.then, if.else
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, if.then, if.else
 
 if.then:
     ret
 
 if.else:
-    brif i64 2, if.then1, if.else1
+    %int.cmp1 := cmp_ine i64 2, i64 0
+    brif i1 %int.cmp1, if.then1, if.else1
 
 if.then1:
     ret
@@ -247,7 +251,8 @@ entry:
     jmp until.cond
 
 until.cond:
-    brif i64 1, until.merge, until.body
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, until.merge, until.body
 
 until.body:
     ret
@@ -289,7 +294,8 @@ entry:
     jmp until.cond
 
 until.cond:
-    brif i64 1, until.merge, until.body
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, until.merge, until.body
 
 until.body:
     jmp until.cond
@@ -331,7 +337,8 @@ entry:
     jmp until.cond
 
 until.cond:
-    brif i64 1, until.merge, until.body
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, until.merge, until.body
 
 until.body:
     jmp until.merge
@@ -373,10 +380,12 @@ entry:
     jmp until.cond
 
 until.cond:
-    brif i64 1, until.merge, until.body
+    %int.cmp := cmp_ine i64 1, i64 0
+    brif i1 %int.cmp, until.merge, until.body
 
 until.body:
-    brif i64 2, if.then, if.else
+    %int.cmp1 := cmp_ine i64 2, i64 0
+    brif i1 %int.cmp1, if.then, if.else
 
 if.then:
     jmp until.cond
