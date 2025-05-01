@@ -31,14 +31,6 @@ void NameResolution::visit(VarDecl *decl) {
         decl->getInit()->accept(this);
 }
 
-void NameResolution::visit(ParamDecl *decl) {
-
-}
-
-void NameResolution::visit(BreakStmt *stmt) {}
-
-void NameResolution::visit(ContinueStmt *stmt) {}
-
 void NameResolution::visit(CompoundStmt *stmt) {
     m_Scope = stmt->getScope();
     for (auto &S : stmt->getStmts())
@@ -83,16 +75,6 @@ void NameResolution::visit(UntilStmt *stmt) {
     stmt->getCond()->accept(this);
     stmt->getBody()->accept(this);
 }
-
-void NameResolution::visit(IntegerLiteral *expr) {}
-
-void NameResolution::visit(FloatLiteral *expr) {}
-
-void NameResolution::visit(CharLiteral *expr) {}
-
-void NameResolution::visit(StringLiteral *expr) {}
-
-void NameResolution::visit(NilLiteral *expr) {}
 
 void NameResolution::visit(CastExpr *expr) {
     expr->m_Expr->accept(this);

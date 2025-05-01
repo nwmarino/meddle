@@ -419,6 +419,10 @@ void CGN::visit(UntilStmt *stmt) {
 	m_Merge = oldMerge;
 }
 
+void CGN::visit(BoolLiteral *expr) {
+	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
+}
+
 void CGN::visit(IntegerLiteral *expr) {
 	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
 }

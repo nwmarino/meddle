@@ -29,8 +29,20 @@ Expr *Parser::parse_ident() {
         return parse_cast();
     else if (match_keyword("nil"))
         return parse_nil();
+    else if (match_keyword("true") || match_keyword("false"))
+        return parse_bool();
 
     return parse_ref();
+}
+
+BoolLiteral *Parser::parse_bool() {
+    BoolLiteral *B = new BoolLiteral(
+        m_Current->md,
+        m_Context->getBoolType(),
+        m_Current->value == "true"
+    );
+    next();
+    return B;
 }
 
 IntegerLiteral *Parser::parse_int() {

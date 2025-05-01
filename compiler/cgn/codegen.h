@@ -63,6 +63,7 @@ public:
     void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
 
+    void visit(BoolLiteral *expr) override;
     void visit(IntegerLiteral *expr) override;
     void visit(FloatLiteral *expr) override;
     void visit(CharLiteral *expr) override;

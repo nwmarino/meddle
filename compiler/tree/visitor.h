@@ -21,6 +21,7 @@ class RetStmt;
 class UntilStmt;
 
 class Expr;
+class BoolLiteral;
 class IntegerLiteral;
 class FloatLiteral;
 class CharLiteral;
@@ -31,30 +32,31 @@ class RefExpr;
 
 class Visitor {
 public:
-    virtual void visit(TranslationUnit *unit) = 0;
+    virtual void visit(TranslationUnit *unit) {};
 
-    virtual void visit(FunctionDecl *decl) = 0;
-    virtual void visit(VarDecl *decl) = 0;
-    virtual void visit(ParamDecl *decl) = 0;
+    virtual void visit(FunctionDecl *decl) {}
+    virtual void visit(VarDecl *decl) {}
+    virtual void visit(ParamDecl *decl) {}
 
-    virtual void visit(BreakStmt *stmt) = 0;
-    virtual void visit(ContinueStmt *stmt) = 0;
-    virtual void visit(CompoundStmt *stmt) = 0;
-    virtual void visit(DeclStmt *stmt) = 0;
-    virtual void visit(ExprStmt *stmt) = 0;
-    virtual void visit(IfStmt *stmt) = 0;
-    virtual void visit(CaseStmt *stmt) = 0;
-    virtual void visit(MatchStmt *stmt) = 0;
-    virtual void visit(RetStmt *stmt) = 0;
-    virtual void visit(UntilStmt *stmt) = 0;
+    virtual void visit(BreakStmt *stmt) {}
+    virtual void visit(ContinueStmt *stmt) {}
+    virtual void visit(CompoundStmt *stmt) {}
+    virtual void visit(DeclStmt *stmt) {}
+    virtual void visit(ExprStmt *stmt) {}
+    virtual void visit(IfStmt *stmt) {}
+    virtual void visit(CaseStmt *stmt) {}
+    virtual void visit(MatchStmt *stmt) {}
+    virtual void visit(RetStmt *stmt) {}
+    virtual void visit(UntilStmt *stmt) {}
 
-    virtual void visit(IntegerLiteral *expr) = 0;
-    virtual void visit(FloatLiteral *expr) = 0;
-    virtual void visit(CharLiteral *expr) = 0;
-    virtual void visit(StringLiteral *expr) = 0;
-    virtual void visit(NilLiteral *expr) = 0;
-    virtual void visit(CastExpr *expr) = 0;
-    virtual void visit(RefExpr *expr) = 0;
+    virtual void visit(BoolLiteral *expr) {}
+    virtual void visit(IntegerLiteral *expr) {}
+    virtual void visit(FloatLiteral *expr) {}
+    virtual void visit(CharLiteral *expr) {}
+    virtual void visit(StringLiteral *expr) {}
+    virtual void visit(NilLiteral *expr) {}
+    virtual void visit(CastExpr *expr) {}
+    virtual void visit(RefExpr *expr) {}
 };
 
 } // namespace meddle

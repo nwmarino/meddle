@@ -67,6 +67,7 @@ class Parser final {
     Expr *parse_expr();
     Expr *parse_primary();
     Expr *parse_ident();
+    BoolLiteral *parse_bool();
     IntegerLiteral *parse_int();
     FloatLiteral *parse_fp();
     CharLiteral *parse_char();

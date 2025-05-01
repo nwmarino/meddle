@@ -19,10 +19,7 @@ public:
 
     void visit(FunctionDecl *decl) override;
     void visit(VarDecl *decl) override;
-    void visit(ParamDecl *decl) override;
-
-    void visit(BreakStmt *stmt) override;
-    void visit(ContinueStmt *stmt) override;
+    
     void visit(CompoundStmt *stmt) override;
     void visit(DeclStmt *stmt) override;
     void visit(ExprStmt *stmt) override;
@@ -32,11 +29,6 @@ public:
     void visit(RetStmt *stmt) override; 
     void visit(UntilStmt *stmt) override;
 
-    void visit(IntegerLiteral *expr) override;
-    void visit(FloatLiteral *expr) override;
-    void visit(CharLiteral *expr) override;
-    void visit(StringLiteral *expr) override;
-    void visit(NilLiteral *expr) override;
     void visit(CastExpr *expr) override;
     void visit(RefExpr *expr) override;
 };

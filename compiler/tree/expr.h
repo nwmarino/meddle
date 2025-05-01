@@ -28,6 +28,25 @@ public:
     void setType(Type *T) { m_Type = T; }
 
     bool isLValue() const { return m_IsLValue; }
+
+	virtual bool isConstant() const { return false; }
+};
+
+class BoolLiteral final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	bool m_Value;
+
+public:
+	BoolLiteral(const Metadata &M, Type *T, bool V) : Expr(M, T), m_Value(V) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	bool getValue() const { return m_Value; }
+
+	bool isConstant() const override { return true; }
 };
 
 class IntegerLiteral final : public Expr {
@@ -44,6 +63,8 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 	
     long getValue() const { return m_Value; }
+
+	bool isConstant() const override { return true; }
 };
 
 class FloatLiteral final : public Expr {
@@ -60,6 +81,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	double getValue() const { return m_Value; }
+
+	bool isConstant() const override { return true; }
 };
 
 class CharLiteral final : public Expr {
@@ -76,6 +99,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	char getValue() const { return m_Value; }
+
+	bool isConstant() const override { return true; }
 };
 
 class StringLiteral final : public Expr {
@@ -92,6 +117,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	String getValue() const { return m_Value; }
+
+	bool isConstant() const override { return true; }
 };
 
 class NilLiteral final : public Expr {
@@ -103,6 +130,8 @@ public:
 	NilLiteral(const Metadata &M, Type *T) : Expr(M, T) {}
 
 	void accept(Visitor *V) override { V->visit(this); }
+
+	bool isConstant() const override { return true; }
 };
 
 class CastExpr final : public Expr {
@@ -124,6 +153,8 @@ public:
 	Expr *getExpr() const { return m_Expr; }
 
 	Type *getCast() const { return m_Type; }
+
+	bool isConstant() const override { return m_Expr->isConstant(); }
 };
 
 class RefExpr final : public Expr {

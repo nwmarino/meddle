@@ -101,29 +101,6 @@ bool PrimitiveType::compare(Type *T) const {
     return false;
 }
 
-unsigned PrimitiveType::getSizeInBits() const {
-    switch (m_Kind) {
-        case Kind::Void: 
-            return 0;
-        case Kind::Bool:
-        case Kind::Char:
-        case Kind::Int8:
-        case Kind::UInt8: 
-            return 8;
-        case Kind::Int16:
-        case Kind::UInt16: 
-            return 16;
-        case Kind::Int32:
-        case Kind::UInt32:
-        case Kind::Float32: 
-            return 32;
-        case Kind::Int64:
-        case Kind::UInt64:
-        case Kind::Float64: 
-            return 64;
-    }
-}
-
 bool ArrayType::canCastTo(Type *T) const {
     assert(T && "Type cannot be null.");
     if (auto *AT = dynamic_cast<ArrayType *>(T))

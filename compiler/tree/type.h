@@ -48,10 +48,6 @@ public:
     virtual bool compare(Type *T) const { return false; }
 
     virtual bool isQualified() const { return true; }
-
-    virtual unsigned getSizeInBits() const { return 0; }
-
-    unsigned getSizeInBytes() const { return getSizeInBits() / 8; }
 };
 
 class TypeResult final : public Type {
@@ -121,8 +117,6 @@ public:
     bool canCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
-
-    unsigned getSizeInBits() const override;
 };
 
 class ArrayType final : public Type {
@@ -141,9 +135,6 @@ public:
     bool canCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
-
-    unsigned getSizeInBits() const override 
-    { return m_Element->getSizeInBits() * m_Size; }
 };
 
 class PointerType final : public Type {
@@ -157,8 +148,6 @@ public:
     bool canCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
-
-    unsigned getSizeInBits() const override { return 64; }
 };
 
 class FunctionType final : public Type {

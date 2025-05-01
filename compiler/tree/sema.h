@@ -35,13 +35,7 @@ public:
     void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
 
-    void visit(IntegerLiteral *expr) override;
-    void visit(FloatLiteral *expr) override;
-    void visit(CharLiteral *expr) override;
-    void visit(StringLiteral *expr) override;
-    void visit(NilLiteral *expr) override;
     void visit(CastExpr *expr) override;
-    void visit(RefExpr *expr) override;
 };
 
 } // namespace meddle
