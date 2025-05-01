@@ -73,8 +73,10 @@ public:
     /// Detach this block from its parent function and delete it.
     void detach();
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
+
+void clear_bb_dict();
 
 } // namespace mir
 

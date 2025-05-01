@@ -30,19 +30,19 @@ class Argument final : public Value {
     /// The corresponding function slot allocated for this argument.
     ///
     /// This might not always exist.
-    SlotNode *m_Slot;
+    Slot *m_Slot;
 
 public:
-    Argument(String N, Type *T, Function *P, unsigned I, SlotNode *S = nullptr)
+    Argument(String N, Type *T, Function *P, unsigned I, Slot *S = nullptr)
         : Value(N, T), m_Parent(P), m_Index(I), m_Slot(S) {}
 
     Function *get_parent() const { return m_Parent; }
 
     unsigned get_index() const { return m_Index; }
 
-    SlotNode *get_slot() const { return m_Slot; }
+    Slot *get_slot() const { return m_Slot; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class Function final : public Value {
@@ -64,7 +64,7 @@ private:
     std::vector<Argument *> m_Args;
 
     /// The slot nodes of this function.
-    std::unordered_map<String, SlotNode *> m_Slots = {};
+    std::unordered_map<String, Slot *> m_Slots = {};
 
     /// The head and tail blocks of this function.
     BasicBlock *m_Head = nullptr;
@@ -87,9 +87,11 @@ public:
 
     void set_tail(BasicBlock *BB) { m_Tail = BB; }
 
-    void add_slot(SlotNode *S);
+    void add_slot(Slot *S);
 
-    SlotNode *get_slot(String N) const;
+    Slot *get_slot(String N) const;
+
+    std::vector<Slot *> get_slots() const;
 
     const std::vector<Argument *> &get_args() const { return m_Args; }
 
@@ -107,7 +109,7 @@ public:
     /// Detach this function from its parent segment and delete it.
     void detach();
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 } // namespace mir

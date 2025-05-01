@@ -11,13 +11,25 @@ namespace mir {
 
 class Segment;
 
+enum class TypeKind {
+    I1, I8, I16, I32, I64,
+    F32, F64,
+    Array,
+    Function,
+    Pointer,
+    Struct,
+};
+
 class Type {
     String m_Name;
+    TypeKind m_TypeKind;
 
 public:
-    Type(String N) : m_Name(N) {}
+    Type(String N, TypeKind K) : m_Name(N), m_TypeKind(K) {}
 
     String get_name() const { return m_Name; }
+
+    TypeKind get_ty_kind() const { return m_TypeKind; }
 
     virtual bool is_array_ty() const { return false; }
 
@@ -44,8 +56,8 @@ class ArrayType final : public Type {
     unsigned m_Size;
 
     ArrayType(Type *E, unsigned S) 
-      : Type(E->get_name() + "[" + std::to_string(S) + "]"), m_Element(E), 
-        m_Size(S) {}
+      : Type(E->get_name() + "[" + std::to_string(S) + "]", TypeKind::Array), 
+        m_Element(E), m_Size(S) {}
 
 public:
     static ArrayType *get(Segment *S, Type *E, unsigned Sz);
@@ -85,7 +97,7 @@ public:
 private:
     Kind m_Kind;
 
-    IntegerType(Kind K) : Type(get_kind_name(K)), m_Kind(K) {}
+    IntegerType(Kind K);
 
 public:
     bool is_integer_ty() const override { return true; }
@@ -127,7 +139,7 @@ public:
 private:
     Kind m_Kind;
 
-    FloatType(Kind K) : Type(get_kind_name(K)), m_Kind(K) {}
+    FloatType(Kind K);
 
 public:
     Kind get_kind() const { return m_Kind; }
@@ -169,7 +181,8 @@ class PointerType final : public Type {
 
     Type *m_Pointee;
 
-    PointerType(Type *P) : Type(P->get_name() + "*"), m_Pointee(P) {}
+    PointerType(Type *P) 
+        : Type(P->get_name() + "*", TypeKind::Pointer), m_Pointee(P) {}
 
 public:
     static PointerType *get(Segment *S, Type *P);
@@ -185,7 +198,8 @@ class StructType final : public Type {
 
     std::vector<Type *> m_Members;
 
-    StructType(String N, std::vector<Type *> M) : Type(N), m_Members(M) {}
+    StructType(String N, std::vector<Type *> M) 
+        : Type(N, TypeKind::Struct), m_Members(M) {}
 
 public:
     static StructType *get(Segment *S, String N);

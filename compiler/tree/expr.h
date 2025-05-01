@@ -104,6 +104,10 @@ class CastExpr final : public Expr {
 public:
 	CastExpr(const Metadata &M, Type *T, Expr *E) : Expr(M, T), m_Expr(E) {}
 
+	~CastExpr() override {
+		delete m_Expr;
+	}
+
 	void accept(Visitor *V) override { V->visit(this); }
 
 	Expr *getExpr() const { return m_Expr; }

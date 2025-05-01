@@ -61,8 +61,8 @@ public:
       : Stmt(M), m_Scope(S), m_Stmts(stmts) {}
 
     ~CompoundStmt() override {
-        for (auto *stmt : m_Stmts)
-            delete stmt;
+        for (auto &S : m_Stmts)
+            delete S;
 
         delete m_Scope;
     }
@@ -130,7 +130,9 @@ public:
     ~IfStmt() override {
         delete m_Cond;
         delete m_Then;
-        delete m_Else;
+
+        if (m_Else)
+            delete m_Else;
     }
 
     void accept(Visitor *V) override { V->visit(this); }
@@ -140,6 +142,8 @@ public:
     Stmt *getThen() const { return m_Then; }
 
     Stmt *getElse() const { return m_Else; }
+
+    bool hasElse() const { return m_Else != nullptr;}
 };
 
 class CaseStmt final : public Stmt {
@@ -181,7 +185,10 @@ public:
 
     ~MatchStmt() override {
         delete m_Pattern;
-        delete m_Default;
+
+        if (m_Default)
+            delete m_Default;
+
         for (auto &C : m_Cases)
             delete C;
     }
@@ -206,7 +213,8 @@ public:
     RetStmt(const Metadata &M, Expr *E) : Stmt(M), m_Expr(E) {}
 
     ~RetStmt() override {
-        delete m_Expr;
+        if (m_Expr)
+            delete m_Expr;
     }
 
     void accept(Visitor *V) override { V->visit(this); }

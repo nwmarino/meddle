@@ -77,16 +77,17 @@ int main(int argc, char **argv) {
         Sema sema = Sema(opts, unit);
     }
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> frontend;
     if (opts.Time) {
-        auto frontend = std::chrono::high_resolution_clock::now();
+        frontend = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totalDuration = frontend - start;
-        log("Frontend took: " + std::to_string(totalDuration.count()) + "s.");
+        log("  Frontend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
     Target target = Target(
-        Target::Arch::X86_64, 
-        Target::OS::Linux, 
-        Target::ABI::SysV
+        mir::Arch::X86_64, 
+        mir::OS::Linux, 
+        mir::ABI::SystemV
     );
 
     for (auto &unit : units) {
@@ -120,12 +121,23 @@ int main(int argc, char **argv) {
         std::system(rm.c_str());
     }
 
-    if (opts.Time) {
-        auto frontend = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totalDuration = frontend - start;
-        log("Backend took: " + std::to_string(totalDuration.count()) + "s.");
-    }
     */
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> backend;
+    if (opts.Time) {
+        backend = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totalDuration = backend - frontend;
+        log("  Backend took: " + std::to_string(totalDuration.count()) + "s.");
+    }
+
+    if (opts.Time) {
+        auto total = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totalDuration = total - start;
+        log("Compilation took: " + std::to_string(totalDuration.count()) + "s.");
+    }
+
+    for (auto &seg : segments)
+        delete seg;
 
     for (auto &unit : units)
         delete unit;

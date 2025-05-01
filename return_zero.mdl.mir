@@ -1,6 +1,30 @@
-target :: x86_64 linux system_v 
+target :: x86_64 linux system_v
 
-main :: () {
-entry:
-	ret i64 42
+test :: () {
+entry1:
+    jmp until.cond1
+
+until.cond1:
+    brif i64 1, until.merge1, until.body1
+
+until.body1:
+    jmp until.merge1
+
+until.merge1:
+    ret
 }
+
+main :: () -> i32 {
+entry:
+    jmp until.cond
+
+until.cond:
+    brif i64 1, until.merge, until.body
+
+until.body:
+    jmp until.merge
+
+until.merge:
+    ret i64 1
+}
+

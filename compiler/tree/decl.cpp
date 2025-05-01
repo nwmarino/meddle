@@ -18,11 +18,10 @@ FunctionDecl::~FunctionDecl() {
     for (auto &P : m_Params)
         delete P;
 
-    m_Params.clear();
-    delete m_Body;
-    m_Body = nullptr;
+    if (m_Body)
+        delete m_Body;
+    
     delete m_Scope;
-    m_Scope = nullptr;
 }
 
 Type *FunctionDecl::getParamType(unsigned i) const {

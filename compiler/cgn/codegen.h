@@ -30,6 +30,8 @@ class CGN final : public Visitor {
     mir::Builder m_Builder;
     mir::Function *m_Function = nullptr;
     mir::Value *m_Value = nullptr;
+    mir::BasicBlock *m_Merge = nullptr;
+    mir::BasicBlock *m_Cond = nullptr;
     std::unordered_map<NamedDecl *, String> m_Mangled = {};
 
     String mangle_name(NamedDecl *D);

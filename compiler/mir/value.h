@@ -49,18 +49,19 @@ public:
         ); 
     }
 
-    virtual void print(std::ofstream &OS) const = 0;
+    virtual void print(std::ostream &OS) const = 0;
 };
 
 class Data final : public Value {
+    friend class Builder;
+
     Segment *m_Parent;
     Value *m_Value;
     unsigned m_Align;
     bool m_ReadOnly;
 
 public:
-    Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R)
-      : Value(N, T), m_Parent(P), m_Value(V), m_Align(A), m_ReadOnly(R) {}
+    Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R);
     
     ~Data() override {
         delete m_Value;
@@ -78,7 +79,26 @@ public:
         m_Parent->remove_data(this);
     }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
+};
+
+class Slot final : public Value {
+    friend class Builder;
+
+    Function *m_Parent;
+    Type *m_Alloc;
+    unsigned m_Align;
+
+    Slot(String N, Type *T, Function *P, Type *A, unsigned AL);
+
+public:
+    ~Slot() override = default;
+
+    Type *get_alloc_type() const { return m_Alloc; }
+
+    unsigned get_align() const { return m_Align; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class Constant : public Value {
@@ -97,7 +117,7 @@ public:
 
     long get_value() const { return m_Value; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class ConstantFP final : public Constant {
@@ -108,14 +128,14 @@ public:
 
     double get_value() const { return m_Value; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class ConstantNil final : public Constant {
 public:
     ConstantNil(Type *T) : Constant(T) {}
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class ConstantString final : public Constant {
@@ -126,7 +146,7 @@ public:
 
     String get_value() const { return m_Value; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class ConstantAggregate final : public Constant {
@@ -138,7 +158,7 @@ public:
 
     const std::vector<Value *> &get_values() const { return m_Values; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 } // namespace mir

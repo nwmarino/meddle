@@ -2,11 +2,11 @@
 #include "function.h"
 #include "inst.h"
 #include "segment.h"
-#include <fstream>
+#include "value.h"
 
 using namespace mir;
 
-void Argument::print(std::ofstream &OS) const {
+void Argument::print(std::ostream &OS) const {
     OS << get_name() << " : " << get_type()->get_name();
     if (m_Slot)
         OS << " = " << m_Slot->get_name();
@@ -16,26 +16,36 @@ Function::~Function() {
     for (auto &[ String, slot ] : m_Slots)
         delete slot;
 
-    for (BasicBlock *curr = m_Head; curr != nullptr; ) {
-        BasicBlock *next = curr->get_next();
+    for (BasicBlock *curr = m_Tail; curr != nullptr; ) {
+        BasicBlock *prev = curr->get_prev();
         delete curr;
-        curr = next;
+        curr = prev;
     }
 }
 
-void Function::add_slot(SlotNode *S) {
+void Function::add_slot(Slot *S) {
     assert(get_slot(S->get_name()) == nullptr && 
            "Slot with name already exists.");
 
     m_Slots[S->get_name()] = S;
 }
 
-SlotNode *Function::get_slot(String N) const {
+Slot *Function::get_slot(String N) const {
     auto it = m_Slots.find(N);
     if (it != m_Slots.end())
         return it->second;
 
     return nullptr;
+}
+
+std::vector<Slot *> Function::get_slots() const {
+    std::vector<Slot *> slots;
+    slots.reserve(m_Slots.size());
+
+    for (auto &[String, slot] : m_Slots)
+        slots.push_back(slot);
+
+    return slots;
 }
 
 void Function::append(BasicBlock *BB) {
@@ -75,24 +85,6 @@ void Function::detach() {
     m_Parent->remove_function(this);
 }
 
-void Function::print(std::ofstream &OS) const {
-    OS << m_Name << " :: (";
-    for (auto &A : m_Args) {
-
-    }
-
-    OS << ")";
-    if (!m_Head) {
-        OS << ";\n";
-        return;
-    }
-
-    OS << " {\n";
-    for (BasicBlock *curr = m_Head; curr != nullptr; curr = curr->get_next()) {
-        curr->print(OS);
-        if (curr->get_next())
-            OS << "\n";
-    }
-
-    OS << "}\n";
+void Function::print(std::ostream &OS) const {
+    
 }

@@ -2,6 +2,7 @@
 #define MEDDLE_INST_H
 
 #include "value.h"
+#include <fstream>
 
 namespace mir {
 
@@ -44,34 +45,6 @@ public:
     void set_next(Inst *I) { m_Next = I; }
 };
 
-class SlotNode final : public Inst {
-    friend class Builder;
-
-    Type *m_Alloc;
-    unsigned m_Align;
-    bool m_Implicit;
-
-    SlotNode(
-        String N,
-        Type *T,
-        BasicBlock *P,
-        Type *A,
-        unsigned AL,
-        bool I = false
-    ) : Inst(N, T, P), m_Alloc(A), m_Align(AL), m_Implicit(I) {}
-
-public:
-    bool produces_value() const override { return true; }
-
-    Type *get_alloc_type() const { return m_Type; }
-
-    unsigned get_align() const { return m_Align; }
-
-    bool is_implicit() const { return m_Implicit; }
-
-    void print(std::ofstream &OS) const override;
-};
-
 class StoreInst final : public Inst {
     friend class Builder;
 
@@ -91,8 +64,6 @@ public:
         if (m_Value->is_constant())
             delete m_Value;
 
-        delete m_Dest;
-
         if (m_Offset)
             delete m_Offset;
     }
@@ -105,7 +76,7 @@ public:
 
     ConstantInt *get_offset() const { return m_Offset; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
 
 class LoadInst final : public Inst {
@@ -124,8 +95,6 @@ class LoadInst final : public Inst {
 
 public:
     ~LoadInst() override {
-        delete m_Source;
-
         if (m_Offset)
             delete m_Offset;
     }
@@ -138,7 +107,49 @@ public:
 
     ConstantInt *get_offset() const { return m_Offset; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
+};
+
+class BrifInst final : public Inst {
+    friend class Builder;
+
+    Value *m_Cond;
+    BasicBlock *m_True;
+    BasicBlock *m_False;
+
+    BrifInst(BasicBlock *P, Value *C, BasicBlock *T, BasicBlock *F)
+      : Inst(P), m_Cond(C), m_True(T), m_False(F) {}
+
+public:
+    ~BrifInst() override {
+        if (m_Cond->is_constant())
+            delete m_Cond;
+    }
+
+    bool is_terminator() const override { return true; }
+
+    Value *get_cond() const { return m_Cond; }
+
+    BasicBlock *get_true_dest() const { return m_True; }
+
+    BasicBlock *get_false_dest() const { return m_False; }
+
+    void print(std::ostream &OS) const override;
+};
+
+class JMPInst final : public Inst {
+    friend class Builder;
+
+    BasicBlock *m_Dest;
+
+    JMPInst(BasicBlock *P, BasicBlock *D) : Inst(P), m_Dest(D) {}
+
+public:
+    bool is_terminator() const override { return true; }
+
+    BasicBlock *get_dest() const { return m_Dest; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class RetInst final : public Inst {
@@ -150,7 +161,7 @@ class RetInst final : public Inst {
 
 public:
     ~RetInst() override {
-        if (m_Value)
+        if (m_Value && m_Value->is_constant())
             delete m_Value;
     }
 
@@ -162,8 +173,10 @@ public:
 
     Value *get_value() const { return m_Value; }
 
-    void print(std::ofstream &OS) const override;
+    void print(std::ostream &OS) const override;
 };
+
+void clear_inst_dict();
 
 } // namespace mir
 

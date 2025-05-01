@@ -11,25 +11,62 @@ using String = std::string;
 namespace mir {
 
 class Data;
+class DataLayout;
 class Function;
 class Type;
 class StructType;
+enum class TypeKind;
+
+enum class Arch {
+    X86_64,
+};
+
+enum class OS {
+    Linux,
+};
+
+enum class ABI {
+    SystemV,
+};
 
 struct Target final {
-    enum class Arch {
-        X86_64,
-    } Arch;
+    Arch Arch;
+    OS OpSys;
+    ABI ABI;
 
-    enum class OS {
-        Linux,
-    } OpSys;
+    Target(enum Arch Arch, enum OS OpSys, enum ABI ABI)
+      : Arch(Arch), OpSys(OpSys), ABI(ABI) {}
 
-    enum class ABI {
-        SysV,
-    } ABI;
+    DataLayout get_data_layout() const;
+};
 
-    Target(enum Arch Arch, enum OS OS, enum ABI ABI)
-      : Arch(Arch), OpSys(OS), ABI(ABI) {}
+class DataLayout final {
+    Arch m_Arch;
+    bool m_LittleEndian;
+    unsigned m_PointerSize;
+    unsigned m_PointerAlign;
+
+    struct LayoutRule final {
+        unsigned size;
+        unsigned abiAlign;
+    };
+
+    std::unordered_map<TypeKind, LayoutRule> m_Rules = {};
+
+    static unsigned align_to(unsigned offset, unsigned align);
+
+public:
+    DataLayout(enum Arch arch, bool littleEndian, unsigned pointerSZ, 
+               unsigned pointerAL);
+
+    unsigned get_type_size(Type *T) const;
+    unsigned get_type_align(Type *T) const;
+
+    unsigned get_pointer_size(unsigned addrSpace = 0) const;
+    unsigned get_pointer_align(unsigned addrSpace = 0) const;
+    
+    bool is_little_endian() const;
+    bool is_big_endian() const;
 };
 
 class Segment final {
@@ -40,6 +77,7 @@ class Segment final {
     friend class StructType;
 
     Target m_Target;
+    DataLayout m_Layout;
 
     std::unordered_map<String, Type *> m_Types = {};
     std::unordered_map<String, Data *> m_Data = {};
@@ -49,6 +87,8 @@ public:
     Segment(const Target &T);
 
     ~Segment();
+
+    const DataLayout &get_data_layout() const { return m_Layout; }
 
     void add_data(Data *D);
 
@@ -64,7 +104,7 @@ public:
 
     void remove_function(Function *F);
 
-    void print(std::ofstream &OS) const;
+    void print(std::ostream &OS) const;
 };
 
 } // namespace mir

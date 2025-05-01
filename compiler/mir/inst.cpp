@@ -1,9 +1,15 @@
 #include "basicblock.h"
 #include "inst.h"
 #include "type.h"
-#include <fstream>
+
+#include <cassert>
+#include <map>
 
 using namespace mir;
+
+static std::map<String, unsigned> g_Dict = {};
+
+void mir::clear_inst_dict() { g_Dict.clear(); }
 
 Inst::Inst(BasicBlock *P) : Value("", nullptr), m_Parent(P) {
     m_Parent->append(this);
@@ -11,36 +17,32 @@ Inst::Inst(BasicBlock *P) : Value("", nullptr), m_Parent(P) {
 
 Inst::Inst(String N, Type *T, BasicBlock *P) : Value(N, T), m_Parent(P) {
     m_Parent->append(this);
-}
 
-void SlotNode::print(std::ofstream &OS) const {
-    OS << get_name() << " := slot " << m_Alloc->get_name() << ", " << m_Align 
-       << "\n";
-}
-
-void StoreInst::print(std::ofstream &OS) const {
-    OS << "store ";
-    m_Value->print(OS);
-    OS << ", ";
-    m_Dest->print(OS);
-    if (m_Offset) {
-        OS << " + ";
-        m_Offset->print(OS);
+    if (g_Dict[N] == 0) {
+        m_Name = N;
+        g_Dict[N] = 1;
+    } else {
+        m_Name = N + std::to_string(g_Dict[N]);
+        g_Dict[N]++;
     }
-    OS << "\n";
 }
 
-void LoadInst::print(std::ofstream &OS) const {
-    OS << get_name() << " := load " << m_Type->get_name() << ", ";
-    m_Source->print(OS);
-    OS << "\n";
+void StoreInst::print(std::ostream &OS) const { 
+    assert(false && "'store' does not produce a value."); 
 }
 
-void RetInst::print(std::ofstream &OS) const {
-    OS << "ret";
-    if (m_Value) {
-        OS << " ";
-        m_Value->print(OS);
-    }
-    OS << "\n";
+void LoadInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " %" << get_name();
+}
+
+void BrifInst::print(std::ostream &OS) const {
+    assert(false && "'brif' does not produce a value.");
+}
+
+void JMPInst::print(std::ostream &OS) const {
+    assert(false && "'jmp' does not produce a value.");
+}
+
+void RetInst::print(std::ostream &OS) const {
+    assert(false && "'ret' does not produce a value.");
 }
