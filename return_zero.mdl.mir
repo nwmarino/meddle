@@ -1,5 +1,7 @@
 target :: x86_64 linux system_v
 
+global :: readonly i64 5, align 8
+
 test :: () -> i32 {
 entry1:
     jmp match.chain2

@@ -384,6 +384,42 @@ TEST_F(ParseExprTest, Paren_Basic) {
     delete unit;
 }
 
+#define SIZEOF_BASIC R"(test::() { fix x: i32 = sizeof<i32>; })"
+TEST_F(ParseExprTest, Sizeof_Basic) {
+    File file = File("", "", "", SIZEOF_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "i32");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_FALSE(VD->isMutable());
+    EXPECT_FALSE(VD->isGlobal());
+
+    SizeofExpr *SE = dynamic_cast<SizeofExpr *>(VD->getInit());
+    EXPECT_NE(SE, nullptr);
+    EXPECT_NE(SE->getTarget(), nullptr);
+    EXPECT_EQ(SE->getTarget()->getName(), "i32");
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

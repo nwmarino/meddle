@@ -17,6 +17,8 @@ Decl *Parser::parse_decl() {
 
     if (match(TokenKind::SetParen))
         return parse_function(name);
+    else if (match_keyword("fix") || match_keyword("mut"))
+        return parse_global_var(name);
 
     return nullptr;
 }
@@ -63,6 +65,43 @@ FunctionDecl *Parser::parse_function(const Token &name) {
     );
     m_Scope->addDecl(fn);
     return fn;
+}
+
+VarDecl *Parser::parse_global_var(const Token &name) {
+    Type *T = nullptr;
+    Expr *init = nullptr;
+    bool mut = m_Current->value == "mut";
+    next(); // 'fix' or 'mut'
+
+    T = parse_type(true);
+
+    if (!match(TokenKind::Equals))
+        fatal("global variable must have an initializer", &m_Current->md);
+    next(); // '='
+
+    init = parse_expr();
+    if (!init)
+        fatal("expected an initializer", &m_Current->md);
+
+    if (!init->isConstant())
+        fatal("global variable must be initialized with a constant", 
+            &m_Current->md);
+
+    if (!match(TokenKind::Semi))
+        fatal("expected ';' after variable", &m_Current->md);
+    next(); // ';'
+
+    VarDecl *var = new VarDecl(
+        m_Attributes,
+        name.md,
+        name.value,
+        T,
+        init,
+        mut,
+        true
+    );
+    m_Scope->addDecl(var);
+    return var;
 }
 
 VarDecl *Parser::parse_var(bool mut) {

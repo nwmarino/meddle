@@ -169,6 +169,56 @@ TEST_F(ParseDeclTest, Var_Local_Fix_Init) {
     delete unit;
 }
 
+#define VAR_GLOBAL_1 R"(global :: fix i64 = 0;)"
+TEST_F(ParseDeclTest, Var_Global_Fix_Init) {
+    File file = File("", "", "", VAR_GLOBAL_1);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "global");
+    EXPECT_EQ(VD->getType()->getName(), "i64");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_FALSE(VD->isMutable());
+    EXPECT_TRUE(VD->isGlobal());
+
+    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(VD->getInit());
+    EXPECT_NE(I, nullptr);
+    EXPECT_EQ(I->getValue(), 0);
+
+    delete unit;
+}
+
+#define VAR_GLOBAL_2 R"(global :: mut i64 = 0;)"
+TEST_F(ParseDeclTest, Var_Global_Mut_Init) {
+    File file = File("", "", "", VAR_GLOBAL_2);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "global");
+    EXPECT_EQ(VD->getType()->getName(), "i64");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_TRUE(VD->isMutable());
+    EXPECT_TRUE(VD->isGlobal());
+
+    IntegerLiteral *I = dynamic_cast<IntegerLiteral *>(VD->getInit());
+    EXPECT_NE(I, nullptr);
+    EXPECT_EQ(I->getValue(), 0);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

@@ -72,6 +72,7 @@ public:
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
+    void visit(SizeofExpr *expr) override;
 };
 
 } // namespace meddle

@@ -197,6 +197,22 @@ public:
 	NamedDecl *getRef() const { return m_Ref; }
 };
 
+class SizeofExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Type *m_Target;
+
+public:
+	SizeofExpr(const Metadata &M, Type *T, Type *Target)
+	  : Expr(M, T), m_Target(Target) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Type *getTarget() const { return m_Target; }
+};
+
 } // namespace meddle
 
 #endif // MEDDLE_EXPR_H

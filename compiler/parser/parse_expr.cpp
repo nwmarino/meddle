@@ -33,6 +33,8 @@ Expr *Parser::parse_ident() {
         return parse_nil();
     else if (match_keyword("true") || match_keyword("false"))
         return parse_bool();
+    else if (match_keyword("sizeof"))
+        return parse_sizeof();
 
     return parse_ref();
 }
@@ -145,4 +147,21 @@ RefExpr *Parser::parse_ref() {
 
     next();
     return new RefExpr(md, nullptr, name, D);
+}
+
+SizeofExpr *Parser::parse_sizeof() {
+    Metadata md = m_Current->md;
+    next(); // 'sizeof'
+
+    if (!match(TokenKind::Left))
+        fatal("expected '<' after 'sizeof' keyword", &m_Current->md);
+    next(); // '<'
+
+    Type *T = parse_type(true);
+
+    if (!match(TokenKind::Right))
+        fatal("expected '>' after 'sizeof' type", &m_Current->md);
+    next(); // '>'
+
+    return new SizeofExpr(md, m_Context->getU64Type(), T);
 }

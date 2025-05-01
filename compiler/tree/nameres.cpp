@@ -7,6 +7,15 @@
 
 using namespace meddle;
 
+static Type *unwrapType(Type *T) {
+    assert(T && "Cannot unwrap null types.");
+    
+    if (T->isQualified())
+        return T;
+
+    return static_cast<TypeResult *>(T)->getUnderlying();
+}
+
 NameResolution::NameResolution(const Options &opts, TranslationUnit *U) 
   : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()) {
     U->accept(this);
@@ -22,13 +31,20 @@ void NameResolution::visit(FunctionDecl *decl) {
     for (auto &P : decl->getParams())
         P->accept(this);
 
-    decl->m_Body->accept(this);
+    decl->getBody()->accept(this);
     m_Scope = m_Scope->getParent();
 }
 
 void NameResolution::visit(VarDecl *decl) {
     if (decl->getInit())
         decl->getInit()->accept(this);
+
+    if (!decl->m_Type) {
+        assert(decl->getInit() != nullptr && "Cannot infer type.");
+        decl->m_Type = decl->getInit()->getType();
+    } else {
+        decl->m_Type = unwrapType(decl->getType());
+    }
 }
 
 void NameResolution::visit(CompoundStmt *stmt) {
@@ -77,11 +93,13 @@ void NameResolution::visit(UntilStmt *stmt) {
 }
 
 void NameResolution::visit(CastExpr *expr) {
-    expr->m_Expr->accept(this);
+    expr->getExpr()->accept(this);
+    expr->m_Type = unwrapType(expr->m_Type);
 }
 
 void NameResolution::visit(ParenExpr *expr) {
     expr->m_Expr->accept(this);
+    expr->m_Type = expr->getExpr()->getType();
 }
 
 void NameResolution::visit(RefExpr *expr) {
@@ -92,4 +110,8 @@ void NameResolution::visit(RefExpr *expr) {
         expr->m_Type = VD->getType();
     else
         fatal("bad reference", &expr->getMetadata());
+}
+
+void NameResolution::visit(SizeofExpr *expr) {
+    expr->m_Target = unwrapType(expr->getTarget());
 }

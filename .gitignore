@@ -11,3 +11,4 @@ MEDDLE.md
 *.mdl.c
 *.mdl.h
 main
+vgcore.*

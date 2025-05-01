@@ -30,6 +30,7 @@ class NilLiteral;
 class CastExpr;
 class ParenExpr;
 class RefExpr;
+class SizeofExpr;
 
 class Visitor {
 public:
@@ -59,6 +60,7 @@ public:
     virtual void visit(CastExpr *expr) {}
     virtual void visit(ParenExpr *expr) {}
     virtual void visit(RefExpr *expr) {}
+    virtual void visit(SizeofExpr *expr) {}
 };
 
 } // namespace meddle

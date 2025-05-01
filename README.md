@@ -2,10 +2,9 @@
 
 ## roadmap
 
-- `SizeofExpr`
-
-Global Variables
-- add to `VarDecl`
+Type Sanitation
+- Type Result Unwrapping
+- Function Type Reconstruction (in context)
 
 Binary Expressions
 - `=` Assign

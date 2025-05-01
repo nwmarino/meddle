@@ -51,6 +51,7 @@ class Parser final {
 
     Decl *parse_decl();
     FunctionDecl *parse_function(const Token &name);
+    VarDecl *parse_global_var(const Token &name);
     VarDecl *parse_var(bool mut);
 
     Stmt *parse_stmt();
@@ -76,6 +77,7 @@ class Parser final {
     CastExpr *parse_cast();
     ParenExpr *parse_paren();
     RefExpr *parse_ref();
+    SizeofExpr *parse_sizeof();
 
 public:
     Parser(const File &F, const TokenStream &S);

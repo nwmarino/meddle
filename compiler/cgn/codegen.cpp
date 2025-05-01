@@ -82,14 +82,16 @@ mir::Type *CGN::cgn_type(Type *T) {
 			return m_Builder.get_f64_ty();
 		}
 	} else if (auto *AT = dynamic_cast<ArrayType *>(T)) {
-		return mir::ArrayType::get(m_Segment, cgn_type(AT->getElement()), AT->getSize());
+		return mir::ArrayType::get(m_Segment, cgn_type(AT->getElement()), 
+			AT->getSize());
 	} else if (auto *FT = dynamic_cast<FunctionType *>(T)) {
 		std::vector<mir::Type *> params = {};
 		params.reserve(FT->getNumParams());
 		for (auto &P : FT->getParams())
 			params.push_back(cgn_type(P));
 
-		return mir::FunctionType::get(m_Segment, params, cgn_type(FT->getReturnType()));
+		return mir::FunctionType::get(m_Segment, params, 
+				cgn_type(FT->getReturnType()));
 	} else if (auto *PT = dynamic_cast<PointerType *>(T)) {
 		return mir::PointerType::get(m_Segment, cgn_type(PT->getPointee()));
 	}
@@ -176,9 +178,25 @@ void CGN::visit(FunctionDecl *decl) {
 
 void CGN::visit(VarDecl *decl) {
 	mir::Type *ty = cgn_type(decl->getType());
+	mir::DataLayout DL = m_Segment->get_data_layout();
 
 	if (decl->isGlobal() && m_Phase == Phase::Declare) {
+		mir::Data::Linkage L = mir::Data::Linkage::Internal;
 
+		m_VC = ValueContext::RValue;
+		decl->getInit()->accept(this);
+		assert(m_Value && "Variable initializer does not produce a value.");
+		mir::Constant *C = static_cast<mir::Constant *>(m_Value);
+
+		new mir::Data(
+			mangle_name(decl), 
+			ty, 
+			L, 
+			m_Segment, 
+			C,
+			DL.get_type_align(ty),
+			!decl->isMutable()
+		);
 	} else if (!decl->isGlobal()) {
 		mir::Slot *slot = m_Builder.build_slot(ty, decl->getName());
 		
@@ -189,7 +207,6 @@ void CGN::visit(VarDecl *decl) {
 		decl->getInit()->accept(this);
 		assert(m_Value && "Variable initializer does not produce a value.");
 
-		mir::DataLayout DL = m_Segment->get_data_layout();
 		bool isAggregate = !DL.is_scalar_ty(ty);
 		unsigned size = DL.get_type_size(ty);
 
@@ -420,28 +437,38 @@ void CGN::visit(UntilStmt *stmt) {
 }
 
 void CGN::visit(BoolLiteral *expr) {
-	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
+	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), 
+		expr->getValue());
 }
 
 void CGN::visit(IntegerLiteral *expr) {
-	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
+	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), 
+		expr->getValue());
 }
 
 void CGN::visit(FloatLiteral *expr) {
-	m_Value = mir::ConstantFP::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
+	m_Value = mir::ConstantFP::get(m_Segment, cgn_type(expr->getType()), 
+		expr->getValue());
 }
 
 void CGN::visit(CharLiteral *expr) {
-	m_Value = mir::ConstantInt::get(m_Segment, m_Builder.get_i8_ty(), expr->getValue());
+	m_Value = mir::ConstantInt::get(m_Segment, m_Builder.get_i8_ty(), 
+		expr->getValue());
 }
 
 void CGN::visit(StringLiteral *expr) {
 	mir::ConstantString *STR = new mir::ConstantString(
 		cgn_type(expr->getType()), expr->getValue());
 
-	m_Value = new mir::Data("str", mir::PointerType::get(m_Segment, 
-		STR->get_type()), m_Segment, STR, 
-		m_Segment->get_data_layout().get_type_align(STR->get_type()), true);
+	m_Value = new mir::Data(
+		"str", // name
+		mir::PointerType::get(m_Segment, STR->get_type()), // data pointer type 
+		mir::Data::Linkage::Internal, // linkage 
+		m_Segment, // parent
+		STR, // value
+		m_Segment->get_data_layout().get_type_align(STR->get_type()), // align
+		true // readonly?
+	);
 }
 
 void CGN::visit(NilLiteral *expr) {
@@ -460,7 +487,8 @@ void CGN::visit(CastExpr *expr) {
 
     if (srcT == castT) {
         m_Value = srcV;
-    } else if (expr->getType()->isSInt() && srcT->is_integer_ty() && castT->is_integer_ty()) {
+    } else if (expr->getType()->isSInt() && srcT->is_integer_ty() 
+			&& castT->is_integer_ty()) {
         unsigned srcWD = DL.get_type_size(srcT);
         unsigned castWD = DL.get_type_size(castT);
 
@@ -470,7 +498,8 @@ void CGN::visit(CastExpr *expr) {
             m_Value = m_Builder.build_sext(srcV, castT, "cast.sext");
         else
             m_Value = m_Builder.build_trunc(srcV, castT, "cast.trunc");
-    } else if (expr->getType()->isUInt( ) && srcT->is_integer_ty() && castT->is_integer_ty()) {
+    } else if (expr->getType()->isUInt( ) && srcT->is_integer_ty() 
+			&& castT->is_integer_ty()) {
 		unsigned srcWD = DL.get_type_size(srcT);
 		unsigned castWD = DL.get_type_size(castT);
 
@@ -521,4 +550,12 @@ void CGN::visit(RefExpr *expr) {
 		m_Value = m_Builder.build_load(cgn_type(expr->getType()), slot, 
 			expr->getName() + ".val");
 	}
+}
+
+void CGN::visit(SizeofExpr *expr) {
+	mir::DataLayout DL = m_Segment->get_data_layout();
+	mir::Type *T = cgn_type(expr->getTarget());
+	
+	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), 
+		DL.get_type_size(T));
 }

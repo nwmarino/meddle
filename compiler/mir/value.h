@@ -54,17 +54,22 @@ public:
 class Data final : public Value {
     friend class Builder;
 
+public:
+    enum class Linkage {
+        Internal,
+        External,
+    };
+
+private:
+    Linkage m_Linkage;
     Segment *m_Parent;
     Value *m_Value;
     unsigned m_Align;
     bool m_ReadOnly;
 
 public:
-    Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R);
-    
-    ~Data() override {
-        delete m_Value;
-    }
+    Data(String N, Type *T, Linkage L, Segment *P, Value *V, unsigned A, 
+         bool R);
 
     Value *get_value() const { return m_Value; }
 

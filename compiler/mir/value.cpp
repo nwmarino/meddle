@@ -9,8 +9,11 @@ using namespace mir;
 
 static std::map<String, unsigned> g_Dict = {};
 
-Data::Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R)
-    : Value(N, T), m_Parent(P), m_Value(V), m_Align(A), m_ReadOnly(R) {
+Data::Data(String N, Type *T, Linkage L, Segment *P, Value *V, unsigned A, 
+           bool R)
+    : Value(N, T), m_Linkage(L), m_Parent(P), m_Value(V), m_Align(A), 
+      m_ReadOnly(R) 
+{
     if (m_Parent)
         m_Parent->add_data(this);
 
