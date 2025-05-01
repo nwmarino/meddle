@@ -1,4 +1,16 @@
-main :: () i32 {
+main :: () {
     fix x: i64* = nil;
-    ret 1;
+    match x {
+        nil -> { ret; }
+        5 -> ret;
+        _ -> ret;
+    }
+}
+
+test :: () i32 { 
+    match 5 { 
+        1 -> { ret 0; } 
+        2 -> { ret 42; } 
+        _ -> ret 1; 
+    } 
 }

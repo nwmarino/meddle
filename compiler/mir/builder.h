@@ -83,14 +83,22 @@ public:
     Value *build_fp2ui(Value *V, Type *D, String N = "");
 
     Value *build_reint(Value *V, Type *D, String N = "");
+
+    Value *build_ptr2int(Value *V, Type *D, String N = "");
+
+    Value *build_int2ptr(Value *V, Type *D, String N = "");
     
-    Value *build_cmp_ieq(Value *LV, Value *RV, String N = "");
+    Value *build_icmp_eq(Value *LV, Value *RV, String N = "");
 
-    Value *build_cmp_ine(Value *LV, Value *RV, String N = "");
+    Value *build_icmp_ne(Value *LV, Value *RV, String N = "");
 
-    Value *build_cmp_foeq(Value *LV, Value *RV, String N = "");
+    Value *build_fcmp_oeq(Value *LV, Value *RV, String N = "");
 
-    Value *build_cmp_fone(Value *LV, Value *RV, String N = "");
+    Value *build_fcmp_one(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_eq(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_ne(Value *LV, Value *RV, String N = "");
 };
 
 } // namespace mir

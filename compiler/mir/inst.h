@@ -61,14 +61,6 @@ class StoreInst final : public Inst {
     ) : Inst(P), m_Value(V), m_Dest(D), m_Offset(O) {}
 
 public:
-    ~StoreInst() override {
-        if (m_Value->is_constant())
-            delete m_Value;
-
-        if (m_Offset)
-            delete m_Offset;
-    }
-
     Value *get_value() const { return m_Value; }
 
     Value *get_dest() const { return m_Dest; }
@@ -95,11 +87,6 @@ class LoadInst final : public Inst {
     ) : Inst(N, T, P), m_Source(S), m_Offset(O) {}
 
 public:
-    ~LoadInst() override {
-        if (m_Offset)
-            delete m_Offset;
-    }
-
     bool produces_value() const override { return true; }
 
     Value *get_source() const { return m_Source; }
@@ -155,11 +142,6 @@ class BrifInst final : public Inst {
       : Inst(P), m_Cond(C), m_True(T), m_False(F) {}
 
 public:
-    ~BrifInst() override {
-        if (m_Cond->is_constant())
-            delete m_Cond;
-    }
-
     bool is_terminator() const override { return true; }
 
     Value *get_cond() const { return m_Cond; }
@@ -194,11 +176,6 @@ class RetInst final : public Inst {
     RetInst(BasicBlock *P, Value *V = nullptr) : Inst(P), m_Value(V) {} 
 
 public:
-    ~RetInst() override {
-        if (m_Value && m_Value->is_constant())
-            delete m_Value;
-    }
-
     bool is_terminator() const override { return true; }
 
     bool is_ret() const override { return true; }
@@ -225,6 +202,8 @@ public:
         FP2SI,
         FP2UI,
         Reint,
+        Ptr2Int,
+        Int2Ptr,
     };
 
 private:
@@ -235,11 +214,6 @@ private:
       : Inst(N, T, P), m_Kind(K), m_Value(V) {}
 
 public:
-    ~UnopInst() override {
-        if (m_Value->is_constant())
-            delete m_Value;
-    }
-
     Kind get_kind() const { return m_Kind; }
 
     Value *get_value() const { return m_Value; }
@@ -252,10 +226,12 @@ class CMPInst final : public Inst {
 
 public:
     enum class Kind {
-        CMP_IEQ,
-        CMP_INE,
-        CMP_FOEQ,
-        CMP_FONE,
+        ICMP_EQ,
+        ICMP_NE,
+        FCMP_OEQ,
+        FCMP_ONE,
+        PCMP_EQ,
+        PCMP_NE,
     };
 
 private:
@@ -267,13 +243,6 @@ private:
       : Inst(N, T, P), m_Kind(K), m_LVal(LV), m_RVal(RV) {}
 
 public:
-    ~CMPInst() override {
-        if (m_LVal->is_constant())
-            delete m_LVal;
-        if (m_RVal->is_constant())
-            delete m_RVal;
-    }
-
     Kind get_kind() const { return m_Kind; }
 
     Value *get_lval() const { return m_LVal; }

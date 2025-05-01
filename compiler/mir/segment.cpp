@@ -3,8 +3,6 @@
 #include "segment.h"
 #include "type.h"
 
-#include <fstream>
-
 using namespace mir;
 
 DataLayout Target::get_data_layout() const {
@@ -122,17 +120,53 @@ Segment::Segment(const Target &T) : m_Target(T), m_Layout(T.get_data_layout()) {
     m_Types["f32"] = new FloatType(FloatType::Kind::Float32);
     m_Types["f64"] = new FloatType(FloatType::Kind::Float64);
     m_Types["void"] = new VoidType();
+    m_I1Zero = new ConstantInt(m_Types.at("i1"), 0);
+    m_I1One = new ConstantInt(m_Types.at("i1"), 1);
 }
 
 Segment::~Segment() {
     for (auto &T : m_Types)
         delete T.second;
+    m_Types.clear();
 
     for (auto &FN : m_Functions)
         delete FN.second;
+    m_Functions.clear();
 
     for (auto &D : m_Data)
         delete D.second;
+    m_Data.clear();
+
+    for (auto &[ Type, Nil ] : m_NilPool)
+        delete Nil;
+    m_NilPool.clear();
+
+    for (auto &[ Value, Int ] : m_I8Pool)
+        delete Int;
+    m_I8Pool.clear();
+
+    for (auto &[ Value, Int ] : m_I16Pool)
+        delete Int;
+    m_I16Pool.clear();
+
+    for (auto &[ Value, Int ] : m_I32Pool)
+        delete Int;
+    m_I32Pool.clear();
+
+    for (auto &[ Value, Int ] : m_I64Pool)
+        delete Int;
+    m_I64Pool.clear();
+
+    for (auto &[ Value, FP ] : m_F32Pool)
+        delete FP;
+    m_F32Pool.clear();
+
+    for (auto &[ Value, FP ] : m_F64Pool)
+        delete FP;
+    m_F64Pool.clear();
+
+    delete m_I1Zero;
+    delete m_I1One;
 }
 
 void Segment::add_data(Data *D) {

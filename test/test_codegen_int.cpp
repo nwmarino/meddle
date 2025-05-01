@@ -121,7 +121,7 @@ TEST_F(IntegratedCodegenTest, If_Then) {
 
 test :: () -> void {
 entry:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, if.then, if.merge
 
 if.then:
@@ -161,7 +161,7 @@ TEST_F(IntegratedCodegenTest, If_Then_Else) {
 
 test :: () -> void {
 entry:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, if.then, if.else
 
 if.then:
@@ -201,14 +201,14 @@ TEST_F(IntegratedCodegenTest, If_Then_ElseIf_Else) {
 
 test :: () -> void {
 entry:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, if.then, if.else
 
 if.then:
     ret
 
 if.else:
-    %int.cmp1 := cmp_ine i64 2, i64 0
+    %int.cmp1 := icmp i64 2 != i64 0
     brif i1 %int.cmp1, if.then1, if.else1
 
 if.then1:
@@ -251,7 +251,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -294,7 +294,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -337,7 +337,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -380,11 +380,11 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := cmp_ine i64 1, i64 0
+    %int.cmp := icmp i64 1 != i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
-    %int.cmp1 := cmp_ine i64 2, i64 0
+    %int.cmp1 := icmp i64 2 != i64 0
     brif i1 %int.cmp1, if.then, if.else
 
 if.then:
@@ -768,6 +768,59 @@ entry:
     %cast.ptr := reint void* nil -> i64*
     str i64* %cast.ptr -> i64** $x
     ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define INT_CGN_20 R"(test::() i32 { match 5 { 1 -> { ret 0; } 2 -> { ret 42; } _ -> ret 1; } })"
+TEST_F(IntegratedCodegenTest, Match_Basic) {
+    File file = File("", "", "", INT_CGN_20);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i32 {
+entry:
+    jmp match.chain
+
+match.chain:
+    %match.cmp := icmp i64 5 == i64 1
+    brif i1 %match.cmp, match.case, match.chain1
+
+match.case:
+    %cast.trunc := trunc i64 0 -> i32
+    ret i32 %cast.trunc
+
+match.chain1:
+    %match.cmp1 := icmp i64 5 == i64 2
+    brif i1 %match.cmp1, match.case1, match.def
+
+match.case1:
+    %cast.trunc1 := trunc i64 42 -> i32
+    ret i32 %cast.trunc1
+
+match.def:
+    %cast.trunc2 := trunc i64 1 -> i32
+    ret i32 %cast.trunc2
 }
 )";
     EXPECT_EQ(ss.str(), expected);

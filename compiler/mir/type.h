@@ -27,6 +27,8 @@ class Type {
 public:
     Type(String N, TypeKind K) : m_Name(N), m_TypeKind(K) {}
 
+    virtual ~Type() = default;
+
     String get_name() const { return m_Name; }
 
     TypeKind get_ty_kind() const { return m_TypeKind; }
@@ -82,7 +84,7 @@ public:
         Int16,
         Int32,
         Int64,
-        Int128,
+        //Int128,
     };
 
     String get_kind_name(Kind K) const {
@@ -92,7 +94,7 @@ public:
         case Kind::Int16: return "i16";
         case Kind::Int32: return "i32";
         case Kind::Int64: return "i64";
-        case Kind::Int128: return "i128";
+        //case Kind::Int128: return "i128";
         }
     }
 
@@ -111,7 +113,7 @@ public:
         case Kind::Int16: return N == 16;
         case Kind::Int32: return N == 32;
         case Kind::Int64: return N == 64;
-        case Kind::Int128: return N == 128;
+        //case Kind::Int128: return N == 128;
         }
         return false;
     }
@@ -127,14 +129,14 @@ public:
     enum class Kind {
         Float32,
         Float64,
-        Float128,
+        //Float128,
     };
 
     String get_kind_name(Kind K) const {
         switch (K) {
         case Kind::Float32: return "f32";
         case Kind::Float64: return "f64";
-        case Kind::Float128: return "f128";
+        //case Kind::Float128: return "f128";
         }
     }
 
@@ -152,7 +154,7 @@ public:
         switch (m_Kind) {
         case Kind::Float32: return N == 32;
         case Kind::Float64: return N == 64;
-        case Kind::Float128: return N == 128;
+        //case Kind::Float128: return N == 128;
         }
         return false;
     }

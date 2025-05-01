@@ -87,6 +87,8 @@ bool PrimitiveType::canCastTo(Type *T) const {
     assert(T && "Type cannot be null.");
     if (auto *PT = dynamic_cast<PrimitiveType *>(T))
         return isVoid() == T->isVoid();
+    else if (auto *PT = dynamic_cast<PointerType *>(T))
+        return isSInt() || isUInt();
 
     return false;
 }
@@ -142,7 +144,7 @@ bool ArrayType::compare(Type *T) const {
 
 bool PointerType::canCastTo(Type *T) const {
     assert(T && "Type cannot be null.");
-    return T->isPointer();
+    return T->isPointer() || T->isUInt() || T->isSInt();
 }
 
 bool PointerType::compare(Type *T) const {

@@ -211,10 +211,10 @@ Value *Builder::build_ui2fp(Value *V, Type *D, String N) {
     assert(D->is_float_ty() && 
            "Unsigned integer to floating point destination must be a floating point type.");
 
-    UnopInst *ext = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
         UnopInst::Kind::UI2FP, V);
-    V->add_use(ext);
-    return ext;
+    V->add_use(cvt);
+    return cvt;
 }
 
 Value *Builder::build_fp2si(Value *V, Type *D, String N) {
@@ -226,10 +226,10 @@ Value *Builder::build_fp2si(Value *V, Type *D, String N) {
     assert(D->is_integer_ty() && 
            "Floating point to signed integer destination must be an integer.");
 
-    UnopInst *ext = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
         UnopInst::Kind::FP2SI, V);
-    V->add_use(ext);
-    return ext;
+    V->add_use(cvt);
+    return cvt;
 }
 
 Value *Builder::build_fp2ui(Value *V, Type *D, String N) {
@@ -241,10 +241,10 @@ Value *Builder::build_fp2ui(Value *V, Type *D, String N) {
     assert(D->is_integer_ty() && 
            "Floating point to unsigned integer destination must be an integer.");
 
-    UnopInst *ext = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
         UnopInst::Kind::FP2UI, V);
-    V->add_use(ext);
-    return ext;
+    V->add_use(cvt);
+    return cvt;
 }
 
 Value *Builder::build_reint(Value *V, Type *D, String N) {
@@ -256,45 +256,75 @@ Value *Builder::build_reint(Value *V, Type *D, String N) {
     assert(D->is_pointer_ty() && 
            "Reinterpret destination must be a pointer type.");
 
-    UnopInst *ext = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
         UnopInst::Kind::Reint, V);
-    V->add_use(ext);
-    return ext;
+    V->add_use(cvt);
+    return cvt;
 }
 
-Value *Builder::build_cmp_ieq(Value *LV, Value *RV, String N) {
+Value *Builder::build_ptr2int(Value *V, Type *D, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Pointer to integer source cannot be null.");
+    assert(D && "Pointer to integer destination cannot be null.");
+    assert(V->get_type()->is_pointer_ty() && 
+           "Pointer to integer source must be a pointer type.");
+    assert(D->is_integer_ty() &&
+           "Pointer to integer destination must be an integer.");
+           
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+        UnopInst::Kind::Ptr2Int, V);
+    V->add_use(cvt);
+    return cvt;
+}
+
+Value *Builder::build_int2ptr(Value *V, Type *D, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Integer to pointer source cannot be null.");
+    assert(D && "Integer to pointer destination cannot be null.");
+    assert(V->get_type()->is_integer_ty() && 
+           "Integer to pointer source must be an integer.");
+    assert(D->is_pointer_ty() &&
+           "Integer to pointer destination must be a pointer.");
+
+    UnopInst *cvt = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+        UnopInst::Kind::Int2Ptr, V);
+    V->add_use(cvt);
+    return cvt;
+}
+
+Value *Builder::build_icmp_eq(Value *LV, Value *RV, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(LV && "Compare left value cannot be null.");
     assert(RV && "Compare right value cannot be null.");
-    assert((LV->get_type()->is_integer_ty() || LV->get_type()->is_pointer_ty()) 
-           && "Compare 'ieq' left value must be an integer.");
-    assert((RV->get_type()->is_integer_ty() || RV->get_type()->is_pointer_ty()) 
-           && "Compare 'ieq' right value must be an integer.");
+    assert(LV->get_type()->is_integer_ty() && 
+           "Compare 'ieq' left value must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && 
+           "Compare 'ieq' right value must be an integer.");
 
     CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
-        CMPInst::Kind::CMP_IEQ, LV, RV);
+        CMPInst::Kind::ICMP_EQ, LV, RV);
     LV->add_use(cmp);
     RV->add_use(cmp);
     return cmp;
 }
 
-Value *Builder::build_cmp_ine(Value *LV, Value *RV, String N) {
+Value *Builder::build_icmp_ne(Value *LV, Value *RV, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(LV && "Compare left value cannot be null.");
     assert(RV && "Compare right value cannot be null.");
-    assert((LV->get_type()->is_integer_ty() || LV->get_type()->is_pointer_ty()) 
-           && "Compare 'ine' left value must be an integer.");
-    assert((RV->get_type()->is_integer_ty() || RV->get_type()->is_pointer_ty()) 
-           && "Compare 'ine' right value must be an integer.");
+    assert(LV->get_type()->is_integer_ty() && 
+           "Compare 'ine' left value must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && 
+           "Compare 'ine' right value must be an integer.");
 
     CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
-        CMPInst::Kind::CMP_INE, LV, RV);
+        CMPInst::Kind::ICMP_NE, LV, RV);
     LV->add_use(cmp);
     RV->add_use(cmp);
     return cmp;
 }
 
-Value *Builder::build_cmp_foeq(Value *LV, Value *RV, String N) {
+Value *Builder::build_fcmp_oeq(Value *LV, Value *RV, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(LV && "Compare left value cannot be null.");
     assert(RV && "Compare right value cannot be null.");
@@ -304,13 +334,13 @@ Value *Builder::build_cmp_foeq(Value *LV, Value *RV, String N) {
            "Compare 'foeq' right value must be a floating point type.");
 
     CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
-        CMPInst::Kind::CMP_FOEQ, LV, RV);
+        CMPInst::Kind::FCMP_OEQ, LV, RV);
     LV->add_use(cmp);
     RV->add_use(cmp);
     return cmp;
 }
 
-Value *Builder::build_cmp_fone(Value *LV, Value *RV, String N) {
+Value *Builder::build_fcmp_one(Value *LV, Value *RV, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(LV && "Compare left value cannot be null.");
     assert(RV && "Compare right value cannot be null.");
@@ -320,7 +350,39 @@ Value *Builder::build_cmp_fone(Value *LV, Value *RV, String N) {
            "Compare 'fone' right value must be a floating point type.");
 
     CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
-        CMPInst::Kind::CMP_FONE, LV, RV);
+        CMPInst::Kind::FCMP_ONE, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}
+
+Value *Builder::build_pcmp_eq(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert(LV->get_type()->is_pointer_ty() && 
+           "Compare 'peq' left value must be a pointer type.");
+    assert(RV->get_type()->is_pointer_ty() && 
+           "Compare 'peq' right value must be a pointer type.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::PCMP_EQ, LV, RV);
+    LV->add_use(cmp);
+    RV->add_use(cmp);
+    return cmp;
+}
+
+Value *Builder::build_pcmp_ne(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Compare left value cannot be null.");
+    assert(RV && "Compare right value cannot be null.");
+    assert(LV->get_type()->is_pointer_ty() && 
+           "Compare 'pne' left value must be a pointer type.");
+    assert(RV->get_type()->is_pointer_ty() && 
+           "Compare 'pne' right value must be a pointer type.");
+
+    CMPInst *cmp = new CMPInst(N.empty() ? get_ssa() : N, get_i1_ty(), m_Insert,
+        CMPInst::Kind::PCMP_NE, LV, RV);
     LV->add_use(cmp);
     RV->add_use(cmp);
     return cmp;

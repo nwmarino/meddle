@@ -29,25 +29,25 @@ mir::Value *CGN::inject_cmp(mir::Value *V) {
         return V;
 
     if (V->get_type()->is_pointer_ty()) {
-		return m_Builder.build_cmp_ine(
-			V, 
-			new mir::ConstantNil(V->get_type()), 
+		return m_Builder.build_pcmp_ne(
+			V,
+			mir::ConstantNil::get(m_Segment, V->get_type()),
 			"ptr.cmp"
 		);
 	}
 
     if (V->get_type()->is_integer_ty()) {
-        return m_Builder.build_cmp_ine(
+        return m_Builder.build_icmp_ne(
             V,
-            new mir::ConstantInt(V->get_type(), 0),
+            mir::ConstantInt::get(m_Segment, V->get_type(), 0),
             "int.cmp"
         );
     }
 
     if (V->get_type()->is_float_ty()) {
-        return m_Builder.build_cmp_fone(
+        return m_Builder.build_fcmp_one(
 			V,
-            new mir::ConstantFP(V->get_type(), 0.0),
+            mir::ConstantFP::get(m_Segment, V->get_type(), 0.0),
             "fp.cmp"
         );
     }
@@ -317,11 +317,14 @@ void CGN::visit(MatchStmt *stmt) {
 
         // Compare the pattern value with main match expression.
         mir::Value *cmpV = nullptr;
-        if (matchV->get_type()->is_float_ty())
-            cmpV = m_Builder.build_cmp_foeq(matchV, patternV, "match.cmp");
-        else
-            cmpV = m_Builder.build_cmp_ieq(matchV, patternV, "match.cmp");
-        
+		if (matchV->get_type()->is_integer_ty()) {
+			cmpV = m_Builder.build_icmp_eq(matchV, patternV, "match.cmp");
+        } else if (matchV->get_type()->is_float_ty()) {
+            cmpV = m_Builder.build_fcmp_oeq(matchV, patternV, "match.cmp");
+		} else if (matchV->get_type()->is_pointer_ty()) {
+			cmpV = m_Builder.build_pcmp_eq(matchV, patternV, "match.cmp");
+		}
+
         mir::BasicBlock *body = new mir::BasicBlock("match.case", m_Function);
 
         // Branch to the case block if the comparison succeeded, otherwise
@@ -417,15 +420,15 @@ void CGN::visit(UntilStmt *stmt) {
 }
 
 void CGN::visit(IntegerLiteral *expr) {
-	m_Value = new mir::ConstantInt(cgn_type(expr->getType()), expr->getValue());
+	m_Value = mir::ConstantInt::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
 }
 
 void CGN::visit(FloatLiteral *expr) {
-	m_Value = new mir::ConstantFP(cgn_type(expr->getType()), expr->getValue());
+	m_Value = mir::ConstantFP::get(m_Segment, cgn_type(expr->getType()), expr->getValue());
 }
 
 void CGN::visit(CharLiteral *expr) {
-	m_Value = new mir::ConstantInt(m_Builder.get_i8_ty(), expr->getValue());
+	m_Value = mir::ConstantInt::get(m_Segment, m_Builder.get_i8_ty(), expr->getValue());
 }
 
 void CGN::visit(StringLiteral *expr) {
@@ -438,7 +441,7 @@ void CGN::visit(StringLiteral *expr) {
 }
 
 void CGN::visit(NilLiteral *expr) {
-	m_Value = new mir::ConstantNil(cgn_type(expr->getType()));
+	m_Value = mir::ConstantNil::get(m_Segment, cgn_type(expr->getType()));
 }
 
 void CGN::visit(CastExpr *expr) {
@@ -453,7 +456,6 @@ void CGN::visit(CastExpr *expr) {
 
     if (srcT == castT) {
         m_Value = srcV;
-        return;
     } else if (expr->getType()->isSInt() && srcT->is_integer_ty() && castT->is_integer_ty()) {
         unsigned srcWD = DL.get_type_size(srcT);
         unsigned castWD = DL.get_type_size(castT);
@@ -489,19 +491,15 @@ void CGN::visit(CastExpr *expr) {
             m_Value = m_Builder.build_fp2ui(srcV, castT, "cast.cvt");
         else
             m_Value = m_Builder.build_fp2si(srcV, castT, "cast.cvt");
-	} else if (srcT->is_pointer_ty() && castT->is_pointer_ty())
+	} else if (srcT->is_pointer_ty() && castT->is_pointer_ty()) {
 		m_Value = m_Builder.build_reint(srcV, castT, "cast.ptr");
-
-	/*
-    else if (srcT->isPointerTy() && castT->isIntegerTy())
-        tmp = IB.CreatePtrToInt(srcV, castT, "cast.ptr2int");
-
-    else if (srcT->isIntegerTy() && castT->isPointerTy())
-        tmp = IB.CreateIntToPtr(srcV, castT, "cast.int2ptr");
-	*/
-
-    else
+    } else if (srcT->is_pointer_ty() && castT->is_integer_ty()) {
+        m_Value = m_Builder.build_ptr2int(srcV, castT, "cast.ptr");
+	} else if (srcT->is_integer_ty() && castT->is_pointer_ty()) {
+        m_Value = m_Builder.build_int2ptr(srcV, castT, "cast.ptr");
+    } else {
 		assert(false && "Unsupported cast.");
+	}
 }
 
 void CGN::visit(RefExpr *expr) {

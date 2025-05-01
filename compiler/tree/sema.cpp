@@ -23,15 +23,16 @@ static void checkCompoundedDeclStmt(Stmt *S) {
 /// Perform a type check between an expected type and the actual one.
 ///
 /// \returns `true` if the types mismatched but a cast is possible.
-static bool typeCheck(Type *actual, Type *expected, const Metadata *md) {
+static bool typeCheck(Type *actual, Type *expected, const Metadata *md, 
+                      String ctx = "") {
     if (actual->compare(expected))
         return false;
 
     if (actual->canCastTo(expected))
         return true;
 
-    fatal("type mismatch, got '" + actual->getName() + "', expected '" + 
-          expected->getName() + "'", md);
+    fatal((ctx.empty() ? "" : ctx + " ") + "type mismatch, got '" + 
+          actual->getName() + "', expected '" + expected->getName() + "'", md);
 }
 
 Sema::Sema(const Options &opts, TranslationUnit *U) : m_Opts(opts), m_Unit(U) {
@@ -58,7 +59,8 @@ void Sema::visit(VarDecl *decl) {
     if (typeCheck(
         decl->getInit()->getType(), 
         decl->getType(),
-        &decl->getInit()->getMetadata() 
+        &decl->getInit()->getMetadata(),
+        "initializer"
     )) {
         decl->m_Init = new CastExpr(
             decl->getInit()->getMetadata(), 
@@ -115,8 +117,22 @@ void Sema::visit(CaseStmt *stmt) {
 
 void Sema::visit(MatchStmt *stmt) {
     stmt->getPattern()->accept(this);
-    for (auto &C : stmt->getCases())
+    for (auto &C : stmt->getCases()) {
         C->accept(this);
+
+        if (typeCheck(
+            C->getPattern()->getType(), 
+            stmt->getPattern()->getType(), 
+            &C->getMetadata(),
+            "pattern"
+        )) {
+            C->m_Pattern = new CastExpr(
+                C->getPattern()->getMetadata(), 
+                stmt->getPattern()->getType(), 
+                C->getPattern()
+            );
+        }
+    }
 
     if (stmt->getDefault()) {
         stmt->getDefault()->accept(this);
@@ -133,8 +149,9 @@ void Sema::visit(RetStmt *stmt) {
 
         if (typeCheck(stmt->getExpr()->getType(), 
             m_Function->getReturnType(), 
-            &stmt->getMetadata())
-        ) {
+            &stmt->getMetadata(),
+            "return"
+        )) {
             stmt->m_Expr = new CastExpr(
                 stmt->m_Expr->getMetadata(), 
                 m_Function->getReturnType(), 

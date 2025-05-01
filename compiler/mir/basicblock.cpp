@@ -200,6 +200,12 @@ static void print_unop(std::ostream &OS, UnopInst *I) {
     case UnopInst::Kind::Reint:
         OS << "reint ";
         break;
+    case UnopInst::Kind::Ptr2Int:
+        OS << "ptr2int ";
+        break;
+    case UnopInst::Kind::Int2Ptr:
+        OS << "int2ptr ";
+        break;
     }
 
     I->get_value()->print(OS);
@@ -212,22 +218,39 @@ static void print_cmp(std::ostream &OS, CMPInst *I) {
     OS << "%" << I->get_name() << " := ";
 
     switch (I->get_kind()) {
-    case CMPInst::Kind::CMP_IEQ:
-        OS << "cmp_ieq ";
+    case CMPInst::Kind::ICMP_EQ:
+        OS << "icmp ";
         break;
-    case CMPInst::Kind::CMP_INE:
-        OS << "cmp_ine ";
+    case CMPInst::Kind::ICMP_NE:
+        OS << "icmp ";
         break;
-    case CMPInst::Kind::CMP_FOEQ:
-        OS << "cmp_foeq ";
+    case CMPInst::Kind::FCMP_OEQ:
+        OS << "fcmpo ";
         break;
-    case CMPInst::Kind::CMP_FONE:
-        OS << "cmp_fone ";
+    case CMPInst::Kind::FCMP_ONE:
+        OS << "fcmpo ";
+        break;
+    case CMPInst::Kind::PCMP_EQ:
+        OS << "pcmp ";
+        break;
+    case CMPInst::Kind::PCMP_NE:
+        OS << "pcmp ";
         break;
     }
 
     I->get_lval()->print(OS);
-    OS << ", ";
+    switch (I->get_kind()) {
+    case CMPInst::Kind::ICMP_EQ:
+    case CMPInst::Kind::FCMP_OEQ:
+    case CMPInst::Kind::PCMP_EQ:
+        OS << " == ";
+        break;
+    case CMPInst::Kind::ICMP_NE:
+    case CMPInst::Kind::FCMP_ONE:
+    case CMPInst::Kind::PCMP_NE:
+        OS << " != ";
+        break;
+    }
     I->get_rval()->print(OS);
 }
 

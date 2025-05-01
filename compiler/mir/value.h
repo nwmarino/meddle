@@ -1,8 +1,6 @@
 #ifndef MEDDLE_VALUE_H
 #define MEDDLE_VALUE_H
 
-#include "segment.h"
-
 #include <algorithm>
 #include <cassert>
 #include <fstream>
@@ -13,6 +11,7 @@ using String = std::string;
 
 namespace mir {
 
+class Function;
 class Inst;
 class Segment;
 class Type;
@@ -74,10 +73,7 @@ public:
     bool is_read_only() const { return m_ReadOnly; }
 
     /// Detach this data from its parent segment and delete it.
-    void detach() {
-        assert(m_Parent && "Data has no parent.");
-        m_Parent->remove_data(this);
-    }
+    void detach();
 
     void print(std::ostream &OS) const override;
 };
@@ -110,10 +106,14 @@ public:
 };
 
 class ConstantInt final : public Constant {
+    friend class Segment;
+
     long m_Value;
 
-public:
     ConstantInt(Type *T, long V) : Constant(T), m_Value(V) {}
+
+public:
+    static ConstantInt *get(Segment *S, Type *T, long V);
 
     long get_value() const { return m_Value; }
 
@@ -121,10 +121,14 @@ public:
 };
 
 class ConstantFP final : public Constant {
+    friend class Segment;
+
     double m_Value;
 
-public:
     ConstantFP(Type *T, double V) : Constant(T), m_Value(V) {}
+
+public:
+    static ConstantFP *get(Segment *S, Type *T, double V);
 
     double get_value() const { return m_Value; }
 
@@ -132,8 +136,12 @@ public:
 };
 
 class ConstantNil final : public Constant {
-public:
+    friend class Segment;
+    
     ConstantNil(Type *T) : Constant(T) {}
+
+public:
+    static ConstantNil *get(Segment *S, Type *T);
 
     void print(std::ostream &OS) const override;
 };

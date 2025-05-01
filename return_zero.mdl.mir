@@ -1,11 +1,55 @@
 target :: x86_64 linux system_v
 
-main :: () -> i32 {
+test :: () -> i32 {
+entry1:
+    jmp match.chain2
+
+match.chain2:
+    %match.cmp2 := icmp i64 5 == i64 1
+    brif i1 %match.cmp2, match.case2, match.chain3
+
+match.case2:
+    %cast.trunc := trunc i64 0 -> i32
+    ret i32 %cast.trunc
+
+match.chain3:
+    %match.cmp3 := icmp i64 5 == i64 2
+    brif i1 %match.cmp3, match.case3, match.def1
+
+match.case3:
+    %cast.trunc1 := trunc i64 42 -> i32
+    ret i32 %cast.trunc1
+
+match.def1:
+    %cast.trunc2 := trunc i64 1 -> i32
+    ret i32 %cast.trunc2
+}
+
+main :: () -> void {
     $x := slot i64*, align 8
 
 entry:
-    %ptr.reint := reint void* nil -> i64*
-    str i64* %ptr.reint -> i64** $x
-    %cast.trunc := trunc i64 1 -> i32
-    ret i32 %cast.trunc
+    %cast.ptr := reint void* nil -> i64*
+    str i64* %cast.ptr -> i64** $x
+    %x.val := load i64** $x
+    jmp match.chain
+
+match.chain:
+    %cast.ptr1 := reint void* nil -> i64*
+    %match.cmp := pcmp i64* %x.val == i64* %cast.ptr1
+    brif i1 %match.cmp, match.case, match.chain1
+
+match.case:
+    ret
+
+match.chain1:
+    %cast.ptr2 := int2ptr i64 5 -> i64*
+    %match.cmp1 := pcmp i64* %x.val == i64* %cast.ptr2
+    brif i1 %match.cmp1, match.case1, match.def
+
+match.case1:
+    ret
+
+match.def:
+    ret
 }

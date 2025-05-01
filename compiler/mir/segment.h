@@ -1,6 +1,9 @@
 #ifndef SEGMENT_H
 #define SEGMENT_H
 
+#include "value.h"
+
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -10,6 +13,9 @@ using String = std::string;
 
 namespace mir {
 
+class ConstantInt;
+class ConstantFP;
+class ConstantNil;
 class Data;
 class DataLayout;
 class Function;
@@ -77,6 +83,9 @@ class Segment final {
     friend class FunctionType;
     friend class PointerType;
     friend class StructType;
+    friend class ConstantInt;
+    friend class ConstantFP;
+    friend class ConstantNil;
 
     Target m_Target;
     DataLayout m_Layout;
@@ -84,6 +93,16 @@ class Segment final {
     std::unordered_map<String, Type *> m_Types = {};
     std::unordered_map<String, Data *> m_Data = {};
     std::unordered_map<String, Function *> m_Functions = {};
+
+    ConstantInt *m_I1Zero = nullptr;
+    ConstantInt *m_I1One = nullptr;
+    std::unordered_map<Type *, ConstantNil *> m_NilPool = {};
+    std::unordered_map<int8_t, ConstantInt *> m_I8Pool = {};
+    std::unordered_map<int16_t, ConstantInt *> m_I16Pool = {};
+    std::unordered_map<int32_t, ConstantInt *> m_I32Pool = {};
+    std::unordered_map<int64_t, ConstantInt *> m_I64Pool = {};
+    std::unordered_map<uint32_t, ConstantFP *> m_F32Pool = {};
+    std::unordered_map<uint64_t, ConstantFP *> m_F64Pool = {};
 
 public:
     Segment(const Target &T);
