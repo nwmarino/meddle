@@ -28,6 +28,7 @@ class CharLiteral;
 class StringLiteral;
 class NilLiteral;
 class CastExpr;
+class ParenExpr;
 class RefExpr;
 
 class Visitor {
@@ -56,6 +57,7 @@ public:
     virtual void visit(StringLiteral *expr) {}
     virtual void visit(NilLiteral *expr) {}
     virtual void visit(CastExpr *expr) {}
+    virtual void visit(ParenExpr *expr) {}
     virtual void visit(RefExpr *expr) {}
 };
 

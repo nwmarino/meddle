@@ -157,6 +157,27 @@ public:
 	bool isConstant() const override { return m_Expr->isConstant(); }
 };
 
+class ParenExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Expr;
+
+public:
+	ParenExpr(const Metadata &M, Expr *E) : Expr(M, E->getType()), m_Expr(E) {}
+
+	~ParenExpr() override {
+		delete m_Expr;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getExpr() const { return m_Expr; }
+
+	bool isConstant() const override { return m_Expr->isConstant(); }
+};
+
 class RefExpr final : public Expr {
 	friend class CGN;
 	friend class NameResolution;

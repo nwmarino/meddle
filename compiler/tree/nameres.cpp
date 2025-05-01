@@ -80,6 +80,10 @@ void NameResolution::visit(CastExpr *expr) {
     expr->m_Expr->accept(this);
 }
 
+void NameResolution::visit(ParenExpr *expr) {
+    expr->m_Expr->accept(this);
+}
+
 void NameResolution::visit(RefExpr *expr) {
     NamedDecl *ND = expr->getRef();
     assert(ND && "Reference not resolved.");

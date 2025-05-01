@@ -12,6 +12,8 @@ Expr *Parser::parse_expr() {
 Expr *Parser::parse_primary() {
     if (match(TokenKind::Identifier))
         return parse_ident();
+    else if (match(TokenKind::SetParen))
+        return parse_paren();
     else if (match(LiteralKind::Integer))
         return parse_int();
     else if (match(LiteralKind::Float))
@@ -115,6 +117,22 @@ CastExpr *Parser::parse_cast() {
         fatal("expected cast sub-expression", &m_Current->md);
 
     return new CastExpr(md, T, E);
+}
+
+ParenExpr *Parser::parse_paren() {
+    Metadata md = m_Current->md;
+
+    next(); // '('
+
+    Expr *E = parse_expr();
+    if (!E)
+        fatal("expected expression after '('", &m_Current->md);
+
+    if (!match(TokenKind::EndParen))
+        fatal("expected ')' after expression", &m_Current->md);
+
+    next(); // ')'
+    return new ParenExpr(md, E);
 }
 
 RefExpr *Parser::parse_ref() {

@@ -30,6 +30,7 @@ public:
     void visit(UntilStmt *stmt) override;
 
     void visit(CastExpr *expr) override;
+    void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
 };
 

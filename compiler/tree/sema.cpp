@@ -178,3 +178,7 @@ void Sema::visit(CastExpr *expr) {
               "' to '" + expr->getCast()->getName() + "'", &expr->getMetadata());
     }
 }
+
+void Sema::visit(ParenExpr *expr) {
+    expr->m_Expr->accept(this);
+}

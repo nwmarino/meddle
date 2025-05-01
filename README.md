@@ -2,12 +2,10 @@
 
 ## roadmap
 
-- `ParenExpr`
 - `SizeofExpr`
 
 Global Variables
 - add to `VarDecl`
-- must be constants: add `isConstant()` to every expression node.
 
 Binary Expressions
 - `=` Assign

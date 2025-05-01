@@ -347,6 +347,43 @@ TEST_F(ParseExprTest, Bool_Basic_False) {
     delete unit;
 }
 
+#define PAREN_BASIC R"(test::() { fix x: bool = (true); })"
+TEST_F(ParseExprTest, Paren_Basic) {
+    File file = File("", "", "", PAREN_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "bool");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_FALSE(VD->isMutable());
+    EXPECT_FALSE(VD->isGlobal());
+
+    ParenExpr *PE = dynamic_cast<ParenExpr *>(VD->getInit());
+    EXPECT_NE(PE, nullptr);
+    
+    BoolLiteral *B = dynamic_cast<BoolLiteral *>(PE->getExpr());
+    EXPECT_NE(B, nullptr);
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

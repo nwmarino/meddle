@@ -506,6 +506,10 @@ void CGN::visit(CastExpr *expr) {
 	}
 }
 
+void CGN::visit(ParenExpr *expr) {
+	expr->getExpr()->accept(this);
+}
+
 void CGN::visit(RefExpr *expr) {
 	NamedDecl *ref = expr->getRef();
 	mir::Slot *slot = m_Function->get_slot(expr->getName());
