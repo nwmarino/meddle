@@ -163,6 +163,8 @@ void Sema::visit(CharLiteral *expr) {}
 
 void Sema::visit(StringLiteral *expr) {}
 
+void Sema::visit(NilLiteral *expr) {}
+
 void Sema::visit(CastExpr *expr) {
     if (!expr->m_Expr->getType()->canCastTo(expr->getCast())) {
         fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 

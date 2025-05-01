@@ -25,6 +25,7 @@ class IntegerLiteral;
 class FloatLiteral;
 class CharLiteral;
 class StringLiteral;
+class NilLiteral;
 class CastExpr;
 class RefExpr;
 
@@ -51,6 +52,7 @@ public:
     virtual void visit(FloatLiteral *expr) = 0;
     virtual void visit(CharLiteral *expr) = 0;
     virtual void visit(StringLiteral *expr) = 0;
+    virtual void visit(NilLiteral *expr) = 0;
     virtual void visit(CastExpr *expr) = 0;
     virtual void visit(RefExpr *expr) = 0;
 };

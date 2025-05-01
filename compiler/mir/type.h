@@ -46,6 +46,8 @@ public:
     virtual bool is_function_ty() const { return false; }
 
     virtual bool is_struct_ty() const { return false; }
+    
+    virtual bool is_void_ty() const { return false; }
 };
 
 class ArrayType final : public Type {
@@ -213,6 +215,16 @@ public:
         assert(i < m_Members.size() && "Index out of range.");
         return m_Members.at(i);
     }
+};
+
+class VoidType final : public Type {
+    friend class Builder;
+    friend class Segment;
+
+    VoidType() : Type("void", TypeKind::I32) {}
+
+public:
+    bool is_void_ty() const override { return true; }
 };
 
 } // namespace mir

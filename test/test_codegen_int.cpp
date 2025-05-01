@@ -119,7 +119,7 @@ TEST_F(IntegratedCodegenTest, If_Then) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     brif i64 1, if.then, if.merge
 
@@ -158,7 +158,7 @@ TEST_F(IntegratedCodegenTest, If_Then_Else) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     brif i64 1, if.then, if.else
 
@@ -197,7 +197,7 @@ TEST_F(IntegratedCodegenTest, If_Then_ElseIf_Else) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     brif i64 1, if.then, if.else
 
@@ -242,7 +242,7 @@ TEST_F(IntegratedCodegenTest, Until_Basic) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     jmp until.cond
 
@@ -284,7 +284,7 @@ TEST_F(IntegratedCodegenTest, Until_Continue) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     jmp until.cond
 
@@ -326,7 +326,7 @@ TEST_F(IntegratedCodegenTest, Until_Break) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     jmp until.cond
 
@@ -368,7 +368,7 @@ TEST_F(IntegratedCodegenTest, Until_If_Continue_Break) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
 entry:
     jmp until.cond
 
@@ -418,7 +418,7 @@ TEST_F(IntegratedCodegenTest, String_Declaration_Copy) {
 
 str :: readonly i8[7] "hello\n\0", align 1
 
-test :: () {
+test :: () -> void {
     $x := slot i8[7], align 1
 
 entry:
@@ -454,7 +454,7 @@ TEST_F(IntegratedCodegenTest, Truncate_Integer) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot i32, align 4
 
 entry:
@@ -491,7 +491,7 @@ TEST_F(IntegratedCodegenTest, Truncate_SExt_Integer) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot i64, align 8
 
 entry:
@@ -529,7 +529,7 @@ TEST_F(IntegratedCodegenTest, Truncate_Float) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot f32, align 4
 
 entry:
@@ -566,7 +566,7 @@ TEST_F(IntegratedCodegenTest, Truncate_FExt_Float) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot f64, align 8
 
 entry:
@@ -604,7 +604,7 @@ TEST_F(IntegratedCodegenTest, Float_To_SInt) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot i64, align 8
 
 entry:
@@ -641,7 +641,7 @@ TEST_F(IntegratedCodegenTest, Float_To_UInt) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot i64, align 8
 
 entry:
@@ -678,7 +678,7 @@ TEST_F(IntegratedCodegenTest, SInt_To_Float) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot f64, align 8
 
 entry:
@@ -715,12 +715,49 @@ TEST_F(IntegratedCodegenTest, UInt_To_Float) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () {
+test :: () -> void {
     $x := slot f64, align 8
 
 entry:
     %cast.cvt := ui2fp i64 5 -> f64
     str f64 %cast.cvt -> f64* $x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define INT_CGN_19 R"(test::() { fix x: i64* = nil; })"
+TEST_F(IntegratedCodegenTest, Pointer_Reinterpret) {
+    File file = File("", "", "", INT_CGN_19);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    $x := slot i64*, align 8
+
+entry:
+    %cast.ptr := reint void* nil -> i64*
+    str i64* %cast.ptr -> i64** $x
     ret
 }
 )";

@@ -1,4 +1,4 @@
 main :: () i32 {
-    fix x: char[7] = "hello\n";
+    fix x: i64* = nil;
     ret 1;
 }

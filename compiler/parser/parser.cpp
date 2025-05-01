@@ -51,7 +51,7 @@ Type *Parser::parse_type(bool produce) {
 
     while (1) {
         if (match(TokenKind::Star))
-             name += '*';
+            name += '*';
         else if (match(TokenKind::SetBrack)) {
             name += '[';
             next();

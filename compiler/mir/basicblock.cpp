@@ -196,6 +196,9 @@ static void print_unop(std::ostream &OS, UnopInst *I) {
     case UnopInst::Kind::FP2UI:
         OS << "fp2ui ";
         break;
+    case UnopInst::Kind::Reint:
+        OS << "reint ";
+        break;
     }
 
     I->get_value()->print(OS);

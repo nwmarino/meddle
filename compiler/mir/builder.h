@@ -42,6 +42,8 @@ public:
 
     Type *get_f64_ty() const { return m_Segment->m_Types.at("f64"); }
 
+    Type *get_void_ty() const { return m_Segment->m_Types.at("void"); }
+
     Slot *build_slot(Type *T, String N = "", Function *P = nullptr);
 
     StoreInst *build_store(Value *V, Value *D);
@@ -79,6 +81,8 @@ public:
     Value *build_fp2si(Value *V, Type *D, String N = "");
 
     Value *build_fp2ui(Value *V, Type *D, String N = "");
+
+    Value *build_reint(Value *V, Type *D, String N = "");
 };
 
 } // namespace mir

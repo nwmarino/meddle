@@ -92,6 +92,8 @@ void NameResolution::visit(CharLiteral *expr) {}
 
 void NameResolution::visit(StringLiteral *expr) {}
 
+void NameResolution::visit(NilLiteral *expr) {}
+
 void NameResolution::visit(CastExpr *expr) {
     expr->m_Expr->accept(this);
 }

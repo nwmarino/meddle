@@ -27,6 +27,8 @@ Expr *Parser::parse_primary() {
 Expr *Parser::parse_ident() {
     if (match_keyword("cast"))
         return parse_cast();
+    else if (match_keyword("nil"))
+        return parse_nil();
 
     return parse_ref();
 }
@@ -69,6 +71,15 @@ StringLiteral *Parser::parse_str() {
     );
     next();
     return S;
+}
+
+NilLiteral *Parser::parse_nil() {
+    NilLiteral *N = new NilLiteral(
+        m_Current->md,
+        m_Context->getPointerType(m_Context->getVoidType())
+    );
+    next();
+    return N;
 }
 
 CastExpr *Parser::parse_cast() {

@@ -246,3 +246,18 @@ Value *Builder::build_fp2ui(Value *V, Type *D, String N) {
     V->add_use(ext);
     return ext;
 }
+
+Value *Builder::build_reint(Value *V, Type *D, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Reinterpret source cannot be null.");
+    assert(D && "Reinterpret destination cannot be null.");
+    assert(V->get_type()->is_pointer_ty() && 
+           "Reinterpret source must be a pointer type.");
+    assert(D->is_pointer_ty() && 
+           "Reinterpret destination must be a pointer type.");
+
+    UnopInst *ext = new UnopInst(N.empty() ? get_ssa() : N, D, m_Insert,
+        UnopInst::Kind::Reint, V);
+    V->add_use(ext);
+    return ext;
+}

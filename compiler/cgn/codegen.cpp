@@ -30,7 +30,7 @@ mir::Type *CGN::cgn_type(Type *T) {
 	if (auto *PT = dynamic_cast<PrimitiveType *>(T)) {
 		switch (PT->getKind()) {
 		case PrimitiveType::Kind::Void:
-			return nullptr;
+			return m_Builder.get_void_ty();
 		case PrimitiveType::Kind::Bool:
 		case PrimitiveType::Kind::Char:
 		case PrimitiveType::Kind::Int8:
@@ -318,6 +318,10 @@ void CGN::visit(StringLiteral *expr) {
 		m_Segment->get_data_layout().get_type_align(STR->get_type()), true);
 }
 
+void CGN::visit(NilLiteral *expr) {
+	m_Value = new mir::ConstantNil(cgn_type(expr->getType()));
+}
+
 void CGN::visit(CastExpr *expr) {
 	m_VC = ValueContext::RValue;
     expr->getExpr()->accept(this);
@@ -366,12 +370,10 @@ void CGN::visit(CastExpr *expr) {
             m_Value = m_Builder.build_fp2ui(srcV, castT, "cast.cvt");
         else
             m_Value = m_Builder.build_fp2si(srcV, castT, "cast.cvt");
-    }
+	} else if (srcT->is_pointer_ty() && castT->is_pointer_ty())
+		m_Value = m_Builder.build_reint(srcV, castT, "cast.ptr");
 
 	/*
-    else if (srcT->isPointerTy() && castT->isPointerTy())
-        tmp = IB.CreateBitCast(srcV, castT, "cast.ptr");
-
     else if (srcT->isPointerTy() && castT->isIntegerTy())
         tmp = IB.CreatePtrToInt(srcV, castT, "cast.ptr2int");
 

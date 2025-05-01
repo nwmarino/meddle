@@ -242,6 +242,41 @@ TEST_F(ParseExprTest, RefExpr_Basic) {
     delete unit;
 }
 
+#define NIL_BASIC R"(test::() { fix x: i64* = nil; })"
+TEST_F(ParseExprTest, Nil_Basic) {
+    File file = File("", "", "", NIL_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "i64*");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_FALSE(VD->isMutable());
+    EXPECT_FALSE(VD->isGlobal());
+
+    NilLiteral *N = dynamic_cast<NilLiteral *>(VD->getInit());
+    EXPECT_NE(N, nullptr);
+    EXPECT_EQ(N->getType()->getName(), "void*");
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

@@ -31,7 +31,7 @@ public:
 };
 
 class IntegerLiteral final : public Expr {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
     
@@ -47,7 +47,7 @@ public:
 };
 
 class FloatLiteral final : public Expr {
-    friend class CCGN;
+    friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
@@ -63,7 +63,7 @@ public:
 };
 
 class CharLiteral final : public Expr {
-	friend class CCGN;
+	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
@@ -79,7 +79,7 @@ public:
 };
 
 class StringLiteral final : public Expr {
-	friend class CCGN;
+	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
@@ -94,8 +94,19 @@ public:
 	String getValue() const { return m_Value; }
 };
 
+class NilLiteral final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+public:
+	NilLiteral(const Metadata &M, Type *T) : Expr(M, T) {}
+
+	void accept(Visitor *V) override { V->visit(this); }
+};
+
 class CastExpr final : public Expr {
-	friend class CCGN;
+	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
@@ -116,7 +127,7 @@ public:
 };
 
 class RefExpr final : public Expr {
-	friend class CCGN;
+	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 

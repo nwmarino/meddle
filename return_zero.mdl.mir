@@ -1,12 +1,11 @@
 target :: x86_64 linux system_v
 
-str :: readonly i8[7] "hello\n\0", align 1
-
 main :: () -> i32 {
-    $x := slot i8[7], align 1
+    $x := slot i64*, align 8
 
 entry:
-    cpy i64 7, i8[7]* @str, align 1 -> i8[7]* $x, align 1
-    %cast.int.trunc := trunc i64 1 -> i32
-    ret i32 %cast.int.trunc
+    %ptr.reint := reint void* nil -> i64*
+    str i64* %ptr.reint -> i64** $x
+    %cast.trunc := trunc i64 1 -> i32
+    ret i32 %cast.trunc
 }

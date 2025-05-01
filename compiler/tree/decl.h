@@ -45,7 +45,7 @@ public:
 };
 
 class FunctionDecl final : public NamedDecl {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -86,7 +86,7 @@ public:
 };
 
 class VarDecl : public NamedDecl {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -116,7 +116,7 @@ public:
 };
 
 class ParamDecl final : public VarDecl {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 

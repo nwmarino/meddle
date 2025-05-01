@@ -224,6 +224,7 @@ public:
         UI2FP,
         FP2SI,
         FP2UI,
+        Reint,
     };
 
 private:

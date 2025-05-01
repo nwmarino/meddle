@@ -121,6 +121,7 @@ Segment::Segment(const Target &T) : m_Target(T), m_Layout(T.get_data_layout()) {
     m_Types["i64"] = new IntegerType(IntegerType::Kind::Int64);
     m_Types["f32"] = new FloatType(FloatType::Kind::Float32);
     m_Types["f64"] = new FloatType(FloatType::Kind::Float64);
+    m_Types["void"] = new VoidType();
 }
 
 Segment::~Segment() {

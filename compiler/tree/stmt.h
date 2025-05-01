@@ -25,7 +25,7 @@ public:
 };
 
 class BreakStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -37,7 +37,7 @@ public:
 };
 
 class ContinueStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -49,7 +49,7 @@ public:
 };
 
 class CompoundStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -77,7 +77,7 @@ public:
 };
 
 class DeclStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
     
@@ -96,7 +96,7 @@ public:
 };
 
 class ExprStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -115,7 +115,7 @@ public:
 };
 
 class IfStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -147,7 +147,7 @@ public:
 };
 
 class CaseStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -171,7 +171,7 @@ public:
 };
 
 class MatchStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
@@ -203,7 +203,7 @@ public:
 };
 
 class RetStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
     
@@ -223,7 +223,7 @@ public:
 };
 
 class UntilStmt final : public Stmt {
-    friend class CCGN;
+    friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
