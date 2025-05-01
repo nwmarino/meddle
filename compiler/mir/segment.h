@@ -67,6 +67,8 @@ public:
     
     bool is_little_endian() const;
     bool is_big_endian() const;
+
+    bool is_scalar_ty(Type *T) const;
 };
 
 class Segment final {

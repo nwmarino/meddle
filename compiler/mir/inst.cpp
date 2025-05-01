@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <map>
+#include <ostream>
 
 using namespace mir;
 
@@ -35,6 +36,10 @@ void LoadInst::print(std::ostream &OS) const {
     OS << get_type()->get_name() << " %" << get_name();
 }
 
+void CpyInst::print(std::ostream &OS) const {
+    assert(false && "'cpy' does not produce a value.");
+}
+
 void BrifInst::print(std::ostream &OS) const {
     assert(false && "'brif' does not produce a value.");
 }
@@ -45,4 +50,8 @@ void JMPInst::print(std::ostream &OS) const {
 
 void RetInst::print(std::ostream &OS) const {
     assert(false && "'ret' does not produce a value.");
+}
+
+void UnopInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " %" << get_name();
 }

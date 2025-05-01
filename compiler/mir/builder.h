@@ -52,13 +52,33 @@ public:
     
     Value *build_load_offset(Type *T, Value *S, ConstantInt *O, String N = "");
 
+    CpyInst *build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL, unsigned Sz);
+
     BrifInst *build_brif(Value *C, BasicBlock *T, BasicBlock *F);
 
     JMPInst *build_jmp(BasicBlock *D);
 
     RetInst *build_ret_void();
 
-    RetInst *build_ret(Value *V);  
+    RetInst *build_ret(Value *V);
+
+    Value *build_sext(Value *V, Type *D, String N = "");
+
+    Value *build_zext(Value *V, Type *D, String N = "");
+
+    Value *build_trunc(Value *V, Type *D, String N = "");
+
+    Value *build_fext(Value *V, Type *D, String N = "");
+
+    Value *build_ftrunc(Value *V, Type *D, String N = "");
+
+    Value *build_si2fp(Value *V, Type *D, String N = "");
+
+    Value *build_ui2fp(Value *V, Type *D, String N = "");
+
+    Value *build_fp2si(Value *V, Type *D, String N = "");
+
+    Value *build_fp2ui(Value *V, Type *D, String N = "");
 };
 
 } // namespace mir

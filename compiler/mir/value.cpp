@@ -23,7 +23,7 @@ Data::Data(String N, Type *T, Segment *P, Value *V, unsigned A, bool R)
 }
 
 void Data::print(std::ostream &OS) const {
-    OS <<  get_type()->get_name() << " #" << get_name();
+    OS <<  get_type()->get_name() << " @" << get_name();
 }
 
 Slot::Slot(String N, Type *T, Function *P, Type *A, unsigned AL) 

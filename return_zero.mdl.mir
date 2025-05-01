@@ -1,30 +1,12 @@
 target :: x86_64 linux system_v
 
-test :: () {
-entry1:
-    jmp until.cond1
-
-until.cond1:
-    brif i64 1, until.merge1, until.body1
-
-until.body1:
-    jmp until.merge1
-
-until.merge1:
-    ret
-}
+str :: readonly i8[7] "hello\n\0", align 1
 
 main :: () -> i32 {
+    $x := slot i8[7], align 1
+
 entry:
-    jmp until.cond
-
-until.cond:
-    brif i64 1, until.merge, until.body
-
-until.body:
-    jmp until.merge
-
-until.merge:
-    ret i64 1
+    cpy i64 7, i8[7]* @str, align 1 -> i8[7]* $x, align 1
+    %cast.int.trunc := trunc i64 1 -> i32
+    ret i32 %cast.int.trunc
 }
-

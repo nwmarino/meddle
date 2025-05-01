@@ -1,13 +1,4 @@
 main :: () i32 {
-    until 1 {
-        break;
-    }
-
+    fix x: char[7] = "hello\n";
     ret 1;
-}
-
-test::() { 
-    until 1 { 
-        break;
-    }
 }

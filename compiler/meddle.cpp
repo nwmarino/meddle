@@ -77,13 +77,6 @@ int main(int argc, char **argv) {
         Sema sema = Sema(opts, unit);
     }
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> frontend;
-    if (opts.Time) {
-        frontend = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totalDuration = frontend - start;
-        log("  Frontend took: " + std::to_string(totalDuration.count()) + "s.");
-    }
-
     Target target = Target(
         mir::Arch::X86_64, 
         mir::OS::Linux, 
@@ -97,6 +90,13 @@ int main(int argc, char **argv) {
 
         std::ofstream OS = std::ofstream(unit->getFile().filename + ".mir");
         seg->print(OS);
+    }
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> frontend;
+    if (opts.Time) {
+        frontend = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totalDuration = frontend - start;
+        log("  Frontend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
     /*

@@ -156,8 +156,23 @@ void CGN::visit(VarDecl *decl) {
 
 		m_VC = ValueContext::RValue;
 		decl->getInit()->accept(this);
-		assert(m_Value && "Variable init does not produce a value.");
-		m_Builder.build_store(m_Value, slot);
+		assert(m_Value && "Variable initializer does not produce a value.");
+
+		mir::DataLayout DL = m_Segment->get_data_layout();
+		bool isAggregate = !DL.is_scalar_ty(ty);
+		unsigned size = DL.get_type_size(ty);
+
+		if (size > DL.get_pointer_size() || isAggregate) {
+			m_Builder.build_cpy(
+				slot, 
+				DL.get_type_align(ty), 
+				m_Value, 
+				DL.get_type_align(ty), 
+				size
+			);
+		} else {
+			m_Builder.build_store(m_Value, slot);
+		}
 	}
 }
 
@@ -304,7 +319,68 @@ void CGN::visit(StringLiteral *expr) {
 }
 
 void CGN::visit(CastExpr *expr) {
-	expr->getExpr()->accept(this);
+	m_VC = ValueContext::RValue;
+    expr->getExpr()->accept(this);
+    mir::Value *srcV = m_Value;
+    assert(srcV && "Cast source does not produce a value.");
+
+    mir::Type *srcT = srcV->get_type();
+    mir::Type *castT = cgn_type(expr->getType());
+	mir::DataLayout DL = m_Segment->get_data_layout();
+
+    if (srcT == castT) {
+        m_Value = srcV;
+        return;
+    } else if (expr->getType()->isSInt() && srcT->is_integer_ty() && castT->is_integer_ty()) {
+        unsigned srcWD = DL.get_type_size(srcT);
+        unsigned castWD = DL.get_type_size(castT);
+
+        if (srcWD == castWD)
+            m_Value = srcV;
+        else if (srcWD < castWD)
+            m_Value = m_Builder.build_sext(srcV, castT, "cast.sext");
+        else
+            m_Value = m_Builder.build_trunc(srcV, castT, "cast.trunc");
+    } else if (expr->getType()->isUInt( ) && srcT->is_integer_ty() && castT->is_integer_ty()) {
+		unsigned srcWD = DL.get_type_size(srcT);
+		unsigned castWD = DL.get_type_size(castT);
+
+		if (srcWD == castWD)
+			m_Value = srcV;
+		else if (srcWD < castWD)
+			m_Value = m_Builder.build_zext(srcV, castT, "cast.zext");
+		else
+			m_Value = m_Builder.build_trunc(srcV, castT, "cast.trunc");
+	} else if (srcT->is_float_ty() && castT->is_float_ty()) {
+        if (srcT->is_float_ty(64) && castT->is_float_ty(32))
+            m_Value = m_Builder.build_ftrunc(srcV, castT, "cast.ftrunc");
+        else
+            m_Value = m_Builder.build_fext(srcV, castT, "cast.fext");
+    } else if (srcT->is_integer_ty() && castT->is_float_ty()) {
+        if (expr->getExpr()->getType()->isUInt())
+            m_Value = m_Builder.build_ui2fp(srcV, castT, "cast.cvt");
+        else
+            m_Value = m_Builder.build_si2fp(srcV, castT, "cast.cvt");
+    } else if (srcT->is_float_ty() && castT->is_integer_ty()) {
+        if (expr->getType()->isUInt())
+            m_Value = m_Builder.build_fp2ui(srcV, castT, "cast.cvt");
+        else
+            m_Value = m_Builder.build_fp2si(srcV, castT, "cast.cvt");
+    }
+
+	/*
+    else if (srcT->isPointerTy() && castT->isPointerTy())
+        tmp = IB.CreateBitCast(srcV, castT, "cast.ptr");
+
+    else if (srcT->isPointerTy() && castT->isIntegerTy())
+        tmp = IB.CreatePtrToInt(srcV, castT, "cast.ptr2int");
+
+    else if (srcT->isIntegerTy() && castT->isPointerTy())
+        tmp = IB.CreateIntToPtr(srcV, castT, "cast.int2ptr");
+	*/
+
+    else
+		assert(false && "Unsupported cast.");
 }
 
 void CGN::visit(RefExpr *expr) {

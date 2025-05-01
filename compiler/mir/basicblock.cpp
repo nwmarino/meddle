@@ -119,9 +119,9 @@ void BasicBlock::detach() {
 }
 
 static void print_store(std::ostream &OS, StoreInst *I) {
-    OS << "store ";
+    OS << "str ";
     I->get_value()->print(OS);
-    OS << ", ";
+    OS << " -> ";
     I->get_dest()->print(OS);
     if (I->get_offset()) {
         OS << " + ";
@@ -136,6 +136,14 @@ static void print_load(std::ostream &OS, LoadInst *I) {
         OS << " + ";
         I->get_offset()->print(OS);
     }
+}
+
+static void print_cpy(std::ostream &OS, CpyInst *I) {
+    OS << "cpy i64 " << I->get_size() << ", ";
+    I->get_source()->print(OS);
+    OS << ", align " << I->get_source_align() << " -> ";
+    I->get_dest()->print(OS);
+    OS << ", align " << I->get_dest_align();
 }
 
 static void print_brif(std::ostream &OS, BrifInst *I) {
@@ -157,6 +165,45 @@ static void print_ret(std::ostream &OS, RetInst *I) {
     }
 }
 
+static void print_unop(std::ostream &OS, UnopInst *I) {
+    OS << "%" << I->get_name() << " := ";
+
+    switch (I->get_kind()) {
+    case UnopInst::Kind::SExt:
+        OS << "sext ";
+        break;
+    case UnopInst::Kind::ZExt:
+        OS << "zext ";
+        break;
+    case UnopInst::Kind::Trunc:
+        OS << "trunc ";
+        break;
+    case UnopInst::Kind::FExt:
+        OS << "fext ";
+        break;
+    case UnopInst::Kind::FTrunc:
+        OS << "ftrunc ";
+        break;
+    case UnopInst::Kind::SI2FP:
+        OS << "si2fp ";
+        break;
+    case UnopInst::Kind::UI2FP:
+        OS << "ui2fp ";
+        break;
+    case UnopInst::Kind::FP2SI:
+        OS << "fp2si ";
+        break;
+    case UnopInst::Kind::FP2UI:
+        OS << "fp2ui ";
+        break;
+    }
+
+    I->get_value()->print(OS);
+
+    if (I->get_type() != I->get_value()->get_type())
+        OS << " -> " << I->get_type()->get_name();
+}
+
 void BasicBlock::print(std::ostream &OS) const {
     OS << get_name() << ":\n";
     for (Inst *curr = m_Head; curr != nullptr; curr = curr->get_next()) {
@@ -165,12 +212,16 @@ void BasicBlock::print(std::ostream &OS) const {
             print_store(OS, I);
         else if (auto *I = dynamic_cast<LoadInst *>(curr))
             print_load(OS, I);
+        else if (auto *I = dynamic_cast<CpyInst *>(curr))
+            print_cpy(OS, I);
         else if (auto *I = dynamic_cast<BrifInst *>(curr))
             print_brif(OS, I);
         else if (auto *I = dynamic_cast<JMPInst *>(curr))
             print_jmp(OS, I);
         else if (auto *I = dynamic_cast<RetInst *>(curr))
             print_ret(OS, I);
+        else if (auto *I = dynamic_cast<UnopInst *>(curr))
+            print_unop(OS, I);
 
         OS << "\n";
     }

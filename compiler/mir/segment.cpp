@@ -97,6 +97,22 @@ bool DataLayout::is_big_endian() const {
     return !m_LittleEndian;
 }
 
+bool DataLayout::is_scalar_ty(Type *T) const {
+    switch (T->get_ty_kind()) {
+    case TypeKind::I1:
+    case TypeKind::I8:
+    case TypeKind::I16:
+    case TypeKind::I32:
+    case TypeKind::I64:
+    case TypeKind::F32:
+    case TypeKind::F64:
+    case TypeKind::Pointer:
+        return true;
+    default:
+        return false;
+    }
+}
+
 Segment::Segment(const Target &T) : m_Target(T), m_Layout(T.get_data_layout()) {
     m_Types["i1"] = new IntegerType(IntegerType::Kind::Int1);
     m_Types["i8"] = new IntegerType(IntegerType::Kind::Int8);
@@ -170,7 +186,7 @@ void Segment::remove_function(Function *F) {
 }
 
 static void print_data(std::ostream &OS, Data *D) {
-    OS << "#" << D->get_name() << " := " << (D->is_read_only() ? "readonly " : " ");
+    OS << D->get_name() << " :: " << (D->is_read_only() ? "readonly " : " ");
     D->get_value()->print(OS);
     OS << ", align " << D->get_align() << "\n";
 }
@@ -213,7 +229,7 @@ static void print_function(std::ostream &OS, Function *F) {
             OS << "\n";
     }
 
-    OS << "}\n\n";
+    OS << "}\n";
 }
 
 void Segment::print(std::ostream &OS) const {
@@ -242,7 +258,7 @@ void Segment::print(std::ostream &OS) const {
         for (auto &M: ST->get_members())
             OS << M->get_name() << (M != ST->get_members().back() ? ",\n" : "\n");
 
-        OS << " }\n";
+        OS << " }";
     }
 
     for (auto &[ String, Data ] : m_Data)
@@ -250,7 +266,11 @@ void Segment::print(std::ostream &OS) const {
 
     if (!m_Data.empty())
         OS << "\n";
-
-    for (auto &[ String, Function ] : m_Functions)
+    
+    unsigned i = 0;
+    for (auto &[ String, Function ]: m_Functions) {
         print_function(OS, Function);
+        if (++i != m_Functions.size())
+            OS << "\n";
+    }
 }

@@ -3,6 +3,7 @@
 
 #include "value.h"
 #include <fstream>
+#include <ostream>
 
 namespace mir {
 
@@ -110,6 +111,39 @@ public:
     void print(std::ostream &OS) const override;
 };
 
+class CpyInst final : public Inst {
+    friend class Builder;
+
+    Value *m_Source;
+    unsigned m_SrcAlign;
+    Value *m_Dest;
+    unsigned m_DestAlign;
+    unsigned m_Size;
+
+    CpyInst(
+        BasicBlock *P,
+        Value *S,
+        unsigned SAL,
+        Value *D,
+        unsigned DAL,
+        unsigned Sz
+    ) : Inst(P), m_Source(S), m_SrcAlign(SAL), m_Dest(D), m_DestAlign(DAL), 
+        m_Size(Sz) {}
+
+public:
+    Value *get_source() const { return m_Source; }
+
+    unsigned get_source_align() const { return m_SrcAlign; }
+
+    Value *get_dest() const { return m_Dest; }
+
+    unsigned get_dest_align() const { return m_DestAlign; }
+
+    unsigned get_size() const { return m_Size; }
+
+    void print(std::ostream &OS) const override;
+};
+
 class BrifInst final : public Inst {
     friend class Builder;
 
@@ -170,6 +204,42 @@ public:
     bool is_ret() const override { return true; }
 
     bool is_void() const { return m_Value == nullptr; }
+
+    Value *get_value() const { return m_Value; }
+
+    void print(std::ostream &OS) const override;
+};
+
+class UnopInst final : public Inst {
+    friend class Builder;
+
+public:
+    enum class Kind {
+        SExt,
+        ZExt,
+        Trunc,
+        FExt,
+        FTrunc,
+        SI2FP,
+        UI2FP,
+        FP2SI,
+        FP2UI,
+    };
+
+private:
+    Kind m_Kind;
+    Value *m_Value;
+
+    UnopInst(String N, Type *T, BasicBlock *P, Kind K, Value *V)
+      : Inst(N, T, P), m_Kind(K), m_Value(V) {}
+
+public:
+    ~UnopInst() override {
+        if (m_Value->is_constant())
+            delete m_Value;
+    }
+
+    Kind get_kind() const { return m_Kind; }
 
     Value *get_value() const { return m_Value; }
 
