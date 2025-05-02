@@ -15,6 +15,26 @@ static String get_printed_name(Value const *V) {
     return V->get_name();
 }
 
+static void print_phi(std::ostream &OS, PHINode *I) {
+    OS << "$" << get_printed_name(I) << " := phi " << I->get_type()->get_name();
+    if (I->get_incoming().empty())
+        return;
+    
+    OS << " ";
+
+    for (auto &[ Value, Block ] : I->get_incoming()) {
+        OS << "[ ";
+        Block->print(OS);
+        OS << ", ";
+        Value->print(OS);
+        
+        if (Value != I->get_incoming().back().first)
+            OS << " ], ";
+        else
+            OS << " ]";
+    }
+}
+
 static void print_store(std::ostream &OS, StoreInst *I) {
     OS << "str ";
     I->get_value()->print(OS);
@@ -268,7 +288,9 @@ static void print_block(std::ostream &OS, BasicBlock *BB) {
     
     for (Inst *curr = BB->head(); curr != nullptr; curr = curr->get_next()) {
         OS << "    ";
-        if (auto *I = dynamic_cast<StoreInst *>(curr))
+        if (auto *I = dynamic_cast<PHINode *>(curr))
+            print_phi(OS, I);
+        else if (auto *I = dynamic_cast<StoreInst *>(curr))
             print_store(OS, I);
         else if (auto *I = dynamic_cast<LoadInst *>(curr))
             print_load(OS, I);
@@ -445,6 +467,10 @@ void ConstantAggregate::print(std::ostream &OS) const {
         OS << ", ";
     }
     OS << " ]";
+}
+
+void PHINode::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " $" << get_printed_name(this);
 }
 
 void LoadInst::print(std::ostream &OS) const {

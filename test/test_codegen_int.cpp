@@ -3130,6 +3130,98 @@ test :: () -> void {
     delete unit;
 }
 
+#define BINARY_LOGIC_AND R"(test::() { mut x: i64 = 0; x && 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Logical_And_Basic) {
+    File file = File("", "", "", BINARY_LOGIC_AND);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ne i64 $2, i64 0
+    brif i1 $3, #4, #6
+
+4 (1):
+    $5 := icmp_ne i64 1, i64 0
+    jmp #6
+
+6 (1, 4):
+    $7 := phi i1 [ #1, i1 0 ], [ #4, i1 $5 ]
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define BINARY_LOGIC_OR R"(test::() { mut x: i64 = 0; x || 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Logical_Or_Basic) {
+    File file = File("", "", "", BINARY_LOGIC_OR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ne i64 $2, i64 0
+    brif i1 $3, #6, #4
+
+4 (1):
+    $5 := icmp_ne i64 1, i64 0
+    jmp #6
+
+6 (1, 4):
+    $7 := phi i1 [ #1, i1 1 ], [ #4, i1 $5 ]
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

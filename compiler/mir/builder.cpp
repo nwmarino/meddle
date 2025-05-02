@@ -19,6 +19,13 @@ Slot *Builder::build_slot(Type *T, String N, Function *P) {
     return slot;
 }
 
+PHINode *Builder::build_phi(Type *T, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(T && "PHI type cannot be null.");
+
+    return new PHINode(N.empty() ? m_Segment->get_ssa() : N, T, m_Insert);
+}
+
 StoreInst *Builder::build_store(Value *V, Value *D) {
     return build_store_offset(V, D, nullptr);
 }

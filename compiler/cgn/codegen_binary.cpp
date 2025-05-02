@@ -1,7 +1,9 @@
 #include "codegen.h"
 #include "../core/logger.h"
 #include "../tree/expr.h"
+#include "../mir/basicblock.h"
 #include "../mir/builder.h"
+#include "../mir/function.h"
 
 #include <cassert>
 
@@ -651,9 +653,82 @@ void CGN::cgn_shr(BinaryExpr *BIN) {
 }
 
 void CGN::cgn_logic_and(BinaryExpr *BIN) {
+    assert(BIN->getKind() == BinaryExpr::Kind::Logic_And);
 
+    mir::BasicBlock *falseBB = m_Builder.get_insert();
+    
+    mir::BasicBlock *rightBB = new mir::BasicBlock(
+        m_Opts.NamedMIR ? "land.rhs" : "");
+    mir::BasicBlock *mergeBB = new mir::BasicBlock(
+        m_Opts.NamedMIR ? "land.merge" : "");
+    
+    m_VC = ValueContext::RValue;
+    BIN->getLHS()->accept(this);
+    assert(m_Value && "Binary LHS does not produce a value.");
+    mir::Value *LHS = m_Value;
+    LHS = inject_cmp(LHS);
+    
+    // Short-circuit: if LHS is false, skip RHS evaluation.
+    m_Builder.build_brif(LHS, rightBB, mergeBB);
+    
+    m_Function->append(rightBB);
+    m_Builder.set_insert(rightBB);
+    m_VC = ValueContext::RValue;
+    BIN->getRHS()->accept(this);
+    assert(m_Value && "Binary RHS does not produce a value.");
+    mir::Value *RHS = m_Value;
+    RHS = inject_cmp(RHS);
+    m_Builder.build_jmp(mergeBB);
+
+    mir::BasicBlock *OW = m_Builder.get_insert();
+
+    m_Function->append(mergeBB);
+    m_Builder.set_insert(mergeBB);
+    mir::PHINode *phi = m_Builder.build_phi(m_Builder.get_i1_ty(),
+        m_Opts.NamedMIR ? "land.result" : "");
+    phi->add_incoming(mir::ConstantInt::get(m_Segment, m_Builder.get_i1_ty(), 0), falseBB);
+    phi->add_incoming(RHS, OW);
+    
+    m_Value = phi;
 }
 
 void CGN::cgn_logic_or(BinaryExpr *BIN) {
+    assert(BIN->getKind() == BinaryExpr::Kind::Logic_Or);
 
+    mir::BasicBlock *trueBB = m_Builder.get_insert();
+    
+    mir::BasicBlock *rightBB = new mir::BasicBlock(
+        m_Opts.NamedMIR ? "lor.rhs" : "");
+    mir::BasicBlock *mergeBB = new mir::BasicBlock(
+        m_Opts.NamedMIR ? "lor.merge" : "");
+
+    m_VC = ValueContext::RValue;
+    BIN->getLHS()->accept(this);
+    assert(m_Value && "Binary LHS does not produce a value.");
+    mir::Value *LHS = m_Value;
+    LHS = inject_cmp(LHS);
+
+    // Short-circuit: if LHS is true, skip RHS evaluation.
+    m_Builder.build_brif(LHS, mergeBB, rightBB);
+
+    m_Function->append(rightBB);
+    m_Builder.set_insert(rightBB);
+    m_VC = ValueContext::RValue;
+    BIN->getRHS()->accept(this);
+    assert(m_Value && "Binary RHS does not produce a value.");
+    mir::Value *RHS = m_Value;
+    RHS = inject_cmp(RHS);
+    m_Builder.build_jmp(mergeBB);
+
+    mir::BasicBlock *OW = m_Builder.get_insert();
+
+    m_Function->append(mergeBB);
+    m_Builder.set_insert(mergeBB);
+    
+    mir::PHINode *phi = m_Builder.build_phi(m_Builder.get_i1_ty(), 
+        m_Opts.NamedMIR ? "lor.result" : "");
+    phi->add_incoming(mir::ConstantInt::get(m_Segment, m_Builder.get_i1_ty(), 1), trueBB);
+    phi->add_incoming(RHS, OW);
+
+    m_Value = phi;
 }

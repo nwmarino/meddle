@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <ostream>
+#include <utility>
 
 namespace mir {
 
@@ -45,6 +46,31 @@ public:
     void set_prev(Inst *I) { m_Prev = I; }
 
     void set_next(Inst *I) { m_Next = I; }
+};
+
+class PHINode final : public Inst {
+    friend class Builder;
+
+    std::vector<std::pair<Value *, BasicBlock *>> m_Incoming;
+
+    PHINode(
+        String N,
+        Type *T,
+        BasicBlock *P
+    ) : Inst(N, T, P), m_Incoming() {}
+
+public:
+    bool produces_value() const override { return true; }
+
+    void add_incoming(Value *V, BasicBlock *BB) {
+        assert(V->get_type() == this->m_Type && "PHI node type mismatch.");
+        m_Incoming.emplace_back(V, BB);
+    }
+
+    const std::vector<std::pair<Value *, BasicBlock *>> &get_incoming() const 
+    { return m_Incoming; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class StoreInst final : public Inst {

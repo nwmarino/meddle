@@ -43,6 +43,8 @@ public:
 
     Slot *build_slot(Type *T, String N = "", Function *P = nullptr);
 
+    PHINode *build_phi(Type *T, String N = "");
+
     StoreInst *build_store(Value *V, Value *D);
 
     StoreInst *build_store_offset(Value *V, Value *D, ConstantInt *O);
