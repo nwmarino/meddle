@@ -14,12 +14,6 @@ Data::Data(String N, Type *T, Linkage L, Segment *P, Value *V, unsigned A,
     : Value(N, T), m_Linkage(L), m_Parent(P), m_Value(V), m_Align(A), 
       m_ReadOnly(R) 
 {
-    if (m_Parent)
-        m_Parent->add_data(this);
-
-    if (N.empty())
-        return;
-
     if (g_Dict[N] == 0) {
         m_Name = N;
         g_Dict[N] = 1;
@@ -27,6 +21,9 @@ Data::Data(String N, Type *T, Linkage L, Segment *P, Value *V, unsigned A,
         m_Name = N + std::to_string(g_Dict[N]);
         g_Dict[N]++;
     }
+
+    if (m_Parent)
+        m_Parent->add_data(this);
 }
 
 void Data::detach() {

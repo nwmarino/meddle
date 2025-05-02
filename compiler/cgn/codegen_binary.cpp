@@ -29,7 +29,7 @@ void CGN::cgn_assign(BinaryExpr *BIN) {
             dest, 
             DL.get_type_align(ty), 
             m_Value, 
-            DL.get_type_align(m_Value->get_type()), 
+            DL.get_type_align(ty), 
             size
         );
     } else {

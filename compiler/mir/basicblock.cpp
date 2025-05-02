@@ -4,7 +4,6 @@
 #include "segment.h"
 
 #include <map>
-#include <ostream>
 
 using namespace mir;
 
@@ -13,19 +12,18 @@ static std::map<String, unsigned> g_Dict = {};
 void mir::clear_bb_dict() { g_Dict.clear(); }
 
 BasicBlock::BasicBlock(String N, Function *P) : Value(N, nullptr), m_Parent(P) {
+    if (!N.empty()) {
+        if (g_Dict[N] == 0) {
+            m_Name = N;
+            g_Dict[N] = 1;
+        } else {
+            m_Name = N + std::to_string(g_Dict[N]);
+            g_Dict[N]++;
+        }
+    }
+
     if (P)
         P->append(this);
-
-    if (N.empty())
-        return;
-
-    if (g_Dict[N] == 0) {
-        m_Name = N;
-        g_Dict[N] = 1;
-    } else {
-        m_Name = N + std::to_string(g_Dict[N]);
-        g_Dict[N]++;
-    }
 }
 
 BasicBlock::~BasicBlock() {
@@ -34,6 +32,10 @@ BasicBlock::~BasicBlock() {
         delete curr;
         curr = prev;
     }
+}
+
+void BasicBlock::give_ssa(Segment *S) {
+    m_Name = S->get_ssa();
 }
 
 void BasicBlock::append(Inst *I) {

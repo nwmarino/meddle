@@ -28,6 +28,8 @@ public:
 
     ~BasicBlock() override;
 
+    void give_ssa(Segment *S);
+    
     Function *get_parent() const { return m_Parent; }
 
     void set_parent(Function *F) { m_Parent = F; }

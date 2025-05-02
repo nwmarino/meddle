@@ -2,6 +2,8 @@
 
 ## roadmap
 
+Wed. May 7
+
 Binary Expressions
 - `=` Assign
 - `+=` Add Assign
@@ -73,3 +75,6 @@ Inline Assembly
 Templates
 - `TemplateStructDecl`
 - `TemplateFunctionDecl`
+
+Wed. May 14
+

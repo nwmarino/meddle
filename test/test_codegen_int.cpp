@@ -50,7 +50,7 @@ TEST_F(IntegratedCodegenTest, Return_Zero) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> i64 {
-entry:
+1:
     ret i64 0
 }
 )";
@@ -83,12 +83,12 @@ TEST_F(IntegratedCodegenTest, Return_Reference) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> i64 {
-    $x := slot i64, align 8
+    _x := slot i64, align 8
 
-entry:
-    str i64 42 -> i64* $x
-    %x.val := load i64* $x
-    ret i64 %x.val
+1:
+    str i64 42 -> i64* _x
+    $2 := load i64* _x
+    ret i64 $2
 }
 )";
     EXPECT_EQ(ss.str(), expected);
@@ -120,14 +120,14 @@ TEST_F(IntegratedCodegenTest, If_Then) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, if.then, if.merge
+1:
+    $2 := icmp_ne i64 1, i64 0
+    brif i1 $2, #3, #4
 
-if.then:
+3 (1):
     ret
 
-if.merge:
+4 (1):
     ret
 }
 )";
@@ -160,14 +160,14 @@ TEST_F(IntegratedCodegenTest, If_Then_Else) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, if.then, if.else
+1:
+    $2 := icmp_ne i64 1, i64 0
+    brif i1 $2, #3, #4
 
-if.then:
+3 (1):
     ret
 
-if.else:
+4 (1):
     ret
 }
 )";
@@ -200,21 +200,21 @@ TEST_F(IntegratedCodegenTest, If_Then_ElseIf_Else) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, if.then, if.else
+1:
+    $2 := icmp_ne i64 1, i64 0
+    brif i1 $2, #3, #4
 
-if.then:
+3 (1):
     ret
 
-if.else:
-    %int.cmp1 := icmp_ne i64 2, i64 0
-    brif i1 %int.cmp1, if.then1, if.else1
+4 (1):
+    $5 := icmp_ne i64 2, i64 0
+    brif i1 $5, #6, #7
 
-if.then1:
+6 (4):
     ret
 
-if.else1:
+7 (4):
     ret
 }
 )";
@@ -247,17 +247,17 @@ TEST_F(IntegratedCodegenTest, Until_Basic) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    jmp until.cond
+1:
+    jmp #2
 
-until.cond:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, until.merge, until.body
+2 (1):
+    $3 := icmp_ne i64 1, i64 0
+    brif i1 $3, #5, #4
 
-until.body:
+4 (2):
     ret
 
-until.merge:
+5 (2):
     ret
 }
 )";
@@ -290,17 +290,17 @@ TEST_F(IntegratedCodegenTest, Until_Continue) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    jmp until.cond
+1:
+    jmp #2
 
-until.cond:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, until.merge, until.body
+2 (1, 4):
+    $3 := icmp_ne i64 1, i64 0
+    brif i1 $3, #5, #4
 
-until.body:
-    jmp until.cond
+4 (2):
+    jmp #2
 
-until.merge:
+5 (2):
     ret
 }
 )";
@@ -333,17 +333,17 @@ TEST_F(IntegratedCodegenTest, Until_Break) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    jmp until.cond
+1:
+    jmp #2
 
-until.cond:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, until.merge, until.body
+2 (1):
+    $3 := icmp_ne i64 1, i64 0
+    brif i1 $3, #5, #4
 
-until.body:
-    jmp until.merge
+4 (2):
+    jmp #5
 
-until.merge:
+5 (2, 4):
     ret
 }
 )";
@@ -376,24 +376,24 @@ TEST_F(IntegratedCodegenTest, Until_If_Continue_Break) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-entry:
-    jmp until.cond
+1:
+    jmp #2
 
-until.cond:
-    %int.cmp := icmp_ne i64 1, i64 0
-    brif i1 %int.cmp, until.merge, until.body
+2 (1, 6):
+    $3 := icmp_ne i64 1, i64 0
+    brif i1 $3, #8, #4
 
-until.body:
-    %int.cmp1 := icmp_ne i64 2, i64 0
-    brif i1 %int.cmp1, if.then, if.else
+4 (2):
+    $5 := icmp_ne i64 2, i64 0
+    brif i1 $5, #6, #7
 
-if.then:
-    jmp until.cond
+6 (4):
+    jmp #2
 
-if.else:
-    jmp until.merge
+7 (4):
+    jmp #8
 
-until.merge:
+8 (2, 7):
     ret
 }
 )";
@@ -425,13 +425,13 @@ TEST_F(IntegratedCodegenTest, String_Declaration_Copy) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-str :: readonly i8[7] "hello\n\0", align 1
+__const.str :: readonly i8[7] "hello\n\0", align 1
 
 test :: () -> void {
-    $x := slot i8[7], align 1
+    _x := slot i8[7], align 1
 
-entry:
-    cpy i64 7, i8[7]* @str, align 1 -> i8[7]* $x, align 1
+1:
+    cpy i64 7, i8[7]* @__const.str, align 1 -> i8[7]* _x, align 1
     ret
 }
 )";
@@ -464,11 +464,11 @@ TEST_F(IntegratedCodegenTest, Truncate_Integer) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i32, align 4
+    _x := slot i32, align 4
 
-entry:
-    %cast.trunc := trunc i64 5 -> i32
-    str i32 %cast.trunc -> i32* $x
+1:
+    $2 := trunc i64 5 -> i32
+    str i32 $2 -> i32* _x
     ret
 }
 )";
@@ -501,12 +501,12 @@ TEST_F(IntegratedCodegenTest, Truncate_SExt_Integer) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i64, align 8
+    _x := slot i64, align 8
 
-entry:
-    %cast.trunc := trunc i64 5 -> i32
-    %cast.sext := sext i32 %cast.trunc -> i64
-    str i64 %cast.sext -> i64* $x
+1:
+    $2 := trunc i64 5 -> i32
+    $3 := sext i32 $2 -> i64
+    str i64 $3 -> i64* _x
     ret
 }
 )";
@@ -539,11 +539,11 @@ TEST_F(IntegratedCodegenTest, Truncate_Float) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot f32, align 4
+    _x := slot f32, align 4
 
-entry:
-    %cast.ftrunc := ftrunc f64 3.14 -> f32
-    str f32 %cast.ftrunc -> f32* $x
+1:
+    $2 := ftrunc f64 3.140000 -> f32
+    str f32 $2 -> f32* _x
     ret
 }
 )";
@@ -576,12 +576,12 @@ TEST_F(IntegratedCodegenTest, Truncate_FExt_Float) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot f64, align 8
+    _x := slot f64, align 8
 
-entry:
-    %cast.ftrunc := ftrunc f64 3.14 -> f32
-    %cast.fext := fext f32 %cast.ftrunc -> f64
-    str f64 %cast.fext -> f64* $x
+1:
+    $2 := ftrunc f64 3.140000 -> f32
+    $3 := fext f32 $2 -> f64
+    str f64 $3 -> f64* _x
     ret
 }
 )";
@@ -614,11 +614,11 @@ TEST_F(IntegratedCodegenTest, Float_To_SInt) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i64, align 8
+    _x := slot i64, align 8
 
-entry:
-    %cast.cvt := fp2si f64 3.14 -> i64
-    str i64 %cast.cvt -> i64* $x
+1:
+    $2 := fp2si f64 3.140000 -> i64
+    str i64 $2 -> i64* _x
     ret
 }
 )";
@@ -651,11 +651,11 @@ TEST_F(IntegratedCodegenTest, Float_To_UInt) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i64, align 8
+    _x := slot i64, align 8
 
-entry:
-    %cast.cvt := fp2ui f64 3.14 -> i64
-    str i64 %cast.cvt -> i64* $x
+1:
+    $2 := fp2ui f64 3.140000 -> i64
+    str i64 $2 -> i64* _x
     ret
 }
 )";
@@ -688,11 +688,11 @@ TEST_F(IntegratedCodegenTest, SInt_To_Float) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot f64, align 8
+    _x := slot f64, align 8
 
-entry:
-    %cast.cvt := si2fp i64 5 -> f64
-    str f64 %cast.cvt -> f64* $x
+1:
+    $2 := si2fp i64 5 -> f64
+    str f64 $2 -> f64* _x
     ret
 }
 )";
@@ -725,11 +725,11 @@ TEST_F(IntegratedCodegenTest, UInt_To_Float) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot f64, align 8
+    _x := slot f64, align 8
 
-entry:
-    %cast.cvt := ui2fp i64 5 -> f64
-    str f64 %cast.cvt -> f64* $x
+1:
+    $2 := ui2fp i64 5 -> f64
+    str f64 $2 -> f64* _x
     ret
 }
 )";
@@ -762,11 +762,11 @@ TEST_F(IntegratedCodegenTest, Pointer_Reinterpret) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i64*, align 8
+    _x := slot i64*, align 8
 
-entry:
-    %cast.ptr := reint void* nil -> i64*
-    str i64* %cast.ptr -> i64** $x
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
     ret
 }
 )";
@@ -799,28 +799,28 @@ TEST_F(IntegratedCodegenTest, Match_Basic) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> i32 {
-entry:
-    jmp match.chain
+1:
+    jmp #2
 
-match.chain:
-    %match.cmp := icmp_eq i64 5, i64 1
-    brif i1 %match.cmp, match.case, match.chain1
+2 (1):
+    $3 := icmp_eq i64 5, i64 1
+    brif i1 $3, #4, #6
 
-match.case:
-    %cast.trunc := trunc i64 0 -> i32
-    ret i32 %cast.trunc
+4 (2):
+    $5 := trunc i64 0 -> i32
+    ret i32 $5
 
-match.chain1:
-    %match.cmp1 := icmp_eq i64 5, i64 2
-    brif i1 %match.cmp1, match.case1, match.def
+6 (2):
+    $7 := icmp_eq i64 5, i64 2
+    brif i1 $7, #8, #10
 
-match.case1:
-    %cast.trunc1 := trunc i64 42 -> i32
-    ret i32 %cast.trunc1
+8 (6):
+    $9 := trunc i64 42 -> i32
+    ret i32 $9
 
-match.def:
-    %cast.trunc2 := trunc i64 1 -> i32
-    ret i32 %cast.trunc2
+10 (6):
+    $11 := trunc i64 1 -> i32
+    ret i32 $11
 }
 )";
     EXPECT_EQ(ss.str(), expected);
@@ -852,10 +852,10 @@ TEST_F(IntegratedCodegenTest, Bool_Declaration) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i8, align 1
+    _x := slot i8, align 1
 
-entry:
-    str i8 1 -> i8* $x
+1:
+    str i8 1 -> i8* _x
     ret
 }
 )";
@@ -888,10 +888,10 @@ TEST_F(IntegratedCodegenTest, Bool_Declaration_Parentheses) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i8, align 1
+    _x := slot i8, align 1
 
-entry:
-    str i8 0 -> i8* $x
+1:
+    str i8 0 -> i8* _x
     ret
 }
 )";
@@ -924,10 +924,10 @@ TEST_F(IntegratedCodegenTest, Sizeof_Basic) {
     String expected = R"(target :: x86_64 linux system_v
 
 test :: () -> void {
-    $x := slot i64, align 8
+    _x := slot i64, align 8
 
-entry:
-    str i64 4 -> i64* $x
+1:
+    str i64 4 -> i64* _x
     ret
 }
 )";
@@ -970,282 +970,2164 @@ global :: readonly i64 0, align 8
 
 #define BINARY_ASSIGN_SMALL R"(test::() { mut x: i64 = 0; x = 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Small_Assign) {
+    File file = File("", "", "", BINARY_ASSIGN_SMALL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    str i64 1 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_ASSIGN_BIG R"(test::() { mut x: char[8] = "ayoayo\n"; x = "alrcya\n"; })"
 TEST_F(IntegratedCodegenTest, Binary_Big_Assign) {
+    File file = File("", "", "", BINARY_ASSIGN_BIG);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+__const.str2 :: readonly i8[8] "alrcya\n\0", align 1
+__const.str1 :: readonly i8[8] "ayoayo\n\0", align 1
+
+test :: () -> void {
+    _x := slot i8[8], align 1
+
+1:
+    cpy i64 8, i8[8]* @__const.str1, align 1 -> i8[8]* _x, align 1
+    cpy i64 8, i8[8]* @__const.str2, align 1 -> i8[8]* _x, align 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_ADD_ASSIGN R"(test::() { mut x: i64 = 0; x += 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Add_Assign) {
+    File file = File("", "", "", BINARY_INT_ADD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := add i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_FP_ADD_ASSIGN R"(test::() { mut x: f64 = 0.0; x += 1.0; })"
+#define BINARY_FP_ADD_ASSIGN R"(test::() { mut x: f64 = 0.5; x += 3.14; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Add_Assign) {
+    File file = File("", "", "", BINARY_FP_ADD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.500000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fadd f64 $2, f64 3.140000
+    str f64 $3 -> f64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_SUB_ASSIGN R"(test::() { mut x: i64 = 0; x -= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Sub_Assign) {
+    File file = File("", "", "", BINARY_INT_SUB_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := sub i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_SUB_ASSIGN R"(test::() { mut x: f64 = 0.0; x -= 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Sub_Assign) {
+    File file = File("", "", "", BINARY_FP_SUB_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fsub f64 $2, f64 1.000000
+    str f64 $3 -> f64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_SINT_MUL_ASSIGN R"(test::() { mut x: i64 = 0; x *= 1; })"
+#define BINARY_SINT_MUL_ASSIGN R"(test::() { mut x: i64 = 0; x *= 2; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Mul_Assign) {
+    File file = File("", "", "", BINARY_SINT_MUL_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := smul i64 $2, i64 2
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_UINT_MUL_ASSIGN R"(test::() { mut x: u64 = 0; x *= 1; })"
+#define BINARY_UINT_MUL_ASSIGN R"(test::() { mut x: u64 = 0; x *= 2; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Mul_Assign) {
-    
+    File file = File("", "", "", BINARY_UINT_MUL_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := umul i64 $2, i64 2
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_FP_MUL_ASSIGN R"(test::() { mut x: f64 = 0.0; x *= 1.0; })"
+#define BINARY_FP_MUL_ASSIGN R"(test::() { mut x: f64 = 0.0; x *= 1.14; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Mul_Assign) {
+    File file = File("", "", "", BINARY_FP_MUL_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fmul f64 $2, f64 1.140000
+    str f64 $3 -> f64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_SINT_DIV_ASSIGN R"(test::() { mut x: i64 = 0; x /= 1; })"
+#define BINARY_SINT_DIV_ASSIGN R"(test::() { mut x: i64 = 0; x /= 15; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Div_Assign) {
+    File file = File("", "", "", BINARY_SINT_DIV_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := sdiv i64 $2, i64 15
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_UINT_DIV_ASSIGN R"(test::() { mut x: u64 = 0; x /= 1; })"
+#define BINARY_UINT_DIV_ASSIGN R"(test::() { mut x: u64 = 0; x /= 12; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Div_Assign) {
+    File file = File("", "", "", BINARY_UINT_DIV_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := udiv i64 $2, i64 12
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_FP_DIV_ASSIGN R"(test::() { mut x: f64 = 0.0; x /= 1.0; })"
+#define BINARY_FP_DIV_ASSIGN R"(test::() { mut x: f64 = 1.2; x /= 1.23; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Div_Assign) {
+    File file = File("", "", "", BINARY_FP_DIV_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    FunctionDecl *A = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    CompoundStmt *B = dynamic_cast<CompoundStmt *>(A->getBody());
+    ExprStmt *C = dynamic_cast<ExprStmt *>(B->getStmts()[1]);
+    BinaryExpr *D = dynamic_cast<BinaryExpr *>(C->getExpr());
+    FloatLiteral *E = dynamic_cast<FloatLiteral *>(D->getRHS());
+    EXPECT_EQ(E->getValue(), 1.230000);
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 1.200000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fdiv f64 $2, f64 1.230000
+    str f64 $3 -> f64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_SINT_MOD_ASSIGN R"(test::() { mut x: i64 = 0; x %= 1; })"
+#define BINARY_SINT_MOD_ASSIGN R"(test::() { mut x: i64 = 12; x %= 2; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Mod_Assign) {
+    File file = File("", "", "", BINARY_SINT_MOD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 12 -> i64* _x
+    $2 := load i64* _x
+    $3 := srem i64 $2, i64 2
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_UINT_MOD_ASSIGN R"(test::() { mut x: u64 = 0; x %= 1; })"
+#define BINARY_UINT_MOD_ASSIGN R"(test::() { mut x: u64 = 5; x %= 3; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Mod_Assign) {
+    File file = File("", "", "", BINARY_UINT_MOD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 5 -> i64* _x
+    $2 := load i64* _x
+    $3 := urem i64 $2, i64 3
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_AND_ASSIGN R"(test::() { mut x: i64 = 0; x &= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_And_Assign) {
+    File file = File("", "", "", BINARY_AND_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := and i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_OR_ASSIGN R"(test::() { mut x: i64 = 0; x |= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Or_Assign) {
+    File file = File("", "", "", BINARY_OR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := or i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_XOR_ASSIGN R"(test::() { mut x: i64 = 0; x ^= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Xor_Assign) {
+    File file = File("", "", "", BINARY_XOR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := xor i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SHL_ASSIGN R"(test::() { mut x: i64 = 0; x <<= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Shl_Assign) {
+    File file = File("", "", "", BINARY_SHL_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := shl i64 $2, i64 1
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_SHR_ASSIGN R"(test::() { mut x: i64 = 0; x >>= 2; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Shr_Assign) {
+    File file = File("", "", "", BINARY_SINT_SHR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := ashr i64 $2, i64 2
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_SHR_ASSIGN R"(test::() { mut x: u64 = 0; x >>= 2; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Shr_Assign) {
+    File file = File("", "", "", BINARY_UINT_SHR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := lshr i64 $2, i64 2
+    str i64 $3 -> i64* _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_EQUALS R"(test::() { mut x: i64 = 0; x == 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Equals) {
+    File file = File("", "", "", BINARY_INT_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_eq i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_NOT_EQUALS R"(test::() { mut x: i64 = 0; x != 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Not_Equals) {
+    File file = File("", "", "", BINARY_INT_NOT_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ne i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_LESS R"(test::() { mut x: i64 = 0; x < 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Less) {
+    File file = File("", "", "", BINARY_SINT_LESS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_slt i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_LESS R"(test::() { mut x: u64 = 0; x < 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Less) {
+    File file = File("", "", "", BINARY_UINT_LESS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ult i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_LESS R"(test::() { mut x: f64 = 0.0; x < 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Less) {
+    File file = File("", "", "", BINARY_FP_LESS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fcmp_olt f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_LESS R"(test::() { mut x: i64* = nil; x < nil; })"
 TEST_F(IntegratedCodegenTest, Binary_Ptr_Less) {
+    File file = File("", "", "", BINARY_PTR_LESS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := reint void* nil -> i64*
+    $5 := pcmp_lt i64* $3, i64* $4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_LESS_EQUALS R"(test::() { mut x: i64 = 0; x <= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Less_Equals) {
+    File file = File("", "", "", BINARY_SINT_LESS_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_sle i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_LESS_EQUALS R"(test::() { mut x: u64 = 0; x <= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Less_Equals) {
+    File file = File("", "", "", BINARY_UINT_LESS_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ule i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_LESS_EQUALS R"(test::() { mut x: f64 = 0.0; x <= 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Less_Equals) {
+    File file = File("", "", "", BINARY_FP_LESS_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fcmp_ole f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_LESS_EQUALS R"(test::() { mut x: i64* = nil; x <= nil; })"
 TEST_F(IntegratedCodegenTest, Binary_Ptr_Less_Equals) {
+    File file = File("", "", "", BINARY_PTR_LESS_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := reint void* nil -> i64*
+    $5 := pcmp_le i64* $3, i64* $4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_GREATER R"(test::() { mut x: i64 = 0; x > 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Greater) {
+    File file = File("", "", "", BINARY_SINT_GREATER);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_sgt i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_GREATER R"(test::() { mut x: u64 = 0; x > 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Greater) {
+    File file = File("", "", "", BINARY_UINT_GREATER);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_ugt i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_GREATER R"(test::() { mut x: f64 = 0.0; x > 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Greater) {
+    File file = File("", "", "", BINARY_FP_GREATER);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fcmp_ogt f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_GREATER R"(test::() { mut x: i64* = nil; x > nil; })"
 TEST_F(IntegratedCodegenTest, Binary_Ptr_Greater) {
+    File file = File("", "", "", BINARY_PTR_GREATER);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := reint void* nil -> i64*
+    $5 := pcmp_gt i64* $3, i64* $4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_GREATER_EQUALS R"(test::() { mut x: i64 = 0; x >= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Greater_Equals) {
+    File file = File("", "", "", BINARY_SINT_GREATER_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_sge i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_GREATER_EQUALS R"(test::() { mut x: u64 = 0; x >= 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Greater_Equals) {
+    File file = File("", "", "", BINARY_UINT_GREATER_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := icmp_uge i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_GREATER_EQUALS R"(test::() { mut x: f64 = 0.0; x >= 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Greater_Equals) {
+    File file = File("", "", "", BINARY_FP_GREATER_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fcmp_oge f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_GREATER_EQUALS R"(test::() { mut x: i64* = nil; x >= nil; })"
 TEST_F(IntegratedCodegenTest, Binary_Ptr_Greater_Equals) {
+    File file = File("", "", "", BINARY_PTR_GREATER_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := reint void* nil -> i64*
+    $5 := pcmp_ge i64* $3, i64* $4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_AND R"(test::() { mut x: i64 = 0; x & 1; })"
 TEST_F(IntegratedCodegenTest, Binary_And) {
+    File file = File("", "", "", BINARY_AND);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := and i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_OR R"(test::() { mut x: i64 = 0; x | 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Or) {
+    File file = File("", "", "", BINARY_OR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := or i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_XOR R"(test::() { mut x: i64 = 0; x ^ 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Xor) {
+    File file = File("", "", "", BINARY_XOR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := xor i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SHL R"(test::() { mut x: i64 = 0; x << 2; })"
 TEST_F(IntegratedCodegenTest, Binary_Shl) {
+    File file = File("", "", "", BINARY_SHL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := shl i64 $2, i64 2
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_SHR R"(test::() { mut x: i64 = 0; x >> 2; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Shr) {
+    File file = File("", "", "", BINARY_SINT_SHR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := ashr i64 $2, i64 2
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_SHR R"(test::() { mut x: u64 = 0; x >> 2; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Shr) {
+    File file = File("", "", "", BINARY_UINT_SHR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := lshr i64 $2, i64 2
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_ADD R"(test::() { mut x: i64 = 0; x + 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Add) {
+    File file = File("", "", "", BINARY_INT_ADD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := add i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_ADD R"(test::() { mut x: f64 = 0.0; x + 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Add) {
+    File file = File("", "", "", BINARY_FP_ADD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fadd f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_INT_SUB R"(test::() { mut x: i64 = 0; x - 1; })"
 TEST_F(IntegratedCodegenTest, Binary_Int_Sub) {
+    File file = File("", "", "", BINARY_INT_SUB);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := sub i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_SUB R"(test::() { mut x: f64 = 0.0; x - 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Sub) {
+    File file = File("", "", "", BINARY_FP_SUB);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fsub f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_MUL R"(test::() { mut x: i64 = 0; x * 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Mul) {
+    File file = File("", "", "", BINARY_SINT_MUL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := smul i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_MUL R"(test::() { mut x: u64 = 0; x * 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Mul) {
+    File file = File("", "", "", BINARY_UINT_MUL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := umul i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_MUL R"(test::() { mut x: f64 = 0.0; x * 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Mul) {
+    File file = File("", "", "", BINARY_FP_MUL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fmul f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_DIV R"(test::() { mut x: i64 = 0; x / 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Div) {
+    File file = File("", "", "", BINARY_SINT_DIV);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := sdiv i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_DIV R"(test::() { mut x: u64 = 0; x / 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Div) {
+    File file = File("", "", "", BINARY_UINT_DIV);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := udiv i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_FP_DIV R"(test::() { mut x: f64 = 0.0; x / 1.0; })"
 TEST_F(IntegratedCodegenTest, Binary_FP_Div) {
+    File file = File("", "", "", BINARY_FP_DIV);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot f64, align 8
+
+1:
+    str f64 0.000000 -> f64* _x
+    $2 := load f64* _x
+    $3 := fdiv f64 $2, f64 1.000000
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_SINT_MOD R"(test::() { mut x: i64 = 0; x % 1; })"
 TEST_F(IntegratedCodegenTest, Binary_SInt_Mod) {
+    File file = File("", "", "", BINARY_SINT_MOD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := srem i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_UINT_MOD R"(test::() { mut x: u64 = 0; x % 1; })"
 TEST_F(IntegratedCodegenTest, Binary_UInt_Mod) {
+    File file = File("", "", "", BINARY_UINT_MOD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
 
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x
+    $2 := load i64* _x
+    $3 := urem i64 $2, i64 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 } // namespace test

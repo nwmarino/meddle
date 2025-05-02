@@ -4,27 +4,15 @@
 #include "segment.h"
 #include "value.h"
 
+#include <iomanip>
 #include <iostream>
 #include <ostream>
 #include <unordered_map>
 
 using namespace mir;
 
-static std::unordered_map<Value const *, unsigned long> g_IDs = {};
-static unsigned long g_ID = 1;
-
 static String get_printed_name(Value const *V) {
-    if (!V->get_name().empty())
-        return V->get_name();
-
-    auto it = g_IDs.find(V);
-    if (it != g_IDs.end()) {
-        return std::to_string(it->second);
-    } else {
-        g_IDs[V] = g_ID;
-        std::cout << "made id " << g_ID << "\n";
-        return std::to_string(g_ID++);
-    }
+    return V->get_name();
 }
 
 static void print_store(std::ostream &OS, StoreInst *I) {
@@ -65,7 +53,8 @@ static void print_brif(std::ostream &OS, BrifInst *I) {
 }
 
 static void print_jmp(std::ostream &OS, JMPInst *I) {
-    OS << "jmp " << I->get_dest()->get_name();
+    OS << "jmp ";
+    I->get_dest()->print(OS);
 }
 
 static void print_ret(std::ostream &OS, RetInst *I) {
@@ -131,7 +120,7 @@ static void print_binop(std::ostream &OS, BinopInst *I) {
         OS << "ashr ";
         break;
     case BinopInst::Kind::LShr:
-        OS << "shr ";
+        OS << "lshr ";
         break;
     }
 
@@ -348,9 +337,6 @@ static void print_function(std::ostream &OS, Function *FN) {
 }
 
 void Segment::print(std::ostream &OS) const {
-    g_IDs.clear();
-    g_ID = 1;
-
     OS << "target :: ";
 
     switch (m_Target.Arch) {
@@ -414,7 +400,8 @@ void ConstantInt::print(std::ostream &OS) const {
 }
 
 void ConstantFP::print(std::ostream &OS) const {
-    OS << m_Type->get_name() << " " << m_Value;
+    OS << m_Type->get_name() << " " << std::fixed << std::setprecision(6) 
+       << m_Value;
 }
 
 void ConstantNil::print(std::ostream &OS) const {

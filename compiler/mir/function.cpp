@@ -70,6 +70,9 @@ void Function::append(BasicBlock *BB) {
     }
 
     BB->set_parent(this);
+
+    if (BB->get_name().empty())
+        BB->give_ssa(m_Parent);
 }
 
 void Function::prepend(BasicBlock *BB) {
@@ -86,6 +89,9 @@ void Function::prepend(BasicBlock *BB) {
     }
 
     BB->set_parent(this);
+
+    if (BB->get_name().empty())
+        BB->give_ssa(m_Parent);
 }
 
 void Function::detach() {

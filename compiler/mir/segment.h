@@ -88,6 +88,7 @@ class Segment final {
     friend class ConstantFP;
     friend class ConstantNil;
 
+    unsigned long m_SSA = 1;
     Target m_Target;
     DataLayout m_Layout;
 
@@ -102,13 +103,15 @@ class Segment final {
     std::unordered_map<int16_t, ConstantInt *> m_I16Pool = {};
     std::unordered_map<int32_t, ConstantInt *> m_I32Pool = {};
     std::unordered_map<int64_t, ConstantInt *> m_I64Pool = {};
-    std::unordered_map<uint32_t, ConstantFP *> m_F32Pool = {};
-    std::unordered_map<uint64_t, ConstantFP *> m_F64Pool = {};
+    std::unordered_map<float, ConstantFP *> m_F32Pool = {};
+    std::unordered_map<double, ConstantFP *> m_F64Pool = {};
 
 public:
     Segment(const Target &T);
 
     ~Segment();
+
+    String get_ssa() { return std::to_string(m_SSA++); }
 
     const DataLayout &get_data_layout() const { return m_Layout; }
 
