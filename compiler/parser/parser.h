@@ -46,6 +46,12 @@ class Parser final {
 
     void exit_scope() { m_Scope = m_Scope->getParent(); }
 
+    /// Returns the precedence for the current token if it is a operator or -1.
+    int get_bin_precedence() const;
+
+    /// Returns the equivelant binary operator kind for the current token.
+    BinaryExpr::Kind get_bin_operator() const;
+
     Type *parse_type(bool produce = true);
     void parse_attributes();
 
@@ -74,10 +80,14 @@ class Parser final {
     CharLiteral *parse_char();
     StringLiteral *parse_str();
     NilLiteral *parse_nil();
+
+    Expr *parse_binary(Expr *B, int precedence);
     CastExpr *parse_cast();
     ParenExpr *parse_paren();
     RefExpr *parse_ref();
     SizeofExpr *parse_sizeof();
+    Expr *parse_unary_prefix();
+    Expr *parse_unary_postfix();
 
 public:
     Parser(const File &F, const TokenStream &S);

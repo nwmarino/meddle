@@ -475,6 +475,10 @@ void CGN::visit(NilLiteral *expr) {
 	m_Value = mir::ConstantNil::get(m_Segment, cgn_type(expr->getType()));
 }
 
+void CGN::visit(BinaryExpr *expr) {
+	
+}
+
 void CGN::visit(CastExpr *expr) {
 	m_VC = ValueContext::RValue;
     expr->getExpr()->accept(this);

@@ -69,6 +69,8 @@ public:
     void visit(CharLiteral *expr) override;
     void visit(StringLiteral *expr) override;
     void visit(NilLiteral *expr) override;
+
+    void visit(BinaryExpr *expr) override;
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;

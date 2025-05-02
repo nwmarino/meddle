@@ -420,6 +420,1292 @@ TEST_F(ParseExprTest, Sizeof_Basic) {
     delete unit;
 }
 
+#define BINARY_ASSIGN R"(test::() { mut x = 0; x = 1; })"
+TEST_F(ParseExprTest, Binary_Assign) {
+    File file = File("", "", "", BINARY_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_ADD_ASSIGN R"(test::() { mut x = 0; x += 1; })"
+TEST_F(ParseExprTest, Binary_Add_Assign) {
+    File file = File("", "", "", BINARY_ADD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Add_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_SUB_ASSIGN R"(test::() { mut x = 0; x -= 1; })"
+TEST_F(ParseExprTest, Binary_Sub_Assign) {
+    File file = File("", "", "", BINARY_SUB_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Sub_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_MUL_ASSIGN R"(test::() { mut x = 0; x *= 1; })"
+TEST_F(ParseExprTest, Binary_Mul_Assign) {
+    File file = File("", "", "", BINARY_MUL_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Mul_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_DIV_ASSIGN R"(test::() { mut x = 0; x /= 1; })"
+TEST_F(ParseExprTest, Binary_Div_Assign) {
+    File file = File("", "", "", BINARY_DIV_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Div_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_MOD_ASSIGN R"(test::() { mut x = 0; x %= 1; })"
+TEST_F(ParseExprTest, Binary_Mod_Assign) {
+    File file = File("", "", "", BINARY_MOD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Mod_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_AND_ASSIGN R"(test::() { mut x = 0; x &= 1; })"
+TEST_F(ParseExprTest, Binary_And_Assign) {
+    File file = File("", "", "", BINARY_AND_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::And_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_OR_ASSIGN R"(test::() { mut x = 0; x |= 1; })"
+TEST_F(ParseExprTest, Binary_Or_Assign) {
+    File file = File("", "", "", BINARY_OR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Or_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_XOR_ASSIGN R"(test::() { mut x = 0; x ^= 1; })"
+TEST_F(ParseExprTest, Binary_Xor_Assign) {
+    File file = File("", "", "", BINARY_XOR_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Xor_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LS_ASSIGN R"(test::() { mut x = 0; x <<= 1; })"
+TEST_F(ParseExprTest, Binary_LS_Assign) {
+    File file = File("", "", "", BINARY_LS_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::LeftShift_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_RS_ASSIGN R"(test::() { mut x = 0; x >>= 1; })"
+TEST_F(ParseExprTest, Binary_RS_Assign) {
+    File file = File("", "", "", BINARY_RS_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::RightShift_Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_EQUALS R"(test::() { fix x: i32 = 0; x == 1; })"
+TEST_F(ParseExprTest, Binary_Equals) {
+    File file = File("", "", "", BINARY_EQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Equals);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_NEQUALS R"(test::() { fix x: i32 = 0; x != 1; })"
+TEST_F(ParseExprTest, Binary_NEquals) {
+    File file = File("", "", "", BINARY_NEQUALS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::NEquals);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LESS R"(test::() { fix x: i32 = 0; x < 1; })"
+TEST_F(ParseExprTest, Binary_LessThan) {
+    File file = File("", "", "", BINARY_LESS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::LessThan);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LESS_EQ R"(test::() { fix x: i32 = 0; x <= 1; })"
+TEST_F(ParseExprTest, Binary_LessThanEquals) {
+    File file = File("", "", "", BINARY_LESS_EQ);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::LessThanEquals);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_GREATER R"(test::() { fix x: i32 = 0; x > 1; })"
+TEST_F(ParseExprTest, Binary_GreaterThan) {
+    File file = File("", "", "", BINARY_GREATER);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::GreaterThan);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_GREATER_EQ R"(test::() { fix x: i32 = 0; x >= 1; })"
+TEST_F(ParseExprTest, Binary_GreaterThanEquals) {
+    File file = File("", "", "", BINARY_GREATER_EQ);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+    
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::GreaterThanEquals);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_ADD R"(test::() { fix x: i32 = 0; x + 1; })"
+TEST_F(ParseExprTest, Binary_Add) {
+    File file = File("", "", "", BINARY_ADD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+    
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Add);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_SUB R"(test::() { fix x: i32 = 0; x - 1; })"
+TEST_F(ParseExprTest, Binary_Sub) {
+    File file = File("", "", "", BINARY_SUB);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Sub);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_MUL R"(test::() { fix x: i32 = 0; x * 1; })"
+TEST_F(ParseExprTest, Binary_Mul) {
+    File file = File("", "", "", BINARY_MUL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Mul);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_DIV R"(test::() { fix x: i32 = 0; x / 1; })"
+TEST_F(ParseExprTest, Binary_Div) {
+    File file = File("", "", "", BINARY_DIV);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Div);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_MOD R"(test::() { fix x: i32 = 0; x % 1; })"
+TEST_F(ParseExprTest, Binary_Mod) {
+    File file = File("", "", "", BINARY_MOD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Mod);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_AND R"(test::() { fix x: i32 = 0; x & 1; })"
+TEST_F(ParseExprTest, Binary_And) {
+    File file = File("", "", "", BINARY_AND);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Bitwise_And);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_OR R"(test::() { fix x: i32 = 0; x | 1; })"
+TEST_F(ParseExprTest, Binary_Or) {
+    File file = File("", "", "", BINARY_OR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Bitwise_Or);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_XOR R"(test::() { fix x: i32 = 0; x ^ 1; })"
+TEST_F(ParseExprTest, Binary_Xor) {
+    File file = File("", "", "", BINARY_XOR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Bitwise_Xor);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LS R"(test::() { fix x: i32 = 0; x << 1; })"
+TEST_F(ParseExprTest, Binary_LS) {
+    File file = File("", "", "", BINARY_LS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::LeftShift);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_RS R"(test::() { fix x: i32 = 0; x >> 1; })"
+TEST_F(ParseExprTest, Binary_RS) {
+    File file = File("", "", "", BINARY_RS);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::RightShift);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LOGIC_AND R"(test::() { fix x: i32 = 0; x && 1; })"
+TEST_F(ParseExprTest, Binary_Logic_And) {
+    File file = File("", "", "", BINARY_LOGIC_AND);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Logic_And);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_LOGIC_OR R"(test::() { fix x: i32 = 0; x || 1; })"
+TEST_F(ParseExprTest, Binary_Logic_Or) {
+    File file = File("", "", "", BINARY_LOGIC_OR);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Logic_Or);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_PRECEDENCE_BEDMAS1 R"(test::() { fix x: i32 = 0; x + 1 * 2; })"
+TEST_F(ParseExprTest, Binary_Precedence_Bedmas_One) {
+    File file = File("", "", "", BINARY_PRECEDENCE_BEDMAS1);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Add);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+
+    BinaryExpr *RHS = dynamic_cast<BinaryExpr *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+    EXPECT_NE(RHS->getLHS(), nullptr);
+    EXPECT_NE(RHS->getRHS(), nullptr);
+    EXPECT_EQ(RHS->getKind(), BinaryExpr::Kind::Mul);
+
+    IntegerLiteral *RHS_LHS = dynamic_cast<IntegerLiteral *>(RHS->getLHS());
+    EXPECT_NE(RHS_LHS, nullptr);
+
+    IntegerLiteral *RHS_RHS = dynamic_cast<IntegerLiteral *>(RHS->getRHS());
+    EXPECT_NE(RHS_RHS, nullptr);
+
+    delete unit;
+}
+
+#define BINARY_PRECEDENCE_BEDMAS2 R"(test::() { fix x: i32 = 0; x + 1 * 2 / 3; })"
+TEST_F(ParseExprTest, Binary_Precedence_Bedmas_Two) {
+    File file = File("", "", "", BINARY_PRECEDENCE_BEDMAS2);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *addExpr = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(addExpr, nullptr);
+    EXPECT_EQ(addExpr->getKind(), BinaryExpr::Kind::Add);
+
+    RefExpr *lhs = dynamic_cast<RefExpr *>(addExpr->getLHS());
+    EXPECT_NE(lhs, nullptr);
+    EXPECT_EQ(lhs->getName(), "x");
+
+    BinaryExpr *divExpr = dynamic_cast<BinaryExpr *>(addExpr->getRHS());
+    EXPECT_NE(divExpr, nullptr);
+    EXPECT_EQ(divExpr->getKind(), BinaryExpr::Kind::Div);
+
+    BinaryExpr *mulExpr = dynamic_cast<BinaryExpr *>(divExpr->getLHS());
+    EXPECT_NE(mulExpr, nullptr);
+    EXPECT_EQ(mulExpr->getKind(), BinaryExpr::Kind::Mul);
+
+    IntegerLiteral *mulLHS = dynamic_cast<IntegerLiteral *>(mulExpr->getLHS());
+    EXPECT_NE(mulLHS, nullptr);
+    EXPECT_EQ(mulLHS->getValue(), 1);
+
+    IntegerLiteral *mulRHS = dynamic_cast<IntegerLiteral *>(mulExpr->getRHS());
+    EXPECT_NE(mulRHS, nullptr);
+    EXPECT_EQ(mulRHS->getValue(), 2);
+
+    IntegerLiteral *divRHS = dynamic_cast<IntegerLiteral *>(divExpr->getRHS());
+    EXPECT_NE(divRHS, nullptr);
+    EXPECT_EQ(divRHS->getValue(), 3);
+
+    delete unit;
+}
+
+#define BINARY_PRECEDENCE_BEDMAS3 R"(test::() { fix x: i32 = 0; x + 1 * 2 / 3 % 4; })"
+TEST_F(ParseExprTest, Binary_Precedence_Bedmas_Three) {
+    File file = File("", "", "", BINARY_PRECEDENCE_BEDMAS3);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Add);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+    EXPECT_EQ(LHS->getName(), "x");
+
+    BinaryExpr *RHS = dynamic_cast<BinaryExpr *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+    EXPECT_EQ(RHS->getKind(), BinaryExpr::Kind::Mod);
+
+    BinaryExpr *MOD_LHS = dynamic_cast<BinaryExpr *>(RHS->getLHS());
+    EXPECT_NE(MOD_LHS, nullptr);
+    EXPECT_EQ(MOD_LHS->getKind(), BinaryExpr::Kind::Div);
+
+    BinaryExpr *DIV_LHS = dynamic_cast<BinaryExpr *>(MOD_LHS->getLHS());
+    EXPECT_NE(DIV_LHS, nullptr);
+    EXPECT_EQ(DIV_LHS->getKind(), BinaryExpr::Kind::Mul);
+
+    IntegerLiteral *MUL_LHS = dynamic_cast<IntegerLiteral *>(DIV_LHS->getLHS());
+    EXPECT_NE(MUL_LHS, nullptr);
+    EXPECT_EQ(MUL_LHS->getValue(), 1);
+
+    IntegerLiteral *MUL_RHS = dynamic_cast<IntegerLiteral *>(DIV_LHS->getRHS());
+    EXPECT_NE(MUL_RHS, nullptr);
+    EXPECT_EQ(MUL_RHS->getValue(), 2);
+
+    IntegerLiteral *DIV_RHS = dynamic_cast<IntegerLiteral *>(MOD_LHS->getRHS());
+    EXPECT_NE(DIV_RHS, nullptr);
+    EXPECT_EQ(DIV_RHS->getValue(), 3);
+
+    IntegerLiteral *MOD_RHS = dynamic_cast<IntegerLiteral *>(RHS->getRHS());
+    EXPECT_NE(MOD_RHS, nullptr);
+    EXPECT_EQ(MOD_RHS->getValue(), 4);
+
+    delete unit;
+}
+
+#define BINARY_PRECEDENCE_BEDMAS4 R"(test::() { fix x: i32 = 0; x + 1 * 2 / 3 % 4 + 5; })"
+TEST_F(ParseExprTest, Binary_Precedence_Bedmas_Four) {
+    File file = File("", "", "", BINARY_PRECEDENCE_BEDMAS4);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+    
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Add);
+    EXPECT_NE(BS->getLHS(), nullptr);
+    EXPECT_NE(BS->getRHS(), nullptr);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+    EXPECT_EQ(LHS->getName(), "x");
+
+    BinaryExpr *RHS = dynamic_cast<BinaryExpr *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+    EXPECT_EQ(RHS->getKind(), BinaryExpr::Kind::Add);
+    EXPECT_NE(RHS->getLHS(), nullptr);
+    EXPECT_NE(RHS->getRHS(), nullptr);
+
+    BinaryExpr *ADD_LHS = dynamic_cast<BinaryExpr *>(RHS->getLHS());
+    EXPECT_NE(ADD_LHS, nullptr);
+    EXPECT_EQ(ADD_LHS->getKind(), BinaryExpr::Kind::Mod);
+    EXPECT_NE(ADD_LHS->getLHS(), nullptr);
+    EXPECT_NE(ADD_LHS->getRHS(), nullptr);
+
+    BinaryExpr *MOD_LHS = dynamic_cast<BinaryExpr *>(ADD_LHS->getLHS());
+    EXPECT_NE(MOD_LHS, nullptr);
+    EXPECT_EQ(MOD_LHS->getKind(), BinaryExpr::Kind::Div);
+    EXPECT_NE(MOD_LHS->getLHS(), nullptr);
+    EXPECT_NE(MOD_LHS->getRHS(), nullptr);
+
+    BinaryExpr *DIV_LHS = dynamic_cast<BinaryExpr *>(MOD_LHS->getLHS());
+    EXPECT_NE(DIV_LHS, nullptr);
+    EXPECT_EQ(DIV_LHS->getKind(), BinaryExpr::Kind::Mul);
+    EXPECT_NE(DIV_LHS->getLHS(), nullptr);
+    EXPECT_NE(DIV_LHS->getRHS(), nullptr);
+
+    IntegerLiteral *MUL_LHS = dynamic_cast<IntegerLiteral *>(DIV_LHS->getLHS());
+    EXPECT_NE(MUL_LHS, nullptr);
+    EXPECT_EQ(MUL_LHS->getValue(), 1);
+
+    IntegerLiteral *MUL_RHS = dynamic_cast<IntegerLiteral *>(DIV_LHS->getRHS());
+    EXPECT_NE(MUL_RHS, nullptr);
+    EXPECT_EQ(MUL_RHS->getValue(), 2);
+
+    IntegerLiteral *DIV_RHS = dynamic_cast<IntegerLiteral *>(MOD_LHS->getRHS());
+    EXPECT_NE(DIV_RHS, nullptr);
+    EXPECT_EQ(DIV_RHS->getValue(), 3);
+
+    IntegerLiteral *MOD_RHS = dynamic_cast<IntegerLiteral *>(ADD_LHS->getRHS());
+    EXPECT_NE(MOD_RHS, nullptr);
+    EXPECT_EQ(MOD_RHS->getValue(), 4);
+
+    IntegerLiteral *ADD_RHS = dynamic_cast<IntegerLiteral *>(RHS->getRHS());
+    EXPECT_NE(ADD_RHS, nullptr);
+    EXPECT_EQ(ADD_RHS->getValue(), 5);
+    
+    delete unit;
+}
+
+#define BINARY_PRECEDENCE_ASSIGN R"(test::() { fix x: i32 = 0; x = 1 + 2; })"
+TEST_F(ParseExprTest, Binary_Precedence_Assignment_Basic) {
+    File file = File("", "", "", BINARY_PRECEDENCE_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BS = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BS, nullptr);
+    EXPECT_EQ(BS->getKind(), BinaryExpr::Kind::Assign);
+
+    RefExpr *LHS = dynamic_cast<RefExpr *>(BS->getLHS());
+    EXPECT_NE(LHS, nullptr);
+    EXPECT_EQ(LHS->getName(), "x");
+
+    BinaryExpr *RHS = dynamic_cast<BinaryExpr *>(BS->getRHS());
+    EXPECT_NE(RHS, nullptr);
+    EXPECT_EQ(RHS->getKind(), BinaryExpr::Kind::Add);
+
+    IntegerLiteral *RHS_LHS = dynamic_cast<IntegerLiteral *>(RHS->getLHS());
+    EXPECT_NE(RHS_LHS, nullptr);
+    EXPECT_EQ(RHS_LHS->getValue(), 1);
+
+    IntegerLiteral *RHS_RHS = dynamic_cast<IntegerLiteral *>(RHS->getRHS());
+    EXPECT_NE(RHS_RHS, nullptr);
+    EXPECT_EQ(RHS_RHS->getValue(), 2);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

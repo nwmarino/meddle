@@ -14,6 +14,110 @@ void Parser::skip(unsigned n) {
 
 }
 
+int Parser::get_bin_precedence() const {
+    switch (m_Current->kind) {
+    /// *, /, %
+    case TokenKind::Star:
+    case TokenKind::Slash:
+    case TokenKind::Percent:
+        return 11;
+
+    /// +, -
+    case TokenKind::Plus:
+    case TokenKind::Minus:
+        return 10;
+
+    /// <<, >>
+    case TokenKind::LeftLeft:
+    case TokenKind::RightRight:
+        return 9;
+
+    /// <, <=, >, >=
+    case TokenKind::Left:
+    case TokenKind::LeftEquals:
+    case TokenKind::Right:
+    case TokenKind::RightEquals:
+        return 8;
+
+    /// ==, !=
+    case TokenKind::EqualsEquals:
+    case TokenKind::BangEquals:
+        return 7;
+
+    /// &
+    case TokenKind::And:
+        return 6;
+
+    /// ^
+    case TokenKind::Xor:
+        return 5;
+
+    /// |
+    case TokenKind::Or:
+        return 4;
+
+    /// &&
+    case TokenKind::AndAnd:
+        return 3;
+
+    /// ||
+    case TokenKind::OrOr:
+        return 2;
+
+    /// Assignment operators, i.e. +, +=, -=, ...
+    case TokenKind::Equals:
+    case TokenKind::PlusEquals:
+    case TokenKind::MinusEquals:
+    case TokenKind::StarEquals:
+    case TokenKind::SlashEquals:
+    case TokenKind::PercentEquals:
+    case TokenKind::AndEquals:
+    case TokenKind::OrEquals:
+    case TokenKind::XorEquals:
+    case TokenKind::LeftLeftEquals:
+    case TokenKind::RightRightEquals:
+        return 1;
+
+    default:
+        return -1;
+    }
+}
+
+BinaryExpr::Kind Parser::get_bin_operator() const {
+    switch (m_Current->kind) {
+        case TokenKind::Star: return BinaryExpr::Kind::Mul;
+        case TokenKind::Slash: return BinaryExpr::Kind::Div;
+        case TokenKind::Percent: return BinaryExpr::Kind::Mod;
+        case TokenKind::Plus:   return BinaryExpr::Kind::Add;
+        case TokenKind::Minus: return BinaryExpr::Kind::Sub;
+        case TokenKind::LeftLeft: return BinaryExpr::Kind::LeftShift;
+        case TokenKind::RightRight: return BinaryExpr::Kind::RightShift;
+        case TokenKind::Left: return BinaryExpr::Kind::LessThan;
+        case TokenKind::LeftEquals: return BinaryExpr::Kind::LessThanEquals;
+        case TokenKind::Right: return BinaryExpr::Kind::GreaterThan;
+        case TokenKind::RightEquals: return BinaryExpr::Kind::GreaterThanEquals;
+        case TokenKind::EqualsEquals: return BinaryExpr::Kind::Equals;
+        case TokenKind::BangEquals: return BinaryExpr::Kind::NEquals;
+        case TokenKind::And: return BinaryExpr::Kind::Bitwise_And;
+        case TokenKind::Xor: return BinaryExpr::Kind::Bitwise_Xor;
+        case TokenKind::Or: return BinaryExpr::Kind::Bitwise_Or;
+        case TokenKind::AndAnd: return BinaryExpr::Kind::Logic_And;
+        case TokenKind::OrOr: return BinaryExpr::Kind::Logic_Or;
+        case TokenKind::Equals: return BinaryExpr::Kind::Assign;
+        case TokenKind::PlusEquals: return BinaryExpr::Kind::Add_Assign;
+        case TokenKind::MinusEquals: return BinaryExpr::Kind::Sub_Assign;
+        case TokenKind::StarEquals: return BinaryExpr::Kind::Mul_Assign;
+        case TokenKind::SlashEquals: return BinaryExpr::Kind::Div_Assign;
+        case TokenKind::PercentEquals: return BinaryExpr::Kind::Mod_Assign;
+        case TokenKind::AndEquals: return BinaryExpr::Kind::And_Assign;
+        case TokenKind::OrEquals: return BinaryExpr::Kind::Or_Assign;
+        case TokenKind::XorEquals: return BinaryExpr::Kind::Xor_Assign;
+        case TokenKind::LeftLeftEquals: return BinaryExpr::Kind::LeftShift_Assign;
+        case TokenKind::RightRightEquals: return BinaryExpr::Kind::RightShift_Assign;
+        default: return BinaryExpr::Kind::Unknown;
+    }
+}
+
 Type *Parser::parse_type(bool produce) {
     if (!match(TokenKind::Identifier))
         fatal("expected type identifier", &m_Current->md);

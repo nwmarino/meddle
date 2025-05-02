@@ -172,6 +172,43 @@ void Sema::visit(UntilStmt *stmt) {
     m_Loop = prev;
 }
 
+void Sema::visit(BinaryExpr *expr) {
+    expr->getLHS()->accept(this);
+    expr->getRHS()->accept(this);
+
+    Type *LTy = expr->getLHS()->getType();
+    Type *RTy = expr->getRHS()->getType();
+
+    if (typeCheck(RTy, LTy, &expr->getMetadata(), "operator")) {
+        expr->m_RHS = new CastExpr(
+            expr->getRHS()->getMetadata(), 
+            LTy, 
+            expr->getRHS()
+        );
+    }
+
+    if (expr->isComparison()) {
+        expr->m_Type = m_Unit->getContext()->getBoolType();
+        return;
+    }
+
+    expr->m_Type = LTy;
+    if (!expr->isAssignment())
+        return;
+
+    if (!expr->getLHS()->isLValue())
+        fatal("cannot assign to non-lvalue", &expr->getMetadata());
+
+    VarDecl *LVal = nullptr;
+    if (auto *E = dynamic_cast<RefExpr *>(expr->getLHS())) {
+        LVal = dynamic_cast<VarDecl *>(E->getRef());
+    }
+
+    assert(LVal && "LHS must be a reference.");
+    if (!LVal->isMutable())
+        fatal("cannot reassign immutable variable", &expr->getMetadata());
+}
+
 void Sema::visit(CastExpr *expr) {
     if (!expr->m_Expr->getType()->canCastTo(expr->getCast())) {
         fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 

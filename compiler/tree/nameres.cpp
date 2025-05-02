@@ -104,6 +104,11 @@ void NameResolution::visit(UntilStmt *stmt) {
     stmt->getBody()->accept(this);
 }
 
+void NameResolution::visit(BinaryExpr *expr) {
+    expr->getLHS()->accept(this);
+    expr->getRHS()->accept(this);
+}
+
 void NameResolution::visit(CastExpr *expr) {
     expr->getExpr()->accept(this);
     expr->m_Type = unwrapType(expr->m_Type);

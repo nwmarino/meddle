@@ -134,6 +134,124 @@ public:
 	bool isConstant() const override { return true; }
 };
 
+class BinaryExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+public:
+	enum class Kind {
+		Unknown,
+		
+		Assign,
+		Add_Assign,
+		Sub_Assign,
+		Mul_Assign,
+		Div_Assign,
+		Mod_Assign,
+		And_Assign,
+		Or_Assign,
+		Xor_Assign,
+		LeftShift_Assign,
+		RightShift_Assign,
+
+		Add,
+		Sub,
+		Mul,
+		Div,
+		Mod,
+		Bitwise_And,
+		Bitwise_Or,
+		Bitwise_Xor,
+		LeftShift,
+		RightShift,
+		Logic_And,
+		Logic_Or,
+
+		Equals,
+		NEquals,
+		LessThan,
+		LessThanEquals,
+		GreaterThan,
+		GreaterThanEquals,
+	};
+
+private:
+	Kind m_Kind;
+	Expr *m_LHS;
+	Expr *m_RHS;
+
+public:
+	BinaryExpr(const Metadata &M, Type *T, Kind K, Expr *LHS, Expr *RHS)
+	  : Expr(M, T), m_Kind(K), m_LHS(LHS), m_RHS(RHS) {}
+
+	~BinaryExpr() override {
+		delete m_LHS;
+		delete m_RHS;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Kind getKind() const { return m_Kind; }
+
+	Expr *getLHS() const { return m_LHS; }
+
+	Expr *getRHS() const { return m_RHS; }
+
+	bool isConstant() const override
+	{ return m_LHS->isConstant() && m_RHS->isConstant(); }
+
+	bool isComparison() const {
+		switch (m_Kind) {
+			case Kind::Equals:
+			case Kind::NEquals:
+			case Kind::LessThan:
+			case Kind::LessThanEquals:
+			case Kind::GreaterThan:
+			case Kind::GreaterThanEquals:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	bool isLogicComparison() const 
+	{ return m_Kind == Kind::Logic_And || m_Kind == Kind::Logic_Or; }
+
+	bool isInequality() const {
+		switch (m_Kind) {
+			case Kind::LessThan:
+			case Kind::LessThanEquals:
+			case Kind::GreaterThan:
+			case Kind::GreaterThanEquals:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	bool isAssignment() const {
+		switch (m_Kind) {
+			case Kind::Assign:
+			case Kind::Add_Assign:
+			case Kind::Sub_Assign:
+			case Kind::Mul_Assign:
+			case Kind::Div_Assign:
+			case Kind::Mod_Assign:
+			case Kind::And_Assign:
+			case Kind::Or_Assign:
+			case Kind::Xor_Assign:
+			case Kind::LeftShift_Assign:
+			case Kind::RightShift_Assign:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	bool isDirectAssignment() const { return m_Kind == Kind::Assign; }
+};
+
 class CastExpr final : public Expr {
 	friend class CGN;
 	friend class NameResolution;

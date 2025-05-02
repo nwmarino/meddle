@@ -35,6 +35,7 @@ public:
     void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
 
+    void visit(BinaryExpr *expr) override;
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
 };

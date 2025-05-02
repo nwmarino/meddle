@@ -116,21 +116,23 @@ VarDecl *Parser::parse_var(bool mut) {
     name = m_Current->value;
     next();
 
-    if (!match(TokenKind::Colon))
-        fatal("expected ':' after variable name", &m_Current->md);
-    next(); // ':'
-
-    T = parse_type();
-    if (!T)
-        fatal("expected type after ':'", &m_Current->md);
+    if (match(TokenKind::Colon)) {
+        next(); // ':'
+        T = parse_type(true);
+    }
 
     if (match(TokenKind::Equals)) {
         next(); // '='
         init = parse_expr();
         if (!init)
             fatal("expected expression after '='", &m_Current->md);
-    } else if (!mut)
-        fatal("immutable variable must be initialized: " + name, &m_Current->md);
+    } else if (!mut) {
+        fatal("immutable variable must be initialized: " + name, 
+              &m_Current->md);
+    } else if (!T) {
+        fatal("type cannot be inferred without an initializer: " + name, 
+              &m_Current->md);
+    }
 
     if (match(TokenKind::Semi))
         next(); // ';'

@@ -47,12 +47,16 @@ enum class TokenKind {
     LeftLeft,
     /// <=
     LeftEquals,
+    /// <<=
+    LeftLeftEquals,
     /// >
     Right,
     /// >>
     RightRight,
     /// >=
     RightEquals,
+    /// >>=
+    RightRightEquals,
     /// &
     And,
     /// &&

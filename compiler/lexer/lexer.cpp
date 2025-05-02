@@ -100,8 +100,13 @@ Token Lexer::lex() {
 
         case '<':
             if (next() == '<') {
-                kind = TokenKind::LeftLeft;
-                move(2);
+                if (next(2) == '=') {
+                    kind = TokenKind::LeftLeftEquals;
+                    move(3);
+                } else {
+                    kind = TokenKind::LeftLeft;
+                    move(2);
+                }
             } else if (next() == '=') {
                 kind = TokenKind::LeftEquals;
                 move(2);
@@ -114,8 +119,13 @@ Token Lexer::lex() {
 
         case '>':
             if (next() == '>') {
-                kind = TokenKind::RightRight;
-                move(2);
+                if (next(2) == '=') {
+                    kind = TokenKind::RightRightEquals;
+                    move(3);
+                } else {
+                    kind = TokenKind::RightRight;
+                    move(2);
+                }
             } else if (next() == '=') {
                 kind = TokenKind::RightEquals;
                 move(2);

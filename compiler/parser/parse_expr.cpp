@@ -6,7 +6,11 @@
 using namespace meddle;
 
 Expr *Parser::parse_expr() {
-    return parse_primary();
+    Expr *base = parse_primary();
+    if (!base)
+        fatal("expected expression", &m_Current->md);
+
+    return parse_binary(base, 0);
 }
 
 Expr *Parser::parse_primary() {
@@ -98,6 +102,40 @@ NilLiteral *Parser::parse_nil() {
     return N;
 }
 
+Expr *Parser::parse_binary(Expr *B, int precedence) {
+    while (1) {
+        int tokPrec = get_bin_precedence();
+        if (tokPrec < precedence)
+            break;
+
+        BinaryExpr::Kind op = get_bin_operator();
+        if (op == BinaryExpr::Kind::Unknown)
+            break;
+
+        next(); // Eat the operator.
+        Expr *rhs = parse_unary_prefix();
+        if (!rhs)
+            fatal("expected right hand side expression", &m_Current->md);
+
+        int nextPrec = get_bin_precedence();
+        if (tokPrec < nextPrec) {
+            rhs = parse_binary(rhs, precedence + 1);
+            if (!rhs)
+                fatal("expected binary expression", &m_Current->md);
+        }
+
+        B = new BinaryExpr(
+            m_Current->md, 
+            B->getType(), 
+            op, 
+            B, 
+            rhs
+        );
+    }
+
+    return B;
+}
+
 CastExpr *Parser::parse_cast() {
     Metadata md = m_Current->md;
     Type *T = nullptr;
@@ -164,4 +202,51 @@ SizeofExpr *Parser::parse_sizeof() {
     next(); // '>'
 
     return new SizeofExpr(md, m_Context->getU64Type(), T);
+}
+
+Expr *Parser::parse_unary_prefix() {
+    /*
+    UnaryExpr::Op op = getUnop();
+    if (UnaryExpr::isPrefix(op)) {
+        Metadata md = getLoc();
+        next();
+
+        std::unique_ptr<Expr> expr = parseUnaryPrefixExpr();
+        if (!expr) {
+            trace("expected unary prefix expression", &getLoc());
+            return nullptr;
+        }
+
+        return std::make_unique<UnaryExpr>(
+            md, nullptr, op, std::move(expr), false
+        );
+    } else
+        return parseUnaryPostfixExpr();
+    */
+
+
+    return parse_unary_postfix();
+}
+
+Expr *Parser::parse_unary_postfix() {
+    Expr *E = parse_primary();
+    if (!E)
+        fatal("expected expression", &m_Current->md);
+
+    /*
+    while (1) {
+        UnaryExpr::Op op = getUnop();
+        if (UnaryExpr::isPostfix(op)) {
+            Metadata md = getLoc();
+            next();
+
+            expr = std::make_unique<UnaryExpr>(
+                md, nullptr, op, std::move(expr), true
+            );
+        } else
+            break;
+    }
+    */
+
+    return E;
 }
