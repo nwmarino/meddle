@@ -69,8 +69,6 @@ public:
     bool has_offset() const { return m_Offset != nullptr; }
 
     ConstantInt *get_offset() const { return m_Offset; }
-
-    void print(std::ostream &OS) const override;
 };
 
 class LoadInst final : public Inst {
@@ -128,8 +126,6 @@ public:
     unsigned get_dest_align() const { return m_DestAlign; }
 
     unsigned get_size() const { return m_Size; }
-
-    void print(std::ostream &OS) const override;
 };
 
 class BrifInst final : public Inst {
@@ -150,8 +146,6 @@ public:
     BasicBlock *get_true_dest() const { return m_True; }
 
     BasicBlock *get_false_dest() const { return m_False; }
-
-    void print(std::ostream &OS) const override;
 };
 
 class JMPInst final : public Inst {
@@ -165,8 +159,6 @@ public:
     bool is_terminator() const override { return true; }
 
     BasicBlock *get_dest() const { return m_Dest; }
-
-    void print(std::ostream &OS) const override;
 };
 
 class RetInst final : public Inst {
@@ -184,8 +176,6 @@ public:
     bool is_void() const { return m_Value == nullptr; }
 
     Value *get_value() const { return m_Value; }
-
-    void print(std::ostream &OS) const override;
 };
 
 class BinopInst final : public Inst {

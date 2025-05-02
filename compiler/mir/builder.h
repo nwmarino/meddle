@@ -17,12 +17,9 @@ class Segment;
 class Builder final {
     Segment *m_Segment;
     BasicBlock *m_Insert;
-    unsigned long m_SSA;
-
-    String get_ssa() { return std::to_string(m_SSA++); }
 
 public:
-    Builder(Segment *S) : m_Segment(S), m_Insert(nullptr), m_SSA(1) {}
+    Builder(Segment *S) : m_Segment(S), m_Insert(nullptr) {}
 
     BasicBlock *get_insert() const { return m_Insert; }
 
@@ -128,13 +125,45 @@ public:
 
     Value *build_icmp_ne(Value *LV, Value *RV, String N = "");
 
+    Value *build_icmp_slt(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_sle(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_sgt(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_sge(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_ult(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_ule(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_ugt(Value *LV, Value *RV, String N = "");
+
+    Value *build_icmp_uge(Value *LV, Value *RV, String N = "");
+
     Value *build_fcmp_oeq(Value *LV, Value *RV, String N = "");
 
     Value *build_fcmp_one(Value *LV, Value *RV, String N = "");
 
+    Value *build_fcmp_olt(Value *LV, Value *RV, String N = "");
+
+    Value *build_fcmp_ole(Value *LV, Value *RV, String N = "");
+
+    Value *build_fcmp_ogt(Value *LV, Value *RV, String N = "");
+
+    Value *build_fcmp_oge(Value *LV, Value *RV, String N = "");
+
     Value *build_pcmp_eq(Value *LV, Value *RV, String N = "");
 
     Value *build_pcmp_ne(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_lt(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_le(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_gt(Value *LV, Value *RV, String N = "");
+
+    Value *build_pcmp_ge(Value *LV, Value *RV, String N = "");
 };
 
 } // namespace mir

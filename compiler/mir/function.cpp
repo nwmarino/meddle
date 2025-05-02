@@ -12,6 +12,14 @@ void Argument::print(std::ostream &OS) const {
         OS << " = " << m_Slot->get_name();
 }
 
+Function::Function(String N, FunctionType *FT, Linkage L, Segment *P, 
+                   std::vector<Argument *> Args) 
+    : Value(N, FT), m_Linkage(L), m_Parent(P), m_Args(Args) 
+{
+    if (m_Parent)
+        m_Parent->add_function(this);
+};
+
 Function::~Function() {
     for (auto &[ String, slot ] : m_Slots)
         delete slot;
@@ -83,8 +91,4 @@ void Function::prepend(BasicBlock *BB) {
 void Function::detach() {
     assert(m_Parent && "Function has no parent.");
     m_Parent->remove_function(this);
-}
-
-void Function::print(std::ostream &OS) const {
-    
 }

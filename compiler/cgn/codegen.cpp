@@ -32,7 +32,7 @@ mir::Value *CGN::inject_cmp(mir::Value *V) {
 		return m_Builder.build_pcmp_ne(
 			V,
 			mir::ConstantNil::get(m_Segment, V->get_type()),
-			"ptr.cmp"
+			m_Opts.NamedMIR ? "ptr.cmp" : ""
 		);
 	}
 
@@ -40,7 +40,7 @@ mir::Value *CGN::inject_cmp(mir::Value *V) {
         return m_Builder.build_icmp_ne(
             V,
             mir::ConstantInt::get(m_Segment, V->get_type(), 0),
-            "int.cmp"
+            m_Opts.NamedMIR ? "int.cmp" : ""
         );
     }
 
@@ -48,7 +48,7 @@ mir::Value *CGN::inject_cmp(mir::Value *V) {
         return m_Builder.build_fcmp_one(
 			V,
             mir::ConstantFP::get(m_Segment, V->get_type(), 0.0),
-            "fp.cmp"
+            m_Opts.NamedMIR ? "fp.cmp" : ""
         );
     }
 
@@ -99,6 +99,21 @@ mir::Type *CGN::cgn_type(Type *T) {
 	assert(false && "Unable to generate a type.");
 }
 
+CGN::TypeClass CGN::type_class(Type *T) const {
+	if (T->isSInt())
+		return TypeClass::SInt;
+	else if (T->isUInt())
+		return TypeClass::UInt;
+	else if (T->isFloat())
+		return TypeClass::Float;
+	else if (T->isPointer())
+		return TypeClass::Pointer;
+	else if (T->isArray())
+		return TypeClass::Aggregate;
+	else
+		return TypeClass::Unknown;
+}
+
 void CGN::declare_function(FunctionDecl *FD) {
 	mir::FunctionType *FT = static_cast<mir::FunctionType *>
 		(cgn_type(FD->getType()));
@@ -119,7 +134,6 @@ void CGN::declare_function(FunctionDecl *FD) {
 	}
 
 	FN->set_args(args);
-	m_Segment->add_function(FN);
 }
 
 void CGN::define_function(FunctionDecl *FD) {
@@ -131,7 +145,8 @@ void CGN::define_function(FunctionDecl *FD) {
 		return;
 
 	// Create a new entry block for the function.
-	mir::BasicBlock *entry = new mir::BasicBlock("entry", FN);
+	mir::BasicBlock *entry = new mir::BasicBlock(
+		m_Opts.NamedMIR ? "entry" : "", FN);
 	m_Builder.set_insert(entry);
 
 	// For each argument in the function, if it was given a slot node, store
@@ -254,12 +269,14 @@ void CGN::visit(IfStmt *stmt) {
 	assert(cond && "'if' condition does not produce a value.");
 	cond = inject_cmp(cond);
 
-	mir::BasicBlock *thenBB = new mir::BasicBlock("if.then", m_Function);
-	mir::BasicBlock *mergeBB = new mir::BasicBlock("if.merge");
+	mir::BasicBlock *thenBB = new mir::BasicBlock( 
+		m_Opts.NamedMIR ? "if.then" : "", m_Function);
+	mir::BasicBlock *mergeBB = new mir::BasicBlock(
+		m_Opts.NamedMIR ? "if.merge" : "");
 	mir::BasicBlock *elseBB = nullptr;
 
 	if (stmt->hasElse()) {
-		elseBB = new mir::BasicBlock("if.else");
+		elseBB = new mir::BasicBlock(m_Opts.NamedMIR ? "if.else" : "");
 		m_Builder.build_brif(cond, thenBB, elseBB);
 	} else {
 		m_Builder.build_brif(cond, thenBB, mergeBB);
@@ -296,10 +313,11 @@ void CGN::visit(MatchStmt *stmt) {
     assert(matchV && "'match' expression does not produce a value.");
 
     // Create a merge block, without inserting it since it should come last.
-    mir::BasicBlock *mergeBB = new mir::BasicBlock("match.merge");
+    mir::BasicBlock *mergeBB = new mir::BasicBlock(
+		m_Opts.NamedMIR ? "match.merge" : "");
     mir::BasicBlock *defBB = nullptr;
     if (stmt->getDefault())
-        defBB = new mir::BasicBlock("match.def");
+        defBB = new mir::BasicBlock(m_Opts.NamedMIR ? "match.def" : "");
 
     // Create a "chain" block for every case in the statement.
     //
@@ -308,7 +326,7 @@ void CGN::visit(MatchStmt *stmt) {
 	const std::vector<CaseStmt *> cases = stmt->getCases();
     std::vector<mir::BasicBlock *> chains;
     for (auto &C : cases)
-        chains.push_back(new mir::BasicBlock("match.chain"));
+        chains.push_back(new mir::BasicBlock(m_Opts.NamedMIR ? "match.chain" : ""));
 
     // Begin at the first case.
     assert(chains.size() > 0 && "'match' statement has no cases.");
@@ -334,15 +352,26 @@ void CGN::visit(MatchStmt *stmt) {
 
         // Compare the pattern value with main match expression.
         mir::Value *cmpV = nullptr;
-		if (matchV->get_type()->is_integer_ty()) {
-			cmpV = m_Builder.build_icmp_eq(matchV, patternV, "match.cmp");
-        } else if (matchV->get_type()->is_float_ty()) {
-            cmpV = m_Builder.build_fcmp_oeq(matchV, patternV, "match.cmp");
-		} else if (matchV->get_type()->is_pointer_ty()) {
-			cmpV = m_Builder.build_pcmp_eq(matchV, patternV, "match.cmp");
+		String cmpName = m_Opts.NamedMIR ? "match.cmp" : "";
+		switch (type_class(stmt->getPattern()->getType())) {
+		case TypeClass::SInt:
+		case TypeClass::UInt:
+			cmpV = m_Builder.build_icmp_eq(matchV, patternV, cmpName);
+			break;
+		case TypeClass::Float:
+			cmpV = m_Builder.build_fcmp_oeq(matchV, patternV, cmpName);
+			break;
+		case TypeClass::Pointer:
+			cmpV = m_Builder.build_pcmp_eq(matchV, patternV, cmpName);
+			break;
+		default:
+			fatal("unsupported 'match' pattern type", 
+				&stmt->getMetadata());
+			break;
 		}
 
-        mir::BasicBlock *body = new mir::BasicBlock("match.case", m_Function);
+        mir::BasicBlock *body = new mir::BasicBlock( 
+			m_Opts.NamedMIR ? "match.case" : "", m_Function);
 
         // Branch to the case block if the comparison succeeded, otherwise
         // the next chain if there is one, the default if there is one, or the
@@ -392,14 +421,17 @@ void CGN::visit(RetStmt *stmt) {
 	
 	m_VC = ValueContext::RValue;
 	stmt->getExpr()->accept(this);
-	assert(m_Value && "Return expression does not produce a value.");
+	assert(m_Value && "'ret' expression does not produce a value.");
 	m_Builder.build_ret(m_Value);
 }
 
 void CGN::visit(UntilStmt *stmt) {
-	mir::BasicBlock *condBB = new mir::BasicBlock("until.cond", m_Function);
-	mir::BasicBlock *bodyBB = new mir::BasicBlock("until.body");
-	mir::BasicBlock *mergeBB = new mir::BasicBlock("until.merge");
+	mir::BasicBlock *condBB = new mir::BasicBlock( 
+		m_Opts.NamedMIR ? "until.cond" : "", m_Function);
+	mir::BasicBlock *bodyBB = new mir::BasicBlock(
+		m_Opts.NamedMIR ? "until.body" : "");
+	mir::BasicBlock *mergeBB = new mir::BasicBlock(
+		m_Opts.NamedMIR ? "until.merge" : "");
 	mir::BasicBlock *oldCond = m_Cond;
 	mir::BasicBlock *oldMerge = m_Merge;
 
@@ -461,7 +493,7 @@ void CGN::visit(StringLiteral *expr) {
 		cgn_type(expr->getType()), expr->getValue());
 
 	m_Value = new mir::Data(
-		"str", // name
+		"__const.str", // name
 		mir::PointerType::get(m_Segment, STR->get_type()), // data pointer type 
 		mir::Data::Linkage::Internal, // linkage 
 		m_Segment, // parent
@@ -476,66 +508,147 @@ void CGN::visit(NilLiteral *expr) {
 }
 
 void CGN::visit(BinaryExpr *expr) {
-	
+	switch (expr->getKind()) {
+	case BinaryExpr::Kind::Unknown: assert(false && "Unknown binary operator.");
+	case BinaryExpr::Kind::Assign: cgn_assign(expr);
+	case BinaryExpr::Kind::Add_Assign: cgn_add_assign(expr);
+	case BinaryExpr::Kind::Sub_Assign: cgn_sub_assign(expr);
+	case BinaryExpr::Kind::Mul_Assign: cgn_mul_assign(expr);
+	case BinaryExpr::Kind::Div_Assign: cgn_div_assign(expr);
+	case BinaryExpr::Kind::Mod_Assign: cgn_mod_assign(expr);
+	case BinaryExpr::Kind::And_Assign: cgn_and_assign(expr);
+	case BinaryExpr::Kind::Or_Assign: cgn_or_assign(expr);
+	case BinaryExpr::Kind::Xor_Assign: cgn_xor_assign(expr);
+	case BinaryExpr::Kind::LeftShift_Assign: cgn_shl_assign(expr);
+	case BinaryExpr::Kind::RightShift_Assign: cgn_shr_assign(expr);
+	case BinaryExpr::Kind::Add: cgn_add(expr);
+	case BinaryExpr::Kind::Sub: cgn_sub(expr);
+	case BinaryExpr::Kind::Mul: cgn_mul(expr);
+	case BinaryExpr::Kind::Div: cgn_div(expr);
+	case BinaryExpr::Kind::Mod: cgn_mod(expr);
+	case BinaryExpr::Kind::Bitwise_And: cgn_and(expr);
+	case BinaryExpr::Kind::Bitwise_Or: cgn_or(expr);
+	case BinaryExpr::Kind::Bitwise_Xor: cgn_xor(expr);
+	case BinaryExpr::Kind::LeftShift: cgn_shl(expr);
+	case BinaryExpr::Kind::RightShift: cgn_shr(expr);
+	case BinaryExpr::Kind::Logic_And: cgn_logic_and(expr);
+	case BinaryExpr::Kind::Logic_Or: cgn_logic_or(expr);
+	case BinaryExpr::Kind::Equals: cgn_equals(expr);
+	case BinaryExpr::Kind::NEquals: cgn_not_equals(expr);
+	case BinaryExpr::Kind::LessThan: cgn_less(expr);
+	case BinaryExpr::Kind::LessThanEquals: cgn_less_eq(expr);
+	case BinaryExpr::Kind::GreaterThan: cgn_greater(expr);
+	case BinaryExpr::Kind::GreaterThanEquals: cgn_greater_eq(expr);
+    }
 }
 
 void CGN::visit(CastExpr *expr) {
 	m_VC = ValueContext::RValue;
     expr->getExpr()->accept(this);
-    mir::Value *srcV = m_Value;
-    assert(srcV && "Cast source does not produce a value.");
+    assert(m_Value&& "Cast source does not produce a value.");
 
-    mir::Type *srcT = srcV->get_type();
-    mir::Type *castT = cgn_type(expr->getType());
+    Type *srcTy = expr->getExpr()->getType();
+    Type *destTy = expr->getType();
+	TypeClass srcCls = type_class(srcTy);
+	TypeClass destCls = type_class(destTy);
+	mir::Type *srcTyIR = cgn_type(srcTy);
+	mir::Type *destTyIR = cgn_type(destTy);
+	mir::Value *V = m_Value;
 	mir::DataLayout DL = m_Segment->get_data_layout();
+	String name;
 
-    if (srcT == castT) {
-        m_Value = srcV;
-    } else if (expr->getType()->isSInt() && srcT->is_integer_ty() 
-			&& castT->is_integer_ty()) {
-        unsigned srcWD = DL.get_type_size(srcT);
-        unsigned castWD = DL.get_type_size(castT);
+    if (srcTyIR == destTyIR) {
+        m_Value = V;
+		return;
+	}
 
-        if (srcWD == castWD)
-            m_Value = srcV;
-        else if (srcWD < castWD)
-            m_Value = m_Builder.build_sext(srcV, castT, "cast.sext");
-        else
-            m_Value = m_Builder.build_trunc(srcV, castT, "cast.trunc");
-    } else if (expr->getType()->isUInt( ) && srcT->is_integer_ty() 
-			&& castT->is_integer_ty()) {
-		unsigned srcWD = DL.get_type_size(srcT);
-		unsigned castWD = DL.get_type_size(castT);
+	unsigned srcWidth = DL.get_type_size(srcTyIR);
+	unsigned destWidth = DL.get_type_size(destTyIR);
+    
+	if ((srcCls == SInt | srcCls == UInt) && (destCls == SInt | destCls == UInt)) {
+		if (srcWidth == destWidth) {
+			m_Value = V;
+			return;
+		}
 
-		if (srcWD == castWD)
-			m_Value = srcV;
-		else if (srcWD < castWD)
-			m_Value = m_Builder.build_zext(srcV, castT, "cast.zext");
-		else
-			m_Value = m_Builder.build_trunc(srcV, castT, "cast.trunc");
-	} else if (srcT->is_float_ty() && castT->is_float_ty()) {
-        if (srcT->is_float_ty(64) && castT->is_float_ty(32))
-            m_Value = m_Builder.build_ftrunc(srcV, castT, "cast.ftrunc");
-        else
-            m_Value = m_Builder.build_fext(srcV, castT, "cast.fext");
-    } else if (srcT->is_integer_ty() && castT->is_float_ty()) {
-        if (expr->getExpr()->getType()->isUInt())
-            m_Value = m_Builder.build_ui2fp(srcV, castT, "cast.cvt");
-        else
-            m_Value = m_Builder.build_si2fp(srcV, castT, "cast.cvt");
-    } else if (srcT->is_float_ty() && castT->is_integer_ty()) {
-        if (expr->getType()->isUInt())
-            m_Value = m_Builder.build_fp2ui(srcV, castT, "cast.cvt");
-        else
-            m_Value = m_Builder.build_fp2si(srcV, castT, "cast.cvt");
-	} else if (srcT->is_pointer_ty() && castT->is_pointer_ty()) {
-		m_Value = m_Builder.build_reint(srcV, castT, "cast.ptr");
-    } else if (srcT->is_pointer_ty() && castT->is_integer_ty()) {
-        m_Value = m_Builder.build_ptr2int(srcV, castT, "cast.ptr");
-	} else if (srcT->is_integer_ty() && castT->is_pointer_ty()) {
-        m_Value = m_Builder.build_int2ptr(srcV, castT, "cast.ptr");
-    } else {
-		assert(false && "Unsupported cast.");
+		if (srcWidth > destWidth) {
+			// Downcasting.
+			name = m_Opts.NamedMIR ? "cast.trunc" : "";
+			m_Value = m_Builder.build_trunc(V, destTyIR, name);
+		} else {
+			// Upcasting.
+			name = m_Opts.NamedMIR ? "cast.ext" : "";
+
+			if (srcCls == SInt)
+				m_Value = m_Builder.build_sext(V, destTyIR, name);
+			else
+				m_Value = m_Builder.build_zext(V, destTyIR, name);
+		}
+	} 
+	
+	else if (srcCls == Float && destCls == Float) {
+		// Floating point cast.
+		if (srcWidth == destWidth) {
+			m_Value = V;
+			return;
+		}
+
+		if (srcWidth > destWidth) {
+			// Downcasting.
+			name = m_Opts.NamedMIR ? "cast.ftrunc" : "";
+			m_Value = m_Builder.build_ftrunc(V, destTyIR, name);
+		} else {
+			// Upcasting.
+			name = m_Opts.NamedMIR ? "cast.fext" : "";
+			m_Value = m_Builder.build_fext(V, destTyIR, name);
+		}
+	}
+
+	else if (srcCls == SInt && destCls == Float) {
+		// Signed integer to floating point.
+		name = m_Opts.NamedMIR ? "cast.cvt" : "";
+		m_Value = m_Builder.build_si2fp(V, destTyIR, name);
+	}
+
+	else if (srcCls == UInt && destCls == Float) {
+		// Unsigned integer to floating point.
+		name = m_Opts.NamedMIR ? "cast.cvt" : "";
+		m_Value = m_Builder.build_ui2fp(V, destTyIR, name);
+	}
+
+	else if (srcCls == Float && destCls == SInt) {
+		// Floating point to signed integer.
+		name = m_Opts.NamedMIR ? "cast.cvt" : "";
+		m_Value = m_Builder.build_fp2si(V, destTyIR, name);
+	}
+
+	else if (srcCls == Float && destCls == UInt) {
+		// Floating point to unsigned integer.
+		name = m_Opts.NamedMIR ? "cast.cvt" : "";
+		m_Value = m_Builder.build_fp2ui(V, destTyIR, name);
+	}
+
+	else if (srcCls == Pointer && destCls == Pointer) {
+		// Pointer reinterpretation.
+		name = m_Opts.NamedMIR ? "cast.ptr" : "";
+		m_Value = m_Builder.build_reint(V, destTyIR, name);
+	}
+
+	else if (srcCls == Pointer && (destCls == SInt | destCls == UInt)) {
+		// Pointer to integer cast.
+		name = m_Opts.NamedMIR ? "cast.ptr" : "";
+		m_Value = m_Builder.build_ptr2int(V, destTyIR, name);
+	}
+
+	else if ((srcCls == SInt | srcCls == UInt) && destCls == Pointer) {
+		// Integer to pointer cast.
+		name = m_Opts.NamedMIR ? "cast.ptr" : "";
+		m_Value = m_Builder.build_int2ptr(V, destTyIR, name);
+	} 
+	
+	else {
+		fatal("invalid cast from type '" + srcTy->getName() + "' to '" + 
+			destTy->getName(), &expr->getMetadata());
 	}
 }
 
@@ -552,7 +665,7 @@ void CGN::visit(RefExpr *expr) {
 		m_Value = slot;
 	else {
 		m_Value = m_Builder.build_load(cgn_type(expr->getType()), slot, 
-			expr->getName() + ".val");
+			m_Opts.NamedMIR ? expr->getName() + ".val" : "");
 	}
 }
 

@@ -83,6 +83,7 @@ class Segment final {
     friend class FunctionType;
     friend class PointerType;
     friend class StructType;
+    friend class BasicBlock;
     friend class ConstantInt;
     friend class ConstantFP;
     friend class ConstantNil;
@@ -101,8 +102,8 @@ class Segment final {
     std::unordered_map<int16_t, ConstantInt *> m_I16Pool = {};
     std::unordered_map<int32_t, ConstantInt *> m_I32Pool = {};
     std::unordered_map<int64_t, ConstantInt *> m_I64Pool = {};
-    std::unordered_map<float, ConstantFP *> m_F32Pool = {};
-    std::unordered_map<double, ConstantFP *> m_F64Pool = {};
+    std::unordered_map<uint32_t, ConstantFP *> m_F32Pool = {};
+    std::unordered_map<uint64_t, ConstantFP *> m_F64Pool = {};
 
 public:
     Segment(const Target &T);

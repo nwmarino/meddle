@@ -48,7 +48,8 @@ public:
         ); 
     }
 
-    virtual void print(std::ostream &OS) const = 0;
+    virtual void print(std::ostream &OS) const
+    { assert(false && "Value cannot be printed."); }
 };
 
 class Data final : public Value {

@@ -46,6 +46,10 @@ public:
 
     bool has_succs() const { return !m_Succs.empty(); }
 
+    const std::vector<BasicBlock *> &get_preds() const { return m_Preds; }
+
+    const std::vector<BasicBlock *> &get_succs() const { return m_Succs; }
+
     Inst *head() const { return m_Head; }
 
     Inst *tail() const { return m_Tail; }

@@ -968,6 +968,286 @@ global :: readonly i64 0, align 8
     delete unit;
 }
 
+#define BINARY_ASSIGN_SMALL R"(test::() { mut x: i64 = 0; x = 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Small_Assign) {
+
+}
+
+#define BINARY_ASSIGN_BIG R"(test::() { mut x: char[8] = "ayoayo\n"; x = "alrcya\n"; })"
+TEST_F(IntegratedCodegenTest, Binary_Big_Assign) {
+
+}
+
+#define BINARY_INT_ADD_ASSIGN R"(test::() { mut x: i64 = 0; x += 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Add_Assign) {
+
+}
+
+#define BINARY_FP_ADD_ASSIGN R"(test::() { mut x: f64 = 0.0; x += 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Add_Assign) {
+
+}
+
+#define BINARY_INT_SUB_ASSIGN R"(test::() { mut x: i64 = 0; x -= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Sub_Assign) {
+
+}
+
+#define BINARY_FP_SUB_ASSIGN R"(test::() { mut x: f64 = 0.0; x -= 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Sub_Assign) {
+
+}
+
+#define BINARY_SINT_MUL_ASSIGN R"(test::() { mut x: i64 = 0; x *= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Mul_Assign) {
+
+}
+
+#define BINARY_UINT_MUL_ASSIGN R"(test::() { mut x: u64 = 0; x *= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Mul_Assign) {
+    
+}
+
+#define BINARY_FP_MUL_ASSIGN R"(test::() { mut x: f64 = 0.0; x *= 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Mul_Assign) {
+
+}
+
+#define BINARY_SINT_DIV_ASSIGN R"(test::() { mut x: i64 = 0; x /= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Div_Assign) {
+
+}
+
+#define BINARY_UINT_DIV_ASSIGN R"(test::() { mut x: u64 = 0; x /= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Div_Assign) {
+
+}
+
+#define BINARY_FP_DIV_ASSIGN R"(test::() { mut x: f64 = 0.0; x /= 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Div_Assign) {
+
+}
+
+#define BINARY_SINT_MOD_ASSIGN R"(test::() { mut x: i64 = 0; x %= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Mod_Assign) {
+
+}
+
+#define BINARY_UINT_MOD_ASSIGN R"(test::() { mut x: u64 = 0; x %= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Mod_Assign) {
+
+}
+
+#define BINARY_AND_ASSIGN R"(test::() { mut x: i64 = 0; x &= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_And_Assign) {
+
+}
+
+#define BINARY_OR_ASSIGN R"(test::() { mut x: i64 = 0; x |= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Or_Assign) {
+
+}
+
+#define BINARY_XOR_ASSIGN R"(test::() { mut x: i64 = 0; x ^= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Xor_Assign) {
+
+}
+
+#define BINARY_SHL_ASSIGN R"(test::() { mut x: i64 = 0; x <<= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Shl_Assign) {
+
+}
+
+#define BINARY_SINT_SHR_ASSIGN R"(test::() { mut x: i64 = 0; x >>= 2; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Shr_Assign) {
+
+}
+
+#define BINARY_UINT_SHR_ASSIGN R"(test::() { mut x: u64 = 0; x >>= 2; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Shr_Assign) {
+
+}
+
+#define BINARY_INT_EQUALS R"(test::() { mut x: i64 = 0; x == 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Equals) {
+
+}
+
+#define BINARY_INT_NOT_EQUALS R"(test::() { mut x: i64 = 0; x != 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Not_Equals) {
+
+}
+
+#define BINARY_SINT_LESS R"(test::() { mut x: i64 = 0; x < 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Less) {
+
+}
+
+#define BINARY_UINT_LESS R"(test::() { mut x: u64 = 0; x < 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Less) {
+
+}
+
+#define BINARY_FP_LESS R"(test::() { mut x: f64 = 0.0; x < 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Less) {
+
+}
+
+#define BINARY_PTR_LESS R"(test::() { mut x: i64* = nil; x < nil; })"
+TEST_F(IntegratedCodegenTest, Binary_Ptr_Less) {
+
+}
+
+#define BINARY_SINT_LESS_EQUALS R"(test::() { mut x: i64 = 0; x <= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Less_Equals) {
+
+}
+
+#define BINARY_UINT_LESS_EQUALS R"(test::() { mut x: u64 = 0; x <= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Less_Equals) {
+
+}
+
+#define BINARY_FP_LESS_EQUALS R"(test::() { mut x: f64 = 0.0; x <= 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Less_Equals) {
+
+}
+
+#define BINARY_PTR_LESS_EQUALS R"(test::() { mut x: i64* = nil; x <= nil; })"
+TEST_F(IntegratedCodegenTest, Binary_Ptr_Less_Equals) {
+
+}
+
+#define BINARY_SINT_GREATER R"(test::() { mut x: i64 = 0; x > 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Greater) {
+
+}
+
+#define BINARY_UINT_GREATER R"(test::() { mut x: u64 = 0; x > 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Greater) {
+
+}
+
+#define BINARY_FP_GREATER R"(test::() { mut x: f64 = 0.0; x > 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Greater) {
+
+}
+
+#define BINARY_PTR_GREATER R"(test::() { mut x: i64* = nil; x > nil; })"
+TEST_F(IntegratedCodegenTest, Binary_Ptr_Greater) {
+
+}
+
+#define BINARY_SINT_GREATER_EQUALS R"(test::() { mut x: i64 = 0; x >= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Greater_Equals) {
+
+}
+
+#define BINARY_UINT_GREATER_EQUALS R"(test::() { mut x: u64 = 0; x >= 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Greater_Equals) {
+
+}
+
+#define BINARY_FP_GREATER_EQUALS R"(test::() { mut x: f64 = 0.0; x >= 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Greater_Equals) {
+
+}
+
+#define BINARY_PTR_GREATER_EQUALS R"(test::() { mut x: i64* = nil; x >= nil; })"
+TEST_F(IntegratedCodegenTest, Binary_Ptr_Greater_Equals) {
+
+}
+
+#define BINARY_AND R"(test::() { mut x: i64 = 0; x & 1; })"
+TEST_F(IntegratedCodegenTest, Binary_And) {
+
+}
+
+#define BINARY_OR R"(test::() { mut x: i64 = 0; x | 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Or) {
+
+}
+
+#define BINARY_XOR R"(test::() { mut x: i64 = 0; x ^ 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Xor) {
+
+}
+
+#define BINARY_SHL R"(test::() { mut x: i64 = 0; x << 2; })"
+TEST_F(IntegratedCodegenTest, Binary_Shl) {
+
+}
+
+#define BINARY_SINT_SHR R"(test::() { mut x: i64 = 0; x >> 2; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Shr) {
+
+}
+
+#define BINARY_UINT_SHR R"(test::() { mut x: u64 = 0; x >> 2; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Shr) {
+
+}
+
+#define BINARY_INT_ADD R"(test::() { mut x: i64 = 0; x + 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Add) {
+
+}
+
+#define BINARY_FP_ADD R"(test::() { mut x: f64 = 0.0; x + 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Add) {
+
+}
+
+#define BINARY_INT_SUB R"(test::() { mut x: i64 = 0; x - 1; })"
+TEST_F(IntegratedCodegenTest, Binary_Int_Sub) {
+
+}
+
+#define BINARY_FP_SUB R"(test::() { mut x: f64 = 0.0; x - 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Sub) {
+
+}
+
+#define BINARY_SINT_MUL R"(test::() { mut x: i64 = 0; x * 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Mul) {
+
+}
+
+#define BINARY_UINT_MUL R"(test::() { mut x: u64 = 0; x * 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Mul) {
+
+}
+
+#define BINARY_FP_MUL R"(test::() { mut x: f64 = 0.0; x * 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Mul) {
+
+}
+
+#define BINARY_SINT_DIV R"(test::() { mut x: i64 = 0; x / 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Div) {
+
+}
+
+#define BINARY_UINT_DIV R"(test::() { mut x: u64 = 0; x / 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Div) {
+
+}
+
+#define BINARY_FP_DIV R"(test::() { mut x: f64 = 0.0; x / 1.0; })"
+TEST_F(IntegratedCodegenTest, Binary_FP_Div) {
+
+}
+
+#define BINARY_SINT_MOD R"(test::() { mut x: i64 = 0; x % 1; })"
+TEST_F(IntegratedCodegenTest, Binary_SInt_Mod) {
+
+}
+
+#define BINARY_UINT_MOD R"(test::() { mut x: u64 = 0; x % 1; })"
+TEST_F(IntegratedCodegenTest, Binary_UInt_Mod) {
+
+}
+
 } // namespace test
 
 } // namespace meddle

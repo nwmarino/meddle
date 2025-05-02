@@ -13,6 +13,7 @@ struct Options final {
 
     unsigned Debug:1;
     unsigned KeepCC:1;
+    unsigned NamedMIR:1;
     unsigned Time:1;
 };
 

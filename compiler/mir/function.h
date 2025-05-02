@@ -72,8 +72,7 @@ private:
 
 public:
     Function(String N, FunctionType *FT, Linkage L, Segment *P, 
-             std::vector<Argument *> Args) 
-        : Value(N, FT), m_Linkage(L), m_Parent(P), m_Args(Args) {};
+             std::vector<Argument *> Args);
 
     ~Function() override;
 
@@ -92,6 +91,9 @@ public:
     Slot *get_slot(String N) const;
 
     std::vector<Slot *> get_slots() const;
+
+    Type *get_return_ty() const 
+    { return static_cast<FunctionType *>(m_Type)->get_return_type(); }
 
     const std::vector<Argument *> &get_args() const { return m_Args; }
 

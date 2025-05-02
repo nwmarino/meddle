@@ -56,6 +56,7 @@ int main(int argc, char **argv) {
 
     Options opts {
         .KeepCC = 1,
+        .NamedMIR = 0,
         .Time = 1,
     };
     std::vector<File> files;
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
 
     for (auto &unit : units) {
         mir::Segment *seg = new mir::Segment(target);
+        assert(seg && "Unable to create segment.");
         CGN cgn = CGN(opts, unit, seg);
         segments.push_back(seg);
 
