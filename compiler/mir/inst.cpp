@@ -52,6 +52,10 @@ void RetInst::print(std::ostream &OS) const {
     assert(false && "'ret' does not produce a value.");
 }
 
+void BinopInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " %" << get_name();
+}
+
 void UnopInst::print(std::ostream &OS) const {
     OS << get_type()->get_name() << " %" << get_name();
 }

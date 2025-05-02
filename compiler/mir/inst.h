@@ -188,6 +188,51 @@ public:
     void print(std::ostream &OS) const override;
 };
 
+class BinopInst final : public Inst {
+    friend class Builder;
+
+public:
+    enum class Kind {
+        Add,
+        Sub,
+        SMul,
+        UMul,
+        SDiv,
+        UDiv,
+        SRem,
+        URem,
+
+        FAdd,
+        FSub,
+        FMul,
+        FDiv,
+
+        And,
+        Or,
+        Xor,
+        Shl,
+        AShr,
+        LShr,
+    };
+
+private:
+    Kind m_Kind;
+    Value *m_LVal;
+    Value *m_RVal;
+
+    BinopInst(String N, Type *T, BasicBlock *P, Kind K, Value *L, Value *R)
+      : Inst(N, T, P), m_Kind(K), m_LVal(L), m_RVal(R) {}
+
+public:
+    Kind get_kind() const { return m_Kind; }
+
+    Value *get_lval() const { return m_LVal; }
+
+    Value *get_rval() const { return m_RVal; }
+
+    void print(std::ostream &OS) const override;
+};
+
 class UnopInst final : public Inst {
     friend class Builder;
 
@@ -229,10 +274,28 @@ public:
     enum class Kind {
         ICMP_EQ,
         ICMP_NE,
+        ICMP_SLT,
+        ICMP_ULT,
+        ICMP_SLE,
+        ICMP_ULE,
+        ICMP_SGT,
+        ICMP_UGT,
+        ICMP_SGE,
+        ICMP_UGE,
+        
         FCMP_OEQ,
         FCMP_ONE,
+        FCMP_OLT,
+        FCMP_OLE,
+        FCMP_OGT,
+        FCMP_OGE,
+
         PCMP_EQ,
         PCMP_NE,
+        PCMP_LT,
+        PCMP_LE,
+        PCMP_GT,
+        PCMP_GE,
     };
 
 private:

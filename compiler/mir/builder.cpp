@@ -106,6 +106,258 @@ RetInst *Builder::build_ret(Value *V) {
     return ret;
 }
 
+Value *Builder::build_add(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer addition left source cannot be null.");
+    assert(RV && "Integer addition right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer addition left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer addition right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::Add, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_sub(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer subtraction left source cannot be null.");
+    assert(RV && "Integer subtraction right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer subtraction left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer subtraction right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::Sub, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_smul(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer multiplication left source cannot be null.");
+    assert(RV && "Integer multiplication right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer multiplication left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer multiplication right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::SMul, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_umul(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer multiplication left source cannot be null.");
+    assert(RV && "Integer multiplication right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer multiplication left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer multiplication right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::UMul, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_sdiv(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer division left source cannot be null.");
+    assert(RV && "Integer division right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer division left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer division right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::SDiv, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_udiv(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer division left source cannot be null.");
+    assert(RV && "Integer division right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer division left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer division right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::UDiv, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_srem(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer remainder left source cannot be null.");
+    assert(RV && "Integer remainder right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer remainder left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer remainder right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::SRem, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_urem(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Integer remainder left source cannot be null.");
+    assert(RV && "Integer remainder right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Integer remainder left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Integer remainder right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::URem, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_fadd(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Float addition left source cannot be null.");
+    assert(RV && "Float addition right source cannot be null.");
+    assert(LV->get_type()->is_float_ty() && "Float addition left source must be a float.");
+    assert(RV->get_type()->is_float_ty() && "Float addition right source must be a float.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::FAdd, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_fsub(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Float subtraction left source cannot be null.");
+    assert(RV && "Float subtraction right source cannot be null.");
+    assert(LV->get_type()->is_float_ty() && "Float subtraction left source must be a float.");
+    assert(RV->get_type()->is_float_ty() && "Float subtraction right source must be a float.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::FSub, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_fmul(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Float multiplication left source cannot be null.");
+    assert(RV && "Float multiplication right source cannot be null.");
+    assert(LV->get_type()->is_float_ty() && "Float multiplication left source must be a float.");
+    assert(RV->get_type()->is_float_ty() && "Float multiplication right source must be a float.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::FMul, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_fdiv(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Float division left source cannot be null.");
+    assert(RV && "Float division right source cannot be null.");
+    assert(LV->get_type()->is_float_ty() && "Float division left source must be a float.");
+    assert(RV->get_type()->is_float_ty() && "Float division right source must be a float.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::FDiv, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_and(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "And left source cannot be null.");
+    assert(RV && "And right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "And left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "And right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::And, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_or(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Or left source cannot be null.");
+    assert(RV && "Or right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Or left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Or right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::Or, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_xor(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Xor left source cannot be null.");
+    assert(RV && "Xor right source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Xor left source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Xor right source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::Xor, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_shl(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Left shift source cannot be null.");
+    assert(RV && "Right shift source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Left shift source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Right shift source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::Shl, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_lshr(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Left shift source cannot be null.");
+    assert(RV && "Right shift source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Left shift source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Right shift source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::LShr, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
+Value *Builder::build_ashr(Value *LV, Value *RV, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(LV && "Left shift source cannot be null.");
+    assert(RV && "Right shift source cannot be null.");
+    assert(LV->get_type()->is_integer_ty() && "Left shift source must be an integer.");
+    assert(RV->get_type()->is_integer_ty() && "Right shift source must be an integer.");
+
+    BinopInst *bin = new BinopInst(N.empty() ? get_ssa() : N, LV->get_type(), 
+        m_Insert, BinopInst::Kind::AShr, LV, RV);
+    LV->add_use(bin);
+    RV->add_use(bin);
+    return bin;
+}
+
 Value *Builder::build_sext(Value *V, Type *D, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(V && "Sign extend source cannot be null.");

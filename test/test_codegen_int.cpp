@@ -121,7 +121,7 @@ TEST_F(IntegratedCodegenTest, If_Then) {
 
 test :: () -> void {
 entry:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, if.then, if.merge
 
 if.then:
@@ -161,7 +161,7 @@ TEST_F(IntegratedCodegenTest, If_Then_Else) {
 
 test :: () -> void {
 entry:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, if.then, if.else
 
 if.then:
@@ -201,14 +201,14 @@ TEST_F(IntegratedCodegenTest, If_Then_ElseIf_Else) {
 
 test :: () -> void {
 entry:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, if.then, if.else
 
 if.then:
     ret
 
 if.else:
-    %int.cmp1 := icmp i64 2 != i64 0
+    %int.cmp1 := icmp_ne i64 2, i64 0
     brif i1 %int.cmp1, if.then1, if.else1
 
 if.then1:
@@ -251,7 +251,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -294,7 +294,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -337,7 +337,7 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
@@ -380,11 +380,11 @@ entry:
     jmp until.cond
 
 until.cond:
-    %int.cmp := icmp i64 1 != i64 0
+    %int.cmp := icmp_ne i64 1, i64 0
     brif i1 %int.cmp, until.merge, until.body
 
 until.body:
-    %int.cmp1 := icmp i64 2 != i64 0
+    %int.cmp1 := icmp_ne i64 2, i64 0
     brif i1 %int.cmp1, if.then, if.else
 
 if.then:
@@ -803,7 +803,7 @@ entry:
     jmp match.chain
 
 match.chain:
-    %match.cmp := icmp i64 5 == i64 1
+    %match.cmp := icmp_eq i64 5, i64 1
     brif i1 %match.cmp, match.case, match.chain1
 
 match.case:
@@ -811,7 +811,7 @@ match.case:
     ret i32 %cast.trunc
 
 match.chain1:
-    %match.cmp1 := icmp i64 5 == i64 2
+    %match.cmp1 := icmp_eq i64 5, i64 2
     brif i1 %match.cmp1, match.case1, match.def
 
 match.case1:

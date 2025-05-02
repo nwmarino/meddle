@@ -64,6 +64,42 @@ public:
 
     RetInst *build_ret(Value *V);
 
+    Value *build_add(Value *LV, Value *RV, String N = "");
+
+    Value *build_sub(Value *LV, Value *RV, String N = "");
+
+    Value *build_smul(Value *LV, Value *RV, String N = "");
+
+    Value *build_umul(Value *LV, Value *RV, String N = "");
+
+    Value *build_sdiv(Value *LV, Value *RV, String N = "");
+
+    Value *build_udiv(Value *LV, Value *RV, String N = "");
+
+    Value *build_srem(Value *LV, Value *RV, String N = "");
+
+    Value *build_urem(Value *LV, Value *RV, String N = "");
+
+    Value *build_fadd(Value *LV, Value *RV, String N = "");
+
+    Value *build_fsub(Value *LV, Value *RV, String N = "");
+
+    Value *build_fmul(Value *LV, Value *RV, String N = "");
+
+    Value *build_fdiv(Value *LV, Value *RV, String N = "");
+
+    Value *build_and(Value *LV, Value *RV, String N = "");
+
+    Value *build_or(Value *LV, Value *RV, String N = "");
+
+    Value *build_xor(Value *LV, Value *RV, String N = "");
+
+    Value *build_shl(Value *LV, Value *RV, String N = "");
+
+    Value *build_lshr(Value *LV, Value *RV, String N = "");
+
+    Value *build_ashr(Value *LV, Value *RV, String N = "");
+
     Value *build_sext(Value *V, Type *D, String N = "");
 
     Value *build_zext(Value *V, Type *D, String N = "");

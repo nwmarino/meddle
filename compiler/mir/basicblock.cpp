@@ -166,6 +166,71 @@ static void print_ret(std::ostream &OS, RetInst *I) {
     }
 }
 
+static void print_binop(std::ostream &OS, BinopInst *I) {
+    OS << "%" << I->get_name() << " := ";
+    
+    switch (I->get_kind()) {
+    case BinopInst::Kind::Add:
+        OS << "add ";
+        break;
+    case BinopInst::Kind::Sub:
+        OS << "sub ";
+        break;
+    case BinopInst::Kind::SMul:
+        OS << "smul ";
+        break;
+    case BinopInst::Kind::UMul:
+        OS << "umul ";
+        break;
+    case BinopInst::Kind::SDiv:
+        OS << "sdiv ";
+        break;
+    case BinopInst::Kind::UDiv:
+        OS << "udiv ";
+        break;
+    case BinopInst::Kind::SRem:
+        OS << "srem ";
+        break;
+    case BinopInst::Kind::URem:
+        OS << "urem ";
+        break;
+    case BinopInst::Kind::FAdd:
+        OS << "fadd ";
+        break;
+    case BinopInst::Kind::FSub:
+        OS << "fsub ";
+        break;
+    case BinopInst::Kind::FMul:
+        OS << "fmul ";
+        break;
+    case BinopInst::Kind::FDiv:
+        OS << "fdiv ";
+        break;
+    case BinopInst::Kind::And:
+        OS << "and ";
+        break;
+    case BinopInst::Kind::Or:
+        OS << "or ";
+        break;
+    case BinopInst::Kind::Xor:
+        OS << "xor ";
+        break;
+    case BinopInst::Kind::Shl:
+        OS << "shl ";
+        break;
+    case BinopInst::Kind::AShr:
+        OS << "ashr ";
+        break;
+    case BinopInst::Kind::LShr:
+        OS << "shr ";
+        break;
+    }
+
+    I->get_lval()->print(OS);
+    OS << ", ";
+    I->get_rval()->print(OS);
+}
+
 static void print_unop(std::ostream &OS, UnopInst *I) {
     OS << "%" << I->get_name() << " := ";
 
@@ -219,38 +284,75 @@ static void print_cmp(std::ostream &OS, CMPInst *I) {
 
     switch (I->get_kind()) {
     case CMPInst::Kind::ICMP_EQ:
-        OS << "icmp ";
+        OS << "icmp_eq ";
         break;
     case CMPInst::Kind::ICMP_NE:
-        OS << "icmp ";
+        OS << "icmp_ne ";
+        break;
+    case CMPInst::Kind::ICMP_SLT:
+        OS << "icmp_slt ";
+        break;
+    case CMPInst::Kind::ICMP_ULT:
+        OS << "icmp_ult ";
+        break;
+    case CMPInst::Kind::ICMP_SLE:
+        OS << "icmp_sle ";
+        break;
+    case CMPInst::Kind::ICMP_ULE:
+        OS << "icmp_ule ";
+        break;
+    case CMPInst::Kind::ICMP_SGT:
+        OS << "icmp_sgt ";
+        break;
+    case CMPInst::Kind::ICMP_UGT:
+        OS << "icmp_ugt ";
+        break;
+    case CMPInst::Kind::ICMP_SGE:
+        OS << "icmp_sge ";
+        break;
+    case CMPInst::Kind::ICMP_UGE:
+        OS << "icmp_uge ";
         break;
     case CMPInst::Kind::FCMP_OEQ:
-        OS << "fcmpo ";
+        OS << "fcmp_oeq ";
         break;
     case CMPInst::Kind::FCMP_ONE:
-        OS << "fcmpo ";
+        OS << "fcmp_one ";
+        break;
+    case CMPInst::Kind::FCMP_OLT:
+        OS << "fcmp_olt ";
+        break;
+    case CMPInst::Kind::FCMP_OLE:
+        OS << "fcmp_ole ";
+        break;
+    case CMPInst::Kind::FCMP_OGT:
+        OS << "fcmp_ogt ";
+        break;
+    case CMPInst::Kind::FCMP_OGE:
+        OS << "fcmp_oge ";
         break;
     case CMPInst::Kind::PCMP_EQ:
-        OS << "pcmp ";
+        OS << "pcmp_eq ";
         break;
     case CMPInst::Kind::PCMP_NE:
-        OS << "pcmp ";
+        OS << "pcmp_ne ";
+        break;
+    case CMPInst::Kind::PCMP_LT:
+        OS << "pcmp_lt ";
+        break;
+    case CMPInst::Kind::PCMP_LE:
+        OS << "pcmp_le ";
+        break;
+    case CMPInst::Kind::PCMP_GT:
+        OS << "pcmp_gt ";
+        break;
+    case CMPInst::Kind::PCMP_GE:
+        OS << "pcmp_ge ";
         break;
     }
 
     I->get_lval()->print(OS);
-    switch (I->get_kind()) {
-    case CMPInst::Kind::ICMP_EQ:
-    case CMPInst::Kind::FCMP_OEQ:
-    case CMPInst::Kind::PCMP_EQ:
-        OS << " == ";
-        break;
-    case CMPInst::Kind::ICMP_NE:
-    case CMPInst::Kind::FCMP_ONE:
-    case CMPInst::Kind::PCMP_NE:
-        OS << " != ";
-        break;
-    }
+    OS << ", ";
     I->get_rval()->print(OS);
 }
 
@@ -270,6 +372,8 @@ void BasicBlock::print(std::ostream &OS) const {
             print_jmp(OS, I);
         else if (auto *I = dynamic_cast<RetInst *>(curr))
             print_ret(OS, I);
+        else if (auto *I = dynamic_cast<BinopInst *>(curr))
+            print_binop(OS, I);
         else if (auto *I = dynamic_cast<UnopInst *>(curr))
             print_unop(OS, I);
         else if (auto *I = dynamic_cast<CMPInst *>(curr))
