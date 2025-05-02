@@ -59,7 +59,9 @@ public:
 
     Type *produceType(const String &N, const Metadata &M);
 
-    void scrubRefs();
+    void reconstructFunctionType(FunctionType *FT);
+
+    void sanitate();
 };
 
 } // namespace meddle

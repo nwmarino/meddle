@@ -2,6 +2,7 @@
 #include "decl.h"
 #include "expr.h"
 #include "stmt.h"
+#include "type.h"
 #include "unit.h"
 #include "../core/logger.h"
 
@@ -9,7 +10,7 @@ using namespace meddle;
 
 static Type *unwrapType(Type *T) {
     assert(T && "Cannot unwrap null types.");
-    
+
     if (T->isQualified())
         return T;
 
@@ -22,28 +23,39 @@ NameResolution::NameResolution(const Options &opts, TranslationUnit *U)
 }
 
 void NameResolution::visit(TranslationUnit *U) {
+    m_Phase = Phase::Shallow;
+    for (auto &D : U->getDecls())
+        D->accept(this);
+
+    m_Phase = Phase::Recurse;
     for (auto &D : U->getDecls())
         D->accept(this);
 }
 
 void NameResolution::visit(FunctionDecl *decl) {
-    m_Scope = decl->getScope();
-    for (auto &P : decl->getParams())
-        P->accept(this);
-
-    decl->getBody()->accept(this);
-    m_Scope = m_Scope->getParent();
+    if (m_Phase == Phase::Shallow) {
+        auto *FT = static_cast<FunctionType *>(decl->getType());
+        for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i)
+            decl->getParam(i)->m_Type = FT->getParamType(i);
+    } else if (m_Phase == Phase::Recurse) {
+        m_Scope = decl->getScope();
+        decl->getBody()->accept(this);
+        m_Scope = m_Scope->getParent();
+    }
 }
 
 void NameResolution::visit(VarDecl *decl) {
-    if (decl->getInit())
-        decl->getInit()->accept(this);
-
-    if (!decl->m_Type) {
-        assert(decl->getInit() != nullptr && "Cannot infer type.");
-        decl->m_Type = decl->getInit()->getType();
-    } else {
-        decl->m_Type = unwrapType(decl->getType());
+    if (m_Phase == Phase::Shallow) {
+        if (decl->m_Type)
+            decl->m_Type = unwrapType(decl->getType());
+    } else if (m_Phase == Phase::Recurse) {
+        if (decl->getInit())
+            decl->getInit()->accept(this);
+        
+        if (!decl->m_Type) {
+            assert(decl->getInit() != nullptr && "Cannot infer type.");
+            decl->m_Type = decl->getInit()->getType();
+        }
     }
 }
 

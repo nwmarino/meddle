@@ -97,7 +97,22 @@ Type *Context::produceType(const String &N, const Metadata &M) {
     return TR;
 }
 
-void Context::scrubRefs() {
+void Context::reconstructFunctionType(FunctionType *FT) {
+    if (!FT->getReturnType()->isQualified())
+        FT->setReturnType(
+            static_cast<TypeResult *>(FT->getReturnType())->getUnderlying());
+
+    for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i) {
+        Type *P = FT->getParamType(i);
+        if (P->isQualified())
+            continue;
+
+        TypeResult *TR = static_cast<TypeResult *>(P);
+        FT->setParamType(TR->getUnderlying(), i);
+    }
+}
+
+void Context::sanitate() {
     // Move all type results from the main type pool to the designated results.
     for (auto it = m_Types.begin(); it != m_Types.end(); ) {
         if (TypeResult *TR = dynamic_cast<TypeResult *>(it->second)) {
@@ -119,4 +134,8 @@ void Context::scrubRefs() {
 
         R->setUnderlying(newTy);
     }
+
+    // For each recognized function type, unwrap any nested type results.
+    for (auto &FT : m_FunctionTypes)
+        reconstructFunctionType(FT);
 }

@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     units.push_back(parser.get());
 
     for (auto &unit : units) {
+        unit->getContext()->sanitate();
         NameResolution NR = NameResolution(opts, unit);
         Sema sema = Sema(opts, unit);
     }

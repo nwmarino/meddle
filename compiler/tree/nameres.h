@@ -8,6 +8,9 @@
 namespace meddle {
 
 class NameResolution final : public Visitor {
+    enum class Phase {
+        Shallow, Recurse
+    } m_Phase;
     Options m_Opts;
     TranslationUnit *m_Unit;
     Scope *m_Scope;
