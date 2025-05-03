@@ -11,6 +11,7 @@ class Sema final : public Visitor {
         None = 0,
         Until,
     } m_Loop = LoopKind::None;
+
     Options m_Opts;
     TranslationUnit *m_Unit;
     FunctionDecl *m_Function;

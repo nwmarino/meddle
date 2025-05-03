@@ -8,6 +8,12 @@
 
 using namespace meddle;
 
+enum class TypeCheckMode {
+    Exact,
+    AllowImplicit,
+    Loose
+};
+
 /// Check that if a statement is not compounded then it is not declarative.
 ///
 /// Specifically, this crashes on behaviour like:
@@ -26,12 +32,33 @@ static void checkCompoundedDeclStmt(Stmt *S) {
 ///
 /// \returns `true` if the types mismatched but a cast is possible.
 static bool typeCheck(Type *actual, Type *expected, const Metadata *md, 
-                      String ctx = "") {
+                      String ctx = "", 
+                      TypeCheckMode mode = TypeCheckMode::AllowImplicit) {
     if (actual->compare(expected))
         return false;
 
-    if (actual->canCastTo(expected))
-        return true;
+    switch (mode) {
+    case TypeCheckMode::Exact:
+        break;
+
+    case TypeCheckMode::AllowImplicit:
+        if (actual->canImplCastTo(expected))
+            return true;
+
+        break;
+
+    case TypeCheckMode::Loose:
+        if (actual->canImplCastTo(expected))
+            return true;
+        else if (actual->isPointer() && expected->isPointer())
+            return false;
+        else if (actual->isInt() && expected->isPointer())
+            return false;
+        else if (actual->isPointer() && expected->isInt())
+            return false;
+
+        break;
+    }
 
     fatal((ctx.empty() ? "" : ctx + " ") + "type mismatch, got '" + 
           actual->getName() + "', expected '" + expected->getName() + "'", md);
@@ -181,7 +208,11 @@ void Sema::visit(BinaryExpr *expr) {
     Type *LTy = expr->getLHS()->getType();
     Type *RTy = expr->getRHS()->getType();
 
-    if (typeCheck(RTy, LTy, &expr->getMetadata(), "operator")) {
+    TypeCheckMode mode = TypeCheckMode::AllowImplicit;
+    if (BinaryExpr::supportsPtrArith(expr->getKind()))
+        mode = TypeCheckMode::Loose;
+
+    if (typeCheck(RTy, LTy, &expr->getMetadata(), "operator", mode)) {
         expr->m_RHS = new CastExpr(
             expr->getRHS()->getMetadata(), 
             LTy, 

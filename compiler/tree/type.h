@@ -39,11 +39,15 @@ public:
 
     virtual bool isUInt(unsigned N) const { return false; }
 
+    bool isInt() const { return isSInt() || isUInt(); }
+
     virtual bool isFloat() const { return false; }
 
     virtual bool isFloat(unsigned N) const { return false; }
 
     virtual bool canCastTo(Type *T) const { return false; }
+
+    virtual bool canImplCastTo(Type *T) const { return false; }
 
     virtual bool compare(Type *T) const { return false; }
 
@@ -66,6 +70,9 @@ public:
     bool isQualified() const override { return m_Underlying != nullptr; }
 
     bool canCastTo(Type *T) const override
+    { assert(false && "Cannot cast this non-concrete type."); }
+
+    bool canImplCastTo(Type *T) const override 
     { assert(false && "Cannot cast this non-concrete type."); }
 
     bool compare(Type *T) const override 
@@ -115,6 +122,8 @@ public:
     bool isFloat(unsigned N) const override;
 
     bool canCastTo(Type *T) const override;
+    
+    bool canImplCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
 };
@@ -134,6 +143,8 @@ public:
 
     bool canCastTo(Type *T) const override;
 
+    bool canImplCastTo(Type *T) const override;
+
     bool compare(Type *T) const override;
 };
 
@@ -146,6 +157,8 @@ public:
     Type *getPointee() const { return m_Pointee; }
 
     bool canCastTo(Type *T) const override;
+
+    bool canImplCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
 };

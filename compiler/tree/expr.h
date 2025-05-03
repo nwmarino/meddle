@@ -176,6 +176,11 @@ public:
 		GreaterThanEquals,
 	};
 
+	static bool supportsPtrArith(Kind K) {
+		return K == Kind::Add || K == Kind::Sub ||
+		       K == Kind::Add_Assign || K == Kind::Sub_Assign;
+	}
+
 private:
 	Kind m_Kind;
 	Expr *m_LHS;

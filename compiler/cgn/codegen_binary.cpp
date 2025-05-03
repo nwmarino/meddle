@@ -477,12 +477,17 @@ void CGN::cgn_add(BinaryExpr *BIN) {
     assert(m_Value && "Binary RHS does not produce a value.");
     mir::Value *RHS = m_Value;
 
-    if (LHS->get_type()->is_integer_ty())
-        m_Value = m_Builder.build_add(LHS, RHS, m_Opts.NamedMIR ? "add" : "");
-    else if (LHS->get_type()->is_float_ty())
-        m_Value = m_Builder.build_fadd(LHS, RHS, m_Opts.NamedMIR ? "add" : "");
-    else
+    String name = m_Opts.NamedMIR ? "add" : "";
+
+    if (LHS->get_type()->is_pointer_ty() && RHS->get_type()->is_integer_ty()) {
+        m_Value = m_Builder.build_ap(LHS->get_type(), LHS, RHS);
+    } else if (LHS->get_type()->is_integer_ty()) {
+        m_Value = m_Builder.build_add(LHS, RHS, name);
+    } else if (LHS->get_type()->is_float_ty()) {
+        m_Value = m_Builder.build_fadd(LHS, RHS, name);
+    } else {
         fatal("unsupported '+' operator between types", &BIN->getMetadata());
+    }
 }
 
 void CGN::cgn_sub(BinaryExpr *BIN) {

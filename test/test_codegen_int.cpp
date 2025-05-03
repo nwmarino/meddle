@@ -591,7 +591,7 @@ test :: () -> void {
     delete unit;
 }
 
-#define INT_CGN_15 R"(test::() { fix x: i64 = 3.14; })"
+#define INT_CGN_15 R"(test::() { fix x: i64 = cast<i64> 3.14; })"
 TEST_F(IntegratedCodegenTest, Float_To_SInt) {
     File file = File("", "", "", INT_CGN_15);
     Lexer lexer = Lexer(file);
@@ -628,7 +628,7 @@ test :: () -> void {
     delete unit;
 }
 
-#define INT_CGN_16 R"(test::() { fix x: u64 = 3.14; })"
+#define INT_CGN_16 R"(test::() { fix x: u64 = cast<u64> 3.14; })"
 TEST_F(IntegratedCodegenTest, Float_To_UInt) {
     File file = File("", "", "", INT_CGN_16);
     Lexer lexer = Lexer(file);
@@ -3726,22 +3726,57 @@ test :: () -> i64* {
     delete unit;
 }
 
-#define BINARY_PTR_ARITH_ADD R"()"
+#define BINARY_PTR_ARITH_ADD R"(test::() { mut x: i64* = nil; x = x + 3; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Add) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", BINARY_PTR_ARITH_ADD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i64* {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := ap i64*, i64* $3, i32 3
+    str i64* $4 -> i64** _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define BINARY_PTR_ARITH_ADD_ASSIGN R"()"
+#define BINARY_PTR_ARITH_ADD_ASSIGN R"(test::() { mut x: i64* = nil; x += 3; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Add_Assign) {
     EXPECT_EQ(1, 0);
 }
 
-#define BINARY_PTR_ARITH_SUB R"()"
+#define BINARY_PTR_ARITH_SUB R"(test::() { mut x: i64* = nil; x = x - 2; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub) {
     EXPECT_EQ(1, 0);
 }
 
-#define BINARY_PTR_ARITH_SUB_ASSIGN R"()"
+#define BINARY_PTR_ARITH_SUB_ASSIGN R"(test::() { mut x: i64* = nil; x -= 2; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub_Assign) {
     EXPECT_EQ(1, 0);
 }
