@@ -86,6 +86,14 @@ class CGN final : public Visitor {
     
     void cgn_logic_and(BinaryExpr *BIN);
     void cgn_logic_or(BinaryExpr *BIN);
+
+    void cgn_not(UnaryExpr *UN);
+    void cgn_logic_not(UnaryExpr *UN);
+    void cgn_neg(UnaryExpr *UN);
+    void cgn_addrof(UnaryExpr *UN);
+    void cgn_deref(UnaryExpr *UN);
+    void cgn_inc(UnaryExpr *UN);
+    void cgn_dec(UnaryExpr *UN);
     
 public:
     CGN(const Options &opts, TranslationUnit *U, mir::Segment *S);
@@ -119,6 +127,7 @@ public:
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
     void visit(SizeofExpr *expr) override;
+    void visit(UnaryExpr *expr) override;
 };
 
 } // namespace meddle

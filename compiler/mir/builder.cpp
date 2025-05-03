@@ -364,6 +364,38 @@ Value *Builder::build_ashr(Value *LV, Value *RV, String N) {
     return bin;
 }
 
+Value *Builder::build_not(Value *V, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Not source cannot be null.");
+
+    UnopInst *un = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, V->get_type(), m_Insert, 
+        UnopInst::Kind::Not, V);
+    V->add_use(un);
+    return un;
+}
+
+Value *Builder::build_neg(Value *V, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Negate source cannot be null.");
+    assert(V->get_type()->is_integer_ty() && "Negate source must be an integer.");
+
+    UnopInst *neg = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, V->get_type(), m_Insert, 
+        UnopInst::Kind::Neg, V);
+    V->add_use(neg);
+    return neg;
+}
+
+Value *Builder::build_fneg(Value *V, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(V && "Floating point negate source cannot be null.");
+    assert(V->get_type()->is_float_ty() && "Floating point negate source must be a float.");
+
+    UnopInst *neg = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, V->get_type(), m_Insert, 
+        UnopInst::Kind::FNeg, V);
+    V->add_use(neg);
+    return neg;
+}
+
 Value *Builder::build_sext(Value *V, Type *D, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(V && "Sign extend source cannot be null.");

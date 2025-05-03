@@ -3222,6 +3222,71 @@ test :: () -> void {
     delete unit;
 }
 
+#define UNARY_INT_INCREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Int_Increment) {
+
+}
+
+#define UNARY_FP_INCREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_FP_Increment) {
+    
+}
+
+#define UNARY_PTR_INCREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Ptr_Increment) {
+    
+}
+
+#define UNARY_INT_DECREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Int_Decrement) {
+    
+}
+
+#define UNARY_FP_DECREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_FP_Decrement) {
+    
+}
+
+#define UNARY_PTR_DECREMENT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Ptr_Decrement) {
+    
+}
+
+#define UNARY_BITWISE_NOT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Bitwise_Not) {
+    
+}
+
+#define UNARY_LOGIC_NOT R"()"
+TEST_F(IntegratedCodegenTest, Unary_Logic_Not) {
+    
+}
+
+#define UNARY_INT_NEG R"()"
+TEST_F(IntegratedCodegenTest, Unary_Int_Negative) {
+    
+}
+
+#define UNARY_FP_NER R"()"
+TEST_F(IntegratedCodegenTest, Unary_FP_Negative) {
+    
+}
+
+#define UNARY_DEREFERENCE_LVALUE R"()"
+TEST_F(IntegratedCodegenTest, Unary_Deref_LValue) {
+    
+}
+
+#define UNARY_DEREFERENCE_RVALUE R"()"
+TEST_F(IntegratedCodegenTest, Unary_Deref_RValue) {
+    
+}
+
+#define UNARY_ADDRESS_OF R"()"
+TEST_F(IntegratedCodegenTest, Unary_Address_Of) {
+    
+}
+
 } // namespace test
 
 } // namespace meddle

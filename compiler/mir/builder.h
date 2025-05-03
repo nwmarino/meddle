@@ -99,6 +99,12 @@ public:
 
     Value *build_ashr(Value *LV, Value *RV, String N = "");
 
+    Value *build_not(Value *V, String N = "");
+
+    Value *build_neg(Value *V, String N = "");
+
+    Value *build_fneg(Value *V, String N = "");
+
     Value *build_sext(Value *V, Type *D, String N = "");
 
     Value *build_zext(Value *V, Type *D, String N = "");

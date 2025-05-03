@@ -152,6 +152,15 @@ static void print_binop(std::ostream &OS, BinopInst *I) {
 static void print_unop(std::ostream &OS, UnopInst *I) {
     OS << "$" << get_printed_name(I) << " := ";
     switch (I->get_kind()) {
+    case UnopInst::Kind::Not:
+        OS << "not ";
+        break;
+    case UnopInst::Kind::Neg:
+        OS << "neg ";
+        break;
+    case UnopInst::Kind::FNeg:
+        OS << "fneg ";
+        break;
     case UnopInst::Kind::SExt:
         OS << "sext ";
         break;

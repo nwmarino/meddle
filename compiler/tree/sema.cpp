@@ -1,6 +1,7 @@
 #include "sema.h"
 #include "expr.h"
 #include "stmt.h"
+#include "type.h"
 #include "unit.h"
 #include "../core/logger.h"
 
@@ -218,4 +219,54 @@ void Sema::visit(CastExpr *expr) {
 
 void Sema::visit(ParenExpr *expr) {
     expr->m_Expr->accept(this);
+}
+
+void Sema::visit(UnaryExpr *expr) {
+    expr->getExpr()->accept(this);
+
+    switch (expr->getKind()) {
+    case UnaryExpr::Kind::Unknown:
+        assert(false && "Unknown unary operator.");
+
+    case UnaryExpr::Kind::Logic_Not:
+    case UnaryExpr::Kind::Bitwise_Not:
+    case UnaryExpr::Kind::Negative:
+        expr->m_Type = expr->getExpr()->getType();
+        break;
+
+    case UnaryExpr::Kind::Address_Of:
+        if (!expr->getExpr()->isLValue())
+            fatal("cannot apply '&' to non-lvalue", &expr->getMetadata());
+
+        expr->m_Type = m_Unit->getContext()->getPointerType(
+            expr->getExpr()->getType());
+        
+        break;
+
+    case UnaryExpr::Kind::Dereference:
+        if (!expr->getExpr()->getType()->isPointer())
+            fatal("cannot apply '*' operator to non-pointer type", 
+                  &expr->getMetadata());
+
+        expr->m_Type = static_cast<PointerType *>(
+            expr->getExpr()->getType())->getPointee();
+
+        break;
+
+    case UnaryExpr::Kind::Increment:
+    case UnaryExpr::Kind::Decrement:
+        if (!expr->getExpr()->isLValue())
+            fatal("cannot apply unary operator to non-lvalue", 
+                  &expr->getMetadata());
+
+        VarDecl *LVal = nullptr;
+        if (auto *E = dynamic_cast<RefExpr *>(expr->getExpr())) {
+            LVal = dynamic_cast<VarDecl *>(E->getRef());
+        }
+              
+        assert(LVal && "LHS must be a reference.");
+        if (!LVal->isMutable())
+            fatal("cannot reassign immutable variable", &expr->getMetadata());
+        break;
+    }
 }

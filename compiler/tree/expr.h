@@ -331,6 +331,71 @@ public:
 	Type *getTarget() const { return m_Target; }
 };
 
+class UnaryExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+public:
+	enum class Kind {
+		Unknown,
+
+		Logic_Not,
+		Bitwise_Not,
+		Negative,
+		Address_Of,
+		Dereference,
+		Increment,
+		Decrement,
+	};
+
+private:
+	Kind m_Kind;
+	Expr *m_Expr;
+
+public:
+	UnaryExpr(const Metadata &M, Type *T, Kind K, Expr *E)
+	  : Expr(M, T), m_Kind(K), m_Expr(E) {}
+
+	~UnaryExpr() override {
+		delete m_Expr;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Kind getKind() const { return m_Kind; }
+
+	Expr *getExpr() const { return m_Expr; }
+
+	bool isConstant() const override { return m_Expr->isConstant(); }
+
+	bool isPostfix() const {
+		switch (m_Kind) {
+			case Kind::Increment:
+			case Kind::Decrement:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	bool isPrefix() const {
+		switch (m_Kind) {
+			case Kind::Address_Of:
+			case Kind::Dereference:
+			case Kind::Increment:
+			case Kind::Decrement:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	bool isAddressOf() const { return m_Kind == Kind::Address_Of; }
+
+	bool isDereference() const { return m_Kind == Kind::Dereference; }
+};
+
 } // namespace meddle
 
 #endif // MEDDLE_EXPR_H

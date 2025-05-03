@@ -254,6 +254,10 @@ class UnopInst final : public Inst {
 
 public:
     enum class Kind {
+        Not,
+        Neg,
+        FNeg,
+
         SExt,
         ZExt,
         Trunc,
