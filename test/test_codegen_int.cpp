@@ -3675,7 +3675,7 @@ test :: () -> i64* {
     $2 := reint void* nil -> i64*
     str i64* $2 -> i64** _x
     $3 := load i64** _x
-    $4 := ap i64*, i64* $3, i32 1
+    $4 := ap i64*, i64* $3, i64 1
     str i64* $4 -> i64** _x
     ret i64* $3
 }
@@ -3715,7 +3715,7 @@ test :: () -> i64* {
     $2 := reint void* nil -> i64*
     str i64* $2 -> i64** _x
     $3 := load i64** _x
-    $4 := ap i64*, i64* $3, i32 -1
+    $4 := ap i64*, i64* $3, i64 -1
     str i64* $4 -> i64** _x
     ret i64* $4
 }
@@ -3748,14 +3748,14 @@ TEST_F(IntegratedCodegenTest, Pointer_Arith_Add) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () -> i64* {
+test :: () -> void {
     _x := slot i64*, align 8
 
 1:
     $2 := reint void* nil -> i64*
     str i64* $2 -> i64** _x
     $3 := load i64** _x
-    $4 := ap i64*, i64* $3, i32 3
+    $4 := ap i64*, i64* $3, i64 3
     str i64* $4 -> i64** _x
     ret
 }
@@ -3768,17 +3768,124 @@ test :: () -> i64* {
 
 #define BINARY_PTR_ARITH_ADD_ASSIGN R"(test::() { mut x: i64* = nil; x += 3; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Add_Assign) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", BINARY_PTR_ARITH_ADD_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := ap i64*, i64* $3, i64 3
+    str i64* $4 -> i64** _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_ARITH_SUB R"(test::() { mut x: i64* = nil; x = x - 2; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", BINARY_PTR_ARITH_SUB);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := neg i64 2
+    $5 := ap i64*, i64* $3, i64 $4
+    str i64* $5 -> i64** _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_ARITH_SUB_ASSIGN R"(test::() { mut x: i64* = nil; x -= 2; })"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub_Assign) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", BINARY_PTR_ARITH_SUB_ASSIGN);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := neg i64 2
+    $5 := ap i64*, i64* $3, i64 $4
+    str i64* $5 -> i64** _x
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 } // namespace test

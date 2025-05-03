@@ -99,7 +99,7 @@ void CGN::cgn_inc(UnaryExpr *UN) {
 
     case Pointer:
         inc = m_Builder.build_ap(og_val->get_type(), og_val, 
-            mir::ConstantInt::get(m_Segment, m_Builder.get_i32_ty(), 1), 
+            mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), 1), 
             m_Opts.NamedMIR ? "inc.ptr" : "");
         break;
 
@@ -143,7 +143,7 @@ void CGN::cgn_dec(UnaryExpr *UN) {
 
     case Pointer:
         dec = m_Builder.build_ap(og_val->get_type(), og_val, 
-            mir::ConstantInt::get(m_Segment, m_Builder.get_i32_ty(), -1), 
+            mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), -1), 
             m_Opts.NamedMIR ? "dec.ptr" : "");
         break;
 

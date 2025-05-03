@@ -52,12 +52,15 @@ void CGN::cgn_add_assign(BinaryExpr *BIN) {
 
     mir::Value *ADD = nullptr;
     String name = m_Opts.NamedMIR ? "add.asn" : "";
-    if (LHS->get_type()->is_integer_ty())
+    if (LHS->get_type()->is_pointer_ty() && RHS->get_type()->is_integer_ty()) {
+        ADD = m_Builder.build_ap(LHS->get_type(), LHS, RHS, name);
+    } else if (LHS->get_type()->is_integer_ty()) {
         ADD = m_Builder.build_add(LHS, RHS, name);
-    else if (LHS->get_type()->is_float_ty())
+    } else if (LHS->get_type()->is_float_ty()) {
         ADD = m_Builder.build_fadd(LHS, RHS, name);
-    else
+    } else {
         fatal("unsupported '+=' operator between types", &BIN->getMetadata());
+    }
 
     m_VC = ValueContext::LValue;
     BIN->getLHS()->accept(this);
@@ -79,12 +82,16 @@ void CGN::cgn_sub_assign(BinaryExpr *BIN) {
 
     mir::Value *SUB = nullptr;
     String name = m_Opts.NamedMIR ? "sub.asn" : "";
-    if (LHS->get_type()->is_integer_ty())
+    if (LHS->get_type()->is_pointer_ty() && RHS->get_type()->is_integer_ty()) {
+        mir::Value *neg = m_Builder.build_neg(RHS, m_Opts.NamedMIR ? "parith.neg" : "");
+        SUB = m_Builder.build_ap(LHS->get_type(), LHS, neg, name);
+    } else if (LHS->get_type()->is_integer_ty()) {
         SUB = m_Builder.build_sub(LHS, RHS, name);
-    else if (LHS->get_type()->is_float_ty())
+    } else if (LHS->get_type()->is_float_ty()) {
         SUB = m_Builder.build_fsub(LHS, RHS, name);
-    else
+    } else {
         fatal("unsupported '-=' operator between types", &BIN->getMetadata());
+    }
 
     m_VC = ValueContext::LValue;
     BIN->getLHS()->accept(this);
@@ -478,7 +485,6 @@ void CGN::cgn_add(BinaryExpr *BIN) {
     mir::Value *RHS = m_Value;
 
     String name = m_Opts.NamedMIR ? "add" : "";
-
     if (LHS->get_type()->is_pointer_ty() && RHS->get_type()->is_integer_ty()) {
         m_Value = m_Builder.build_ap(LHS->get_type(), LHS, RHS);
     } else if (LHS->get_type()->is_integer_ty()) {
@@ -501,12 +507,17 @@ void CGN::cgn_sub(BinaryExpr *BIN) {
     assert(m_Value && "Binary RHS does not produce a value.");
     mir::Value *RHS = m_Value;
 
-    if (LHS->get_type()->is_integer_ty())
-        m_Value = m_Builder.build_sub(LHS, RHS, m_Opts.NamedMIR ? "sub" : "");
-    else if (LHS->get_type()->is_float_ty())
-        m_Value = m_Builder.build_fsub(LHS, RHS, m_Opts.NamedMIR ? "sub" : "");
-    else
+    String name = m_Opts.NamedMIR ? "sub" : "";
+    if (LHS->get_type()->is_pointer_ty() && RHS->get_type()->is_integer_ty()) {
+        mir::Value *neg = m_Builder.build_neg(RHS, m_Opts.NamedMIR ? "parith.neg" : "");
+        m_Value = m_Builder.build_ap(LHS->get_type(), LHS, neg, name);
+    } else if (LHS->get_type()->is_integer_ty()) {
+        m_Value = m_Builder.build_sub(LHS, RHS, name);
+    } else if (LHS->get_type()->is_float_ty()) {
+        m_Value = m_Builder.build_fsub(LHS, RHS, name);
+    } else {
         fatal("unsupported '-' operator between types", &BIN->getMetadata());
+    }
 }
 
 void CGN::cgn_mul(BinaryExpr *BIN) {
