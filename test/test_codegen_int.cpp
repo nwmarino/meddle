@@ -3648,12 +3648,82 @@ test :: () -> void {
 
 #define UNARY_PTR_INCREMENT R"(test::() i64* { mut x: i64* = nil; ret x++; })"
 TEST_F(IntegratedCodegenTest, Unary_Ptr_Increment) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", UNARY_PTR_INCREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i64* {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := ap i64*, i64* $3, i32 1
+    str i64* $4 -> i64** _x
+    ret i64* $3
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
-#define UNARY_PTR_DECREMENT R"(test::() i64* { mut x: i64* = nil; ret x--; })"
+#define UNARY_PTR_DECREMENT R"(test::() i64* { mut x: i64* = nil; ret --x; })"
 TEST_F(IntegratedCodegenTest, Unary_Ptr_Decrement) {
-    EXPECT_EQ(1, 0);
+    File file = File("", "", "", UNARY_PTR_DECREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i64* {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := ap i64*, i64* $3, i32 -1
+    str i64* $4 -> i64** _x
+    ret i64* $4
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
 }
 
 #define BINARY_PTR_ARITH_ADD R"()"

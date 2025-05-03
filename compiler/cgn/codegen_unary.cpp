@@ -89,18 +89,18 @@ void CGN::cgn_inc(UnaryExpr *UN) {
     case SInt:
     case UInt:
         inc = m_Builder.build_add(og_val, mir::ConstantInt::get(m_Segment, 
-            og_val->get_type(), 1));
-
+            og_val->get_type(), 1), m_Opts.NamedMIR ? "inc.int" : "");
         break;
 
     case Float:
         inc = m_Builder.build_fadd(og_val, mir::ConstantFP::get(m_Segment, 
-            og_val->get_type(), 1.0));
-
+            og_val->get_type(), 1.0), m_Opts.NamedMIR ? "inc.fp" : "");
         break;
 
     case Pointer:
-        assert(false && "Pointer arithmetic not implemented.");
+        inc = m_Builder.build_ap(og_val->get_type(), og_val, 
+            mir::ConstantInt::get(m_Segment, m_Builder.get_i32_ty(), 1), 
+            m_Opts.NamedMIR ? "inc.ptr" : "");
         break;
 
     default:
@@ -131,18 +131,20 @@ void CGN::cgn_dec(UnaryExpr *UN) {
     case SInt:
     case UInt:
         dec = m_Builder.build_sub(og_val, mir::ConstantInt::get(m_Segment, 
-            og_val->get_type(), 1));
+            og_val->get_type(), 1), m_Opts.NamedMIR ? "dec.int" : "");
 
         break;
 
     case Float:
         dec = m_Builder.build_fsub(og_val, mir::ConstantFP::get(m_Segment, 
-            og_val->get_type(), 1.0));
+            og_val->get_type(), 1.0), m_Opts.NamedMIR ? "dec.fp" : "");
 
         break;
 
     case Pointer:
-        assert(false && "Pointer arithmetic not implemented.");
+        dec = m_Builder.build_ap(og_val->get_type(), og_val, 
+            mir::ConstantInt::get(m_Segment, m_Builder.get_i32_ty(), -1), 
+            m_Opts.NamedMIR ? "dec.ptr" : "");
         break;
 
     default:
