@@ -4,10 +4,6 @@
 
 Wed. May 7
 
-Pointer Arithmetic
-- AP Instruction
-- +, -, +=, -=, ++, --
-
 Array Initializers
 - `SubscriptExpr`
 
