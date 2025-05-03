@@ -258,6 +258,37 @@ TEST_F(ParseDeclTest, Var_Local_No_Type) {
     delete unit;
 }
 
+#define VAR_LOCAL_NESTED_ARRAY_TYPE R"(test::() { mut x: i64[2][3]; })"
+TEST_F(ParseDeclTest, Var_Local_Nested_Array_Type) {
+    File file = File("", "", "", VAR_LOCAL_NESTED_ARRAY_TYPE);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "i64[2][3]");
+    EXPECT_EQ(VD->getInit(), nullptr);
+    EXPECT_TRUE(VD->isMutable());
+    EXPECT_FALSE(VD->isGlobal());
+
+    delete unit;
+}
+
 #define VAR_GLOBAL_1 R"(global :: fix i64 = 0;)"
 TEST_F(ParseDeclTest, Var_Global_Fix_Init) {
     File file = File("", "", "", VAR_GLOBAL_1);

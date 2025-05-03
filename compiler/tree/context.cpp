@@ -53,8 +53,8 @@ Type *Context::getType(const String &N) {
         return T;
     }
 
-    auto LBrack = N.find('[');
-    auto RBrack = N.find(']');
+    auto LBrack = N.find_last_of('[');
+    auto RBrack = N.find_last_of(']');
     if (LBrack && RBrack) {
         Type *element = getType(N.substr(0, LBrack));
         if (!element)

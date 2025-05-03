@@ -1,6 +1,5 @@
 #include "parser.h"
 #include "../core/logger.h"
-#include <string>
 
 using namespace meddle;
 

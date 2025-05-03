@@ -4676,6 +4676,93 @@ foo :: (aret i64[3]* %1, aarg i64[3]* %x) -> void {
     delete unit;
 }
 
+#define AGGREGATE_RETURN__RETURN_ARRAY_INIT R"(test::() i64[2] { ret [1, 2]; })"
+TEST_F(IntegratedCodegenTest, AArg_Return_Array_Init) {
+    File file = File("", "", "", AGGREGATE_RETURN__RETURN_ARRAY_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: (aret i64[2]* %1) -> void {
+2:
+    $3 := ap i64*, i64[2]* %1, i64 0
+    str i64 1 -> i64* $3, align 8
+    $4 := ap i64*, i64[2]* %1, i64 1
+    str i64 2 -> i64* $4, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define NESTED_ARRAY_INIT R"(test::() { mut x: i64[2][3] = [[1, 2], [3, 4], [5, 6]]; })"
+TEST_F(IntegratedCodegenTest, Nested_Array_Init) {
+    File file = File("", "", "", NESTED_ARRAY_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64[2][3], align 8
+
+1:
+    $2 := ap i64[2]*, i64[2][3]* _x, i64 0
+    $3 := ap i64*, i64[2]* $2, i64 0
+    str i64 1 -> i64* $3, align 8
+    $4 := ap i64*, i64[2]* $2, i64 1
+    str i64 2 -> i64* $4, align 8
+    $5 := ap i64[2]*, i64[2][3]* _x, i64 1
+    $6 := ap i64*, i64[2]* $5, i64 0
+    str i64 3 -> i64* $6, align 8
+    $7 := ap i64*, i64[2]* $5, i64 1
+    str i64 4 -> i64* $7, align 8
+    $8 := ap i64[2]*, i64[2][3]* _x, i64 2
+    $9 := ap i64*, i64[2]* $8, i64 0
+    str i64 5 -> i64* $9, align 8
+    $10 := ap i64*, i64[2]* $8, i64 1
+    str i64 6 -> i64* $10, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle
