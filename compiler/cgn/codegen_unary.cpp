@@ -22,9 +22,10 @@ void CGN::cgn_logic_not(UnaryExpr *UN) {
     m_VC = ValueContext::RValue;
     UN->getExpr()->accept(this);
     assert(m_Value && "Unary base does not produce a value.");
-    m_Value = m_Builder.build_icmp_eq(inject_cmp(m_Value), 
-        mir::ConstantInt::get(m_Segment, m_Builder.get_i1_ty(), 0), 
-        m_Opts.NamedMIR ? "lognot" : "");
+
+    m_Value = m_Builder.build_xor(inject_cmp(m_Value), 
+        mir::ConstantInt::get(m_Segment, m_Builder.get_i1_ty(), 1), 
+        m_Opts.NamedMIR ? "lnot" : "");
 }
 
 void CGN::cgn_neg(UnaryExpr *UN) {

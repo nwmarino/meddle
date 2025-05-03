@@ -404,7 +404,7 @@ Value *Builder::build_sext(Value *V, Type *D, String N) {
     assert(D->is_integer_ty() && "Sign extend destination must be an integer.");
 
     DataLayout DL = m_Segment->get_data_layout();
-    assert(DL.get_type_size(V->get_type()) < DL.get_type_size(D) && 
+    assert(DL.get_type_size(V->get_type()) <= DL.get_type_size(D) && 
            "Sign extend destination must be larger than source.");
 
     UnopInst *ext = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, D, m_Insert, UnopInst::Kind::SExt, V);
@@ -420,7 +420,7 @@ Value *Builder::build_zext(Value *V, Type *D, String N) {
     assert(D->is_integer_ty() && "Zero extend destination must be an integer.");
 
     DataLayout DL = m_Segment->get_data_layout();
-    assert(DL.get_type_size(V->get_type()) < DL.get_type_size(D) && 
+    assert(DL.get_type_size(V->get_type()) <= DL.get_type_size(D) && 
            "Zero extend destination must be larger than source.");
 
     UnopInst *ext = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, D, m_Insert, UnopInst::Kind::ZExt, V);
@@ -436,7 +436,7 @@ Value *Builder::build_trunc(Value *V, Type *D, String N) {
     assert(D->is_integer_ty() && "Truncate destination must be an integer.");
 
     DataLayout DL = m_Segment->get_data_layout();
-    assert(DL.get_type_size(V->get_type()) > DL.get_type_size(D) && 
+    assert(DL.get_type_size(V->get_type()) >= DL.get_type_size(D) && 
            "Truncate destination must be smaller than source.");
 
     UnopInst *trunc = new UnopInst(N.empty() ? m_Segment->get_ssa() : N, D, m_Insert, UnopInst::Kind::Trunc, V);

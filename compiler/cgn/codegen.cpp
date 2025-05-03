@@ -63,6 +63,7 @@ mir::Type *CGN::cgn_type(Type *T) {
 		case PrimitiveType::Kind::Void:
 			return m_Builder.get_void_ty();
 		case PrimitiveType::Kind::Bool:
+			return m_Builder.get_i1_ty();
 		case PrimitiveType::Kind::Char:
 		case PrimitiveType::Kind::Int8:
 		case PrimitiveType::Kind::UInt8:
@@ -509,36 +510,95 @@ void CGN::visit(NilLiteral *expr) {
 
 void CGN::visit(BinaryExpr *expr) {
 	switch (expr->getKind()) {
-	case BinaryExpr::Kind::Unknown: assert(false && "Unknown binary operator.");
-	case BinaryExpr::Kind::Assign: return cgn_assign(expr);
-	case BinaryExpr::Kind::Add_Assign: return cgn_add_assign(expr);
-	case BinaryExpr::Kind::Sub_Assign: return cgn_sub_assign(expr);
-	case BinaryExpr::Kind::Mul_Assign: return cgn_mul_assign(expr);
-	case BinaryExpr::Kind::Div_Assign: return cgn_div_assign(expr);
-	case BinaryExpr::Kind::Mod_Assign: return cgn_mod_assign(expr);
-	case BinaryExpr::Kind::And_Assign: return cgn_and_assign(expr);
-	case BinaryExpr::Kind::Or_Assign: return cgn_or_assign(expr);
-	case BinaryExpr::Kind::Xor_Assign: return cgn_xor_assign(expr);
-	case BinaryExpr::Kind::LeftShift_Assign: return cgn_shl_assign(expr);
-	case BinaryExpr::Kind::RightShift_Assign: return cgn_shr_assign(expr);
-	case BinaryExpr::Kind::Add: return cgn_add(expr);
-	case BinaryExpr::Kind::Sub: return cgn_sub(expr);
-	case BinaryExpr::Kind::Mul: return cgn_mul(expr);
-	case BinaryExpr::Kind::Div: return cgn_div(expr);
-	case BinaryExpr::Kind::Mod: return cgn_mod(expr);
-	case BinaryExpr::Kind::Bitwise_And: return cgn_and(expr);
-	case BinaryExpr::Kind::Bitwise_Or: return cgn_or(expr);
-	case BinaryExpr::Kind::Bitwise_Xor: return cgn_xor(expr);
-	case BinaryExpr::Kind::LeftShift: return cgn_shl(expr);
-	case BinaryExpr::Kind::RightShift: return cgn_shr(expr);
-	case BinaryExpr::Kind::Logic_And: return cgn_logic_and(expr);
-	case BinaryExpr::Kind::Logic_Or: return cgn_logic_or(expr);
-	case BinaryExpr::Kind::Equals: return cgn_equals(expr);
-	case BinaryExpr::Kind::NEquals: return cgn_not_equals(expr);
-	case BinaryExpr::Kind::LessThan: return cgn_less(expr);
-	case BinaryExpr::Kind::LessThanEquals: return cgn_less_eq(expr);
-	case BinaryExpr::Kind::GreaterThan: return cgn_greater(expr);
-	case BinaryExpr::Kind::GreaterThanEquals: return cgn_greater_eq(expr);
+	case BinaryExpr::Kind::Unknown: 
+		assert(false && "Unknown binary operator.");
+	case BinaryExpr::Kind::Assign: 
+		cgn_assign(expr);
+		break;
+	case BinaryExpr::Kind::Add_Assign: 
+		cgn_add_assign(expr);
+		break;
+	case BinaryExpr::Kind::Sub_Assign: 
+		cgn_sub_assign(expr);
+		break;
+	case BinaryExpr::Kind::Mul_Assign: 
+		cgn_mul_assign(expr);
+		break;
+	case BinaryExpr::Kind::Div_Assign: 
+		cgn_div_assign(expr);
+		break;
+	case BinaryExpr::Kind::Mod_Assign: 
+		cgn_mod_assign(expr);
+		break;
+	case BinaryExpr::Kind::And_Assign: 
+		cgn_and_assign(expr);
+		break;
+	case BinaryExpr::Kind::Or_Assign: 
+		cgn_or_assign(expr);
+		break;
+	case BinaryExpr::Kind::Xor_Assign: 
+		cgn_xor_assign(expr);
+		break;
+	case BinaryExpr::Kind::LeftShift_Assign: 
+		cgn_shl_assign(expr);
+		break;
+	case BinaryExpr::Kind::RightShift_Assign: 
+		cgn_shr_assign(expr);
+		break;
+	case BinaryExpr::Kind::Add: 
+		cgn_add(expr);
+		break;
+	case BinaryExpr::Kind::Sub: 
+		cgn_sub(expr);
+		break;
+	case BinaryExpr::Kind::Mul: 
+		cgn_mul(expr);
+		break;
+	case BinaryExpr::Kind::Div: 
+		cgn_div(expr);
+		break;
+	case BinaryExpr::Kind::Mod: 
+		cgn_mod(expr);
+		break;
+	case BinaryExpr::Kind::Bitwise_And: 
+		cgn_and(expr);
+		break;
+	case BinaryExpr::Kind::Bitwise_Or: 
+		cgn_or(expr);
+		break;
+	case BinaryExpr::Kind::Bitwise_Xor: 
+		cgn_xor(expr);
+		break;
+	case BinaryExpr::Kind::LeftShift: 
+		cgn_shl(expr);
+		break;
+	case BinaryExpr::Kind::RightShift:
+		cgn_shr(expr);
+		break;
+	case BinaryExpr::Kind::Logic_And: 
+		cgn_logic_and(expr);
+		break;
+	case BinaryExpr::Kind::Logic_Or: 
+		cgn_logic_or(expr);
+		break;
+	case BinaryExpr::Kind::Equals: 
+		cgn_equals(expr);
+		break;
+	case BinaryExpr::Kind::NEquals: 
+		cgn_not_equals(expr);
+		break;
+	case BinaryExpr::Kind::LessThan: 
+		cgn_less(expr);
+		break;
+	case BinaryExpr::Kind::LessThanEquals: 
+		cgn_less_eq(expr);
+		break;
+	case BinaryExpr::Kind::GreaterThan:
+		cgn_greater(expr);
+		break;
+	case BinaryExpr::Kind::GreaterThanEquals:
+		cgn_greater_eq(expr);
+		break;
     }
 }
 
@@ -679,13 +739,13 @@ void CGN::visit(SizeofExpr *expr) {
 
 void CGN::visit(UnaryExpr *expr) {
 	switch (expr->getKind()) {
-	case UnaryExpr::Kind::Logic_Not: 
-	case UnaryExpr::Kind::Bitwise_Not:
-	case UnaryExpr::Kind::Negate:
-	case UnaryExpr::Kind::Address_Of:
-	case UnaryExpr::Kind::Dereference:
-	case UnaryExpr::Kind::Increment:
-	case UnaryExpr::Kind::Decrement:
+	case UnaryExpr::Kind::Logic_Not: return cgn_logic_not(expr);
+	case UnaryExpr::Kind::Bitwise_Not: return cgn_not(expr);
+	case UnaryExpr::Kind::Negate: return cgn_neg(expr);
+	case UnaryExpr::Kind::Address_Of: return cgn_addrof(expr);
+	case UnaryExpr::Kind::Dereference: return cgn_deref(expr);
+	case UnaryExpr::Kind::Increment: return cgn_inc(expr);
+	case UnaryExpr::Kind::Decrement: return cgn_dec(expr);
 	default: assert(false && "Unknown unary operator.");
     }
 }

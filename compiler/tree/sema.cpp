@@ -1,4 +1,5 @@
 #include "sema.h"
+#include "decl.h"
 #include "expr.h"
 #include "stmt.h"
 #include "type.h"
@@ -203,6 +204,13 @@ void Sema::visit(BinaryExpr *expr) {
     VarDecl *LVal = nullptr;
     if (auto *E = dynamic_cast<RefExpr *>(expr->getLHS())) {
         LVal = dynamic_cast<VarDecl *>(E->getRef());
+    } else if (auto *E = dynamic_cast<UnaryExpr *>(expr->getLHS())) {
+        if (E->getKind() == UnaryExpr::Kind::Dereference) {
+            // Unary expressions are only lvalues for dereferences `*`.
+            RefExpr *RE = dynamic_cast<RefExpr *>(E->getExpr());
+            assert(RE && "Non-referencing deference expression.");
+            LVal = dynamic_cast<VarDecl *>(RE->getRef());
+        }
     }
 
     assert(LVal && "LHS must be a reference.");
@@ -229,6 +237,9 @@ void Sema::visit(UnaryExpr *expr) {
         assert(false && "Unknown unary operator.");
 
     case UnaryExpr::Kind::Logic_Not:
+        expr->m_Type = m_Unit->getContext()->getBoolType();
+        break;
+
     case UnaryExpr::Kind::Bitwise_Not:
     case UnaryExpr::Kind::Negate:
         expr->m_Type = expr->getExpr()->getType();

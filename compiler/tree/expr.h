@@ -364,7 +364,7 @@ private:
 
 public:
 	UnaryExpr(const Metadata &M, Type *T, Kind K, Expr *E, bool POST)
-	  : Expr(M, T), m_Kind(K), m_Expr(E), m_Postfix(POST) {}
+	  : Expr(M, T, K == Kind::Dereference), m_Kind(K), m_Expr(E), m_Postfix(POST) {}
 
 	~UnaryExpr() override {
 		delete m_Expr;
