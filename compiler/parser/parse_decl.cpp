@@ -24,13 +24,50 @@ Decl *Parser::parse_decl() {
 }
 
 FunctionDecl *Parser::parse_function(const Token &name) {
-    next(); // '('
-    next(); // ')'
-
     Type *ret = nullptr;
     Stmt *body = nullptr;
     Scope *scope = enter_scope();
-    std::vector<ParamDecl *> params = {};
+    std::vector<ParamDecl *> params;
+
+    next(); // '('
+
+    while (!match(TokenKind::EndParen)) {
+        Metadata param_md = m_Current->md;
+        String param_name;
+        Type *param_ty = nullptr;
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected parameter name", &param_md);
+        
+        param_name = m_Current->value;
+        next();
+
+        if (!match(TokenKind::Colon))
+            fatal("expected ':' after parameter name", &m_Current->md);
+        next(); // ':'
+
+        param_ty = parse_type(true);
+        if (param_ty->isVoid())
+            fatal("parameter type cannot be 'void'", &m_Current->md);
+
+        params.push_back(new ParamDecl(
+            m_Attributes,
+            param_md,
+            param_name,
+            param_ty,
+            params.size()
+        ));
+
+        if (match(TokenKind::EndParen))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or ')' in function parameter list", 
+                  &m_Current->md);
+        next(); // ','
+    }
+
+    next(); // ')'
 
     if (match(TokenKind::Identifier))
         ret = parse_type(true);

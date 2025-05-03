@@ -68,6 +68,60 @@ TEST_F(ParseDeclTest, Function_Single_Statement) {
     delete unit;
 }
 
+#define FUNCTION_PARAMS_BASIC R"(test::(x: i64) { ret; })"
+TEST_F(ParseDeclTest, Function_Params_Basic) {
+    File file = File("", "", "", FUNCTION_PARAMS_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_EQ(FN->getName(), "test");
+    EXPECT_EQ(FN->getReturnType()->getName(), "void");
+    EXPECT_EQ(FN->getParams().size(), 1);
+
+    ParamDecl *PD = FN->getParams()[0];
+    EXPECT_EQ(PD->getName(), "x");
+    EXPECT_EQ(PD->getType()->getName(), "i64");
+
+    delete unit;
+}
+
+#define FUNCTION_PARAMS_MANY R"(test::(x: i64, y: f32, z: f64) { ret; })"
+TEST_F(ParseDeclTest, Function_Params_Many) {
+    File file = File("", "", "", FUNCTION_PARAMS_MANY);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_EQ(FN->getName(), "test");
+    EXPECT_EQ(FN->getReturnType()->getName(), "void");
+    EXPECT_EQ(FN->getParams().size(), 3);
+
+    ParamDecl *PD1 = FN->getParams()[0];
+    EXPECT_EQ(PD1->getName(), "x");
+    EXPECT_EQ(PD1->getType()->getName(), "i64");
+
+    ParamDecl *PD2 = FN->getParams()[1];
+    EXPECT_EQ(PD2->getName(), "y");
+    EXPECT_EQ(PD2->getType()->getName(), "f32");
+
+    ParamDecl *PD3 = FN->getParams()[2];
+    EXPECT_EQ(PD3->getName(), "z");
+    EXPECT_EQ(PD3->getType()->getName(), "f64");
+
+    delete unit;
+}
+
 #define VAR_LOCAL_1 R"(test::(){ mut x: i64; })"
 TEST_F(ParseDeclTest, Var_Local_Mut_Empty) {
     File file = File("", "", "", VAR_LOCAL_1);
