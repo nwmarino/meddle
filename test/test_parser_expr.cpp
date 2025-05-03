@@ -1706,6 +1706,427 @@ TEST_F(ParseExprTest, Binary_Precedence_Assignment_Basic) {
     delete unit;
 }
 
+#define UNARY_PREFIX_NEG R"(test::() { mut x: i64 = -5;})"
+TEST_F(ParseExprTest, Unary_Prefix_Neg) {
+    File file = File("", "", "", UNARY_PREFIX_NEG);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    UnaryExpr *US = dynamic_cast<UnaryExpr *>(VD->getInit());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getKind(), UnaryExpr::Kind::Negate);
+    EXPECT_EQ(US->isPostfix(), false);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(US->getExpr());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_BITWISE_NOT R"(test::() { mut x: i64 = ~5; })"
+TEST_F(ParseExprTest, Unary_Prefix_Bitwise_Not) {
+    File file = File("", "", "", UNARY_PREFIX_BITWISE_NOT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    UnaryExpr *US = dynamic_cast<UnaryExpr *>(VD->getInit());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getKind(), UnaryExpr::Kind::Bitwise_Not);
+    EXPECT_EQ(US->isPostfix(), false);
+
+    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(US->getExpr());
+    EXPECT_NE(RHS, nullptr);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_LOGICAL_NOT R"(test::() { mut x: bool = true; mut y: bool = !x; })"
+TEST_F(ParseExprTest, Unary_Prefix_Logical_Not) {
+    File file = File("", "", "", UNARY_PREFIX_LOGICAL_NOT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    DeclStmt *DS2 = dynamic_cast<DeclStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(DS2, nullptr);
+
+    VarDecl *VD2 = dynamic_cast<VarDecl *>(DS2->getDecl());
+    EXPECT_NE(VD2, nullptr);
+    EXPECT_EQ(VD2->getName(), "y");
+    EXPECT_NE(VD2->getInit(), nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(VD2->getInit());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Logic_Not);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_ADDRESS_OF R"(test::() { mut x: i64 = 5; mut y: i64* = &x; })"
+TEST_F(ParseExprTest, Unary_Prefix_Address_Of) {
+    File file = File("", "", "", UNARY_PREFIX_ADDRESS_OF);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    DeclStmt *DS2 = dynamic_cast<DeclStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(DS2, nullptr);
+
+    VarDecl *VD2 = dynamic_cast<VarDecl *>(DS2->getDecl());
+    EXPECT_NE(VD2, nullptr);
+    EXPECT_EQ(VD2->getName(), "y");
+    EXPECT_NE(VD2->getInit(), nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(VD2->getInit());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Address_Of);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_DEREFERENCE_LVALUE R"(test::() { mut x: i64* = nil; *x = 5; })"
+TEST_F(ParseExprTest, Unary_Prefix_Dereference_LValue) {
+    File file = File("", "", "", UNARY_PREFIX_DEREFERENCE_LVALUE);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BE = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BE, nullptr);
+    EXPECT_NE(BE->getLHS(), nullptr);
+    EXPECT_NE(BE->getRHS(), nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(BE->getLHS());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Dereference);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_DEREFERENCE_RVALUE R"(test::() { mut x: i64* = nil; mut y: i64 = *x; })"
+TEST_F(ParseExprTest, Unary_Prefix_Dereference_RValue) {
+    File file = File("", "", "", UNARY_PREFIX_DEREFERENCE_RVALUE);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    DeclStmt *DS2 = dynamic_cast<DeclStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(DS2, nullptr);
+
+    VarDecl *VD2 = dynamic_cast<VarDecl *>(DS2->getDecl());
+    EXPECT_NE(VD2, nullptr);
+    EXPECT_EQ(VD2->getName(), "y");
+    EXPECT_NE(VD2->getInit(), nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(VD2->getInit());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Dereference);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_INCREMENT R"(test::() { mut x: i64 = 0; ++x; })"
+TEST_F(ParseExprTest, Unary_Prefix_Increment) {
+    File file = File("", "", "", UNARY_PREFIX_INCREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(ES->getExpr());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Increment);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_DECREMENT R"(test::() { mut x: i64 = 0; --x; })"
+TEST_F(ParseExprTest, Unary_Prefix_Decrement) {
+    File file = File("", "", "", UNARY_PREFIX_DECREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(ES->getExpr());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Decrement);
+    EXPECT_EQ(UN->isPostfix(), false);
+
+    delete unit;
+}
+
+#define UNARY_POSTFIX_INCREMENT R"(test::() { mut x: i64 = 0; x++; })"
+TEST_F(ParseExprTest, Unary_Postfix_Increment) {
+    File file = File("", "", "", UNARY_POSTFIX_INCREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(ES->getExpr());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Increment);
+    EXPECT_EQ(UN->isPostfix(), true);
+
+    delete unit;
+}
+
+#define UNARY_POSTFIX_DECREMENT R"(test::() { mut x: i64 = 0; x--; })"
+TEST_F(ParseExprTest, Unary_Postfix_Decrement) {
+    File file = File("", "", "", UNARY_POSTFIX_DECREMENT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    UnaryExpr *UN = dynamic_cast<UnaryExpr *>(ES->getExpr());
+    EXPECT_NE(UN, nullptr);
+    EXPECT_EQ(UN->getKind(), UnaryExpr::Kind::Decrement);
+    EXPECT_EQ(UN->isPostfix(), true);
+
+    delete unit;
+}
+
+#define UNARY_PREFIX_DEREF_POSTFIX_INC R"(test::() { mut x: i64* = nil; *x++ = 5; })"
+TEST_F(ParseExprTest, Unary_Prefix_Deref_Postfix_Inc) {
+    File file = File("", "", "", UNARY_PREFIX_DEREF_POSTFIX_INC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    BinaryExpr *BE = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BE, nullptr);
+    EXPECT_NE(BE->getLHS(), nullptr);
+    EXPECT_NE(BE->getRHS(), nullptr);
+
+    UnaryExpr *US = dynamic_cast<UnaryExpr *>(BE->getLHS());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getKind(), UnaryExpr::Kind::Dereference);
+    EXPECT_EQ(US->isPostfix(), false);
+
+    UnaryExpr *US2 = dynamic_cast<UnaryExpr *>(US->getExpr());
+    EXPECT_NE(US2, nullptr);
+    EXPECT_EQ(US2->getKind(), UnaryExpr::Kind::Increment);
+    EXPECT_EQ(US2->isPostfix(), true);
+
+    RefExpr *RE = dynamic_cast<RefExpr *>(US2->getExpr());
+    EXPECT_NE(RE, nullptr);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

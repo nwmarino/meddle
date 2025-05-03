@@ -679,13 +679,13 @@ void CGN::visit(SizeofExpr *expr) {
 
 void CGN::visit(UnaryExpr *expr) {
 	switch (expr->getKind()) {
-	case UnaryExpr::Kind::Unknown: assert(false && "Unknown unary operator.");
 	case UnaryExpr::Kind::Logic_Not: 
 	case UnaryExpr::Kind::Bitwise_Not:
-	case UnaryExpr::Kind::Negative:
+	case UnaryExpr::Kind::Negate:
 	case UnaryExpr::Kind::Address_Of:
 	case UnaryExpr::Kind::Dereference:
 	case UnaryExpr::Kind::Increment:
 	case UnaryExpr::Kind::Decrement:
+	default: assert(false && "Unknown unary operator.");
     }
 }

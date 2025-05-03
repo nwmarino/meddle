@@ -1,9 +1,7 @@
 #include "codegen.h"
 #include "../core/logger.h"
 #include "../tree/expr.h"
-#include "../mir/basicblock.h"
 #include "../mir/builder.h"
-#include "../mir/function.h"
 
 #include <cassert>
 
@@ -30,7 +28,7 @@ void CGN::cgn_logic_not(UnaryExpr *UN) {
 }
 
 void CGN::cgn_neg(UnaryExpr *UN) {
-    assert(UN->getKind() == UnaryExpr::Kind::Negative);
+    assert(UN->getKind() == UnaryExpr::Kind::Negate);
 
     m_VC = ValueContext::RValue;
     UN->getExpr()->accept(this);

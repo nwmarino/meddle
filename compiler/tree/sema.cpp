@@ -230,7 +230,7 @@ void Sema::visit(UnaryExpr *expr) {
 
     case UnaryExpr::Kind::Logic_Not:
     case UnaryExpr::Kind::Bitwise_Not:
-    case UnaryExpr::Kind::Negative:
+    case UnaryExpr::Kind::Negate:
         expr->m_Type = expr->getExpr()->getType();
         break;
 

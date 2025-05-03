@@ -52,6 +52,9 @@ class Parser final {
     /// Returns the equivelant binary operator kind for the current token.
     BinaryExpr::Kind get_bin_operator() const;
 
+    /// Returns the equivelant unary operator kind for the current token.
+    UnaryExpr::Kind get_un_operator() const;
+
     Type *parse_type(bool produce = true);
     void parse_attributes();
 

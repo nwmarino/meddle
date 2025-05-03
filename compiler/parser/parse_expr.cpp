@@ -6,7 +6,7 @@
 using namespace meddle;
 
 Expr *Parser::parse_expr() {
-    Expr *base = parse_primary();
+    Expr *base = parse_unary_prefix();
     if (!base)
         fatal("expected expression", &m_Current->md);
 
@@ -205,27 +205,18 @@ SizeofExpr *Parser::parse_sizeof() {
 }
 
 Expr *Parser::parse_unary_prefix() {
-    /*
-    UnaryExpr::Op op = getUnop();
-    if (UnaryExpr::isPrefix(op)) {
-        Metadata md = getLoc();
+    UnaryExpr::Kind op = get_un_operator();
+    if (UnaryExpr::isPrefixOp(op)) {
+        Metadata md = m_Current->md;
         next();
 
-        std::unique_ptr<Expr> expr = parseUnaryPrefixExpr();
-        if (!expr) {
-            trace("expected unary prefix expression", &getLoc());
-            return nullptr;
-        }
+        Expr *E = parse_unary_prefix();
+        if (!E)
+            fatal("expected unary prefix expression", &m_Current->md);
 
-        return std::make_unique<UnaryExpr>(
-            md, nullptr, op, std::move(expr), false
-        );
+        return new UnaryExpr(md, nullptr, op, E, false);
     } else
-        return parseUnaryPostfixExpr();
-    */
-
-
-    return parse_unary_postfix();
+        return parse_unary_postfix();
 }
 
 Expr *Parser::parse_unary_postfix() {
@@ -233,20 +224,16 @@ Expr *Parser::parse_unary_postfix() {
     if (!E)
         fatal("expected expression", &m_Current->md);
 
-    /*
     while (1) {
-        UnaryExpr::Op op = getUnop();
-        if (UnaryExpr::isPostfix(op)) {
-            Metadata md = getLoc();
+        UnaryExpr::Kind op = get_un_operator();
+        if (UnaryExpr::isPostfixOp(op)) {
+            Metadata md = m_Current->md;
             next();
 
-            expr = std::make_unique<UnaryExpr>(
-                md, nullptr, op, std::move(expr), true
-            );
+            E = new UnaryExpr(md, nullptr, op, E, true);
         } else
             break;
     }
-    */
 
     return E;
 }

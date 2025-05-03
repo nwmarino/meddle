@@ -216,6 +216,34 @@ TEST_F(LexerTest, LexLocalVariableInit) {
     EXPECT_EQ(stream.get(13)->kind, TokenKind::Eof);
 }
 
+TEST_F(LexerTest, LexNegativeInteger) {
+    Lexer lexer = Lexer(File("", "", "", "test::() {mut x: i64 = -5;}"));
+    TokenStream stream = lexer.unwrap();
+
+    EXPECT_EQ(stream.getTokens().size(), 15);
+    EXPECT_EQ(stream.get(0)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(0)->value, "test");
+    EXPECT_EQ(stream.get(1)->kind, TokenKind::Path);
+    EXPECT_EQ(stream.get(2)->kind, TokenKind::SetParen);
+    EXPECT_EQ(stream.get(3)->kind, TokenKind::EndParen);
+    EXPECT_EQ(stream.get(4)->kind, TokenKind::SetBrace);
+    EXPECT_EQ(stream.get(5)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(5)->value, "mut");
+    EXPECT_EQ(stream.get(6)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(6)->value, "x");
+    EXPECT_EQ(stream.get(7)->kind, TokenKind::Colon);
+    EXPECT_EQ(stream.get(8)->kind, TokenKind::Identifier);
+    EXPECT_EQ(stream.get(8)->value, "i64");
+    EXPECT_EQ(stream.get(9)->kind, TokenKind::Equals);
+    EXPECT_EQ(stream.get(10)->kind, TokenKind::Minus);
+    EXPECT_EQ(stream.get(11)->kind, TokenKind::Literal);
+    EXPECT_EQ(stream.get(11)->literal, LiteralKind::Integer);
+    EXPECT_EQ(stream.get(11)->value, "5");
+    EXPECT_EQ(stream.get(12)->kind, TokenKind::Semi);
+    EXPECT_EQ(stream.get(13)->kind, TokenKind::EndBrace);
+    EXPECT_EQ(stream.get(14)->kind, TokenKind::Eof);
+}
+
 } // namespace test
 
 } // namespace meddle

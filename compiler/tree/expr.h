@@ -342,20 +342,29 @@ public:
 
 		Logic_Not,
 		Bitwise_Not,
-		Negative,
+		Negate,
 		Address_Of,
 		Dereference,
 		Increment,
 		Decrement,
 	};
+	
+	static bool isPrefixOp(Kind K) { 
+		return K != Kind::Unknown;
+	}
+
+	static bool isPostfixOp(Kind K) {
+		return K == Kind::Increment || K == Kind::Decrement;
+	}
 
 private:
 	Kind m_Kind;
 	Expr *m_Expr;
+	bool m_Postfix;
 
 public:
-	UnaryExpr(const Metadata &M, Type *T, Kind K, Expr *E)
-	  : Expr(M, T), m_Kind(K), m_Expr(E) {}
+	UnaryExpr(const Metadata &M, Type *T, Kind K, Expr *E, bool POST)
+	  : Expr(M, T), m_Kind(K), m_Expr(E), m_Postfix(POST) {}
 
 	~UnaryExpr() override {
 		delete m_Expr;
@@ -369,27 +378,9 @@ public:
 
 	bool isConstant() const override { return m_Expr->isConstant(); }
 
-	bool isPostfix() const {
-		switch (m_Kind) {
-			case Kind::Increment:
-			case Kind::Decrement:
-				return true;
-			default:
-				return false;
-		}
-	}
+	bool isPostfix() const { return m_Postfix; }
 
-	bool isPrefix() const {
-		switch (m_Kind) {
-			case Kind::Address_Of:
-			case Kind::Dereference:
-			case Kind::Increment:
-			case Kind::Decrement:
-				return true;
-			default:
-				return false;
-		}
-	}
+	bool isPrefix() const { return !m_Postfix; }
 
 	bool isAddressOf() const { return m_Kind == Kind::Address_Of; }
 

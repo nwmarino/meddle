@@ -118,6 +118,19 @@ BinaryExpr::Kind Parser::get_bin_operator() const {
     }
 }
 
+UnaryExpr::Kind Parser::get_un_operator() const {
+    switch (m_Current->kind) {
+        case TokenKind::Minus: return UnaryExpr::Kind::Negate;
+        case TokenKind::Tilde: return UnaryExpr::Kind::Bitwise_Not;
+        case TokenKind::Bang: return UnaryExpr::Kind::Logic_Not;
+        case TokenKind::PlusPlus: return UnaryExpr::Kind::Increment;
+        case TokenKind::MinusMinus: return UnaryExpr::Kind::Decrement;
+        case TokenKind::And: return UnaryExpr::Kind::Address_Of;
+        case TokenKind::Star: return UnaryExpr::Kind::Dereference;
+        default: return UnaryExpr::Kind::Unknown;
+    }
+}
+
 Type *Parser::parse_type(bool produce) {
     if (!match(TokenKind::Identifier))
         fatal("expected type identifier", &m_Current->md);
