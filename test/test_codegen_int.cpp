@@ -4141,6 +4141,22 @@ test :: () -> i64 {
     delete unit;
 }
 
+#define CALL_VOID_BASIC R"(foo::() { ret; } test::() { foo(); })"
+
+#define CALL_TYPED_BASIC R"(foo::() i64 { ret 42; } test::() { foo(); })"
+
+#define CALL_ARGS_BASIC R"(foo::(x: i64) i64 { ret x; } test::() { foo(42); })"
+
+#define CALL_ARGS_RVALUE_BASIC R"(foo::(x: i64) i64 { ret x; } test::() { mut x: i64 = 42; foo(x); })"
+
+#define CALL_AGGREGATE_ARRAY_RETURN_BASIC R"(foo::() i64[3] { ret [1, 2, 3]; } test::() { mut x: i64[3] = foo(); })"
+
+#define CALL_AGGREGATE_ARRAY_ARG_REF_BASIC R"(foo::(x: i64[3]) i64 { ret x[1]; } test::() { mut x: i64[3] = [1, 2, 3]; foo(x); })"
+
+#define CALL_AGGREGATE_ARRAY_ARG_INIT_BASIC R"(foo::(x: i64[3]) i64 { ret x[1]; } test::() { mut x: i64 = foo([1, 2, 3]); })"
+
+#define CALL_AGGREGATE_ARRAY_RETURN_AGGREGATE_ARRAY_ARG_BASIC R"(foo::(x: i64[3]) i64[3] { x[1] = 42; ret x; } test::() { mut x: i64[3] = [1, 2, 3]; mut y: i64[3] = foo(x); })"
+
 } // namespace test
 
 } // namespace meddle

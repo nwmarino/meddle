@@ -1,17 +1,17 @@
 #include "parser.h"
 #include "../core/logger.h"
+#include <string>
 
 using namespace meddle;
 
 void Parser::backtrack(unsigned n) {
     m_Stream.setPos(m_Stream.getPos() - n);
-    m_Current = m_Stream.get(m_Stream.getPos());
+    m_Current = &m_Stream.m_Buffer[m_Stream.m_Iter - 1];
 }
 
 void Parser::skip(unsigned n) {
     m_Stream.setPos(m_Stream.getPos() + n);
-    m_Current = m_Stream.get(m_Stream.getPos());
-
+    m_Current = &m_Stream.m_Buffer[m_Stream.m_Iter - 1];
 }
 
 int Parser::get_bin_precedence() const {
@@ -88,7 +88,7 @@ BinaryExpr::Kind Parser::get_bin_operator() const {
         case TokenKind::Star: return BinaryExpr::Kind::Mul;
         case TokenKind::Slash: return BinaryExpr::Kind::Div;
         case TokenKind::Percent: return BinaryExpr::Kind::Mod;
-        case TokenKind::Plus:   return BinaryExpr::Kind::Add;
+        case TokenKind::Plus: return BinaryExpr::Kind::Add;
         case TokenKind::Minus: return BinaryExpr::Kind::Sub;
         case TokenKind::LeftLeft: return BinaryExpr::Kind::LeftShift;
         case TokenKind::RightRight: return BinaryExpr::Kind::RightShift;

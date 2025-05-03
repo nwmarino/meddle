@@ -270,6 +270,33 @@ void Sema::visit(BinaryExpr *expr) {
         fatal("cannot reassign immutable variable", &expr->getMetadata());
 }
 
+void Sema::visit(CallExpr *expr) {
+    FunctionDecl *callee = expr->getCallee();
+
+    // Check that the argument count matches the functions parameter count.
+    if (expr->getNumArgs() != callee->getNumParams()) {
+        fatal("function call argument count mismatch, got " + 
+            std::to_string(expr->getNumArgs()) + ", expected" + 
+            std::to_string(callee->getNumParams()), &expr->getMetadata());
+    }
+
+    // Pass over each argument and type check it with the corresponding param.
+    for (unsigned i = 0; i != expr->getNumArgs(); ++i) {
+        Expr *arg = expr->getArg(i);
+        arg->accept(this);
+
+        ParamDecl *param = callee->getParam(i);
+
+        if (typeCheck(arg->getType(), param->getType(), &arg->getMetadata(), "argument")) {
+            expr->m_Args[i] = new CastExpr(
+                arg->getMetadata(), 
+                param->getType(), 
+                arg
+            );
+        }
+    }
+}
+
 void Sema::visit(CastExpr *expr) {
     if (!expr->m_Expr->getType()->canCastTo(expr->getCast())) {
         fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 

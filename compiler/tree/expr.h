@@ -3,10 +3,12 @@
 
 #include "type.h"
 #include "visitor.h"
+#include <cassert>
 
 namespace meddle {
 
 class NamedDecl;
+class RefExpr;
 
 class Expr {
 protected:
@@ -334,11 +336,12 @@ public:
 	bool isConstant() const override { return m_Expr->isConstant(); }
 };
 
-class RefExpr final : public Expr {
+class RefExpr : public Expr {
 	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
+protected:
 	String m_Name;
 	NamedDecl *m_Ref;
 
@@ -351,6 +354,37 @@ public:
 	String getName() const { return m_Name;}
 
 	NamedDecl *getRef() const { return m_Ref; }
+};
+
+class CallExpr final : public RefExpr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	std::vector<Expr *> m_Args;
+
+public:
+	CallExpr(const Metadata &M, Type *T, String N, NamedDecl *C = nullptr, 
+			 std::vector<Expr *> Args = {})
+	  : RefExpr(M, T, N, C), m_Args(Args) {}
+
+	~CallExpr() override {
+		for (auto &A : m_Args)
+			delete A;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	std::vector<Expr *> getArgs() const { return m_Args; }
+
+	Expr *getArg(unsigned i) const {
+		assert(i < m_Args.size() && "Index out of range.");
+		return m_Args.at(i);
+	}
+
+	unsigned getNumArgs() const { return m_Args.size(); }
+
+	FunctionDecl *getCallee() const;
 };
 
 class SizeofExpr final : public Expr {

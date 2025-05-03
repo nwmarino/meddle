@@ -10,6 +10,8 @@
 namespace meddle {
 
 class TokenStream final { 
+    friend class Parser;
+    
     std::vector<Token> m_Buffer;
     unsigned m_Iter = 0;
 

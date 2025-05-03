@@ -561,93 +561,68 @@ void CGN::visit(BinaryExpr *expr) {
 	case BinaryExpr::Kind::Unknown: 
 		assert(false && "Unknown binary operator.");
 	case BinaryExpr::Kind::Assign: 
-		cgn_assign(expr);
-		break;
+		return cgn_assign(expr);
 	case BinaryExpr::Kind::Add_Assign: 
-		cgn_add_assign(expr);
-		break;
+		return cgn_add_assign(expr);
 	case BinaryExpr::Kind::Sub_Assign: 
-		cgn_sub_assign(expr);
-		break;
+		return cgn_sub_assign(expr);
 	case BinaryExpr::Kind::Mul_Assign: 
-		cgn_mul_assign(expr);
-		break;
+		return cgn_mul_assign(expr);
 	case BinaryExpr::Kind::Div_Assign: 
-		cgn_div_assign(expr);
-		break;
+		return cgn_div_assign(expr);
 	case BinaryExpr::Kind::Mod_Assign: 
-		cgn_mod_assign(expr);
-		break;
+		return cgn_mod_assign(expr);
 	case BinaryExpr::Kind::And_Assign: 
-		cgn_and_assign(expr);
-		break;
+		return cgn_and_assign(expr);
 	case BinaryExpr::Kind::Or_Assign: 
-		cgn_or_assign(expr);
-		break;
+		return cgn_or_assign(expr);
 	case BinaryExpr::Kind::Xor_Assign: 
-		cgn_xor_assign(expr);
-		break;
+		return cgn_xor_assign(expr);
 	case BinaryExpr::Kind::LeftShift_Assign: 
-		cgn_shl_assign(expr);
-		break;
+		return cgn_shl_assign(expr);
 	case BinaryExpr::Kind::RightShift_Assign: 
-		cgn_shr_assign(expr);
-		break;
+		return cgn_shr_assign(expr);
 	case BinaryExpr::Kind::Add: 
-		cgn_add(expr);
-		break;
+		return cgn_add(expr);
 	case BinaryExpr::Kind::Sub: 
-		cgn_sub(expr);
-		break;
+		return cgn_sub(expr);
 	case BinaryExpr::Kind::Mul: 
-		cgn_mul(expr);
-		break;
+		return cgn_mul(expr);
 	case BinaryExpr::Kind::Div: 
-		cgn_div(expr);
-		break;
+		return cgn_div(expr);
 	case BinaryExpr::Kind::Mod: 
-		cgn_mod(expr);
-		break;
+		return cgn_mod(expr);
 	case BinaryExpr::Kind::Bitwise_And: 
-		cgn_and(expr);
-		break;
+		return cgn_and(expr);
 	case BinaryExpr::Kind::Bitwise_Or: 
-		cgn_or(expr);
-		break;
+		return cgn_or(expr);
 	case BinaryExpr::Kind::Bitwise_Xor: 
-		cgn_xor(expr);
-		break;
+		return cgn_xor(expr);
 	case BinaryExpr::Kind::LeftShift: 
-		cgn_shl(expr);
-		break;
+		return cgn_shl(expr);
 	case BinaryExpr::Kind::RightShift:
-		cgn_shr(expr);
-		break;
+		return cgn_shr(expr);
 	case BinaryExpr::Kind::Logic_And: 
-		cgn_logic_and(expr);
-		break;
+		return cgn_logic_and(expr);
 	case BinaryExpr::Kind::Logic_Or: 
-		cgn_logic_or(expr);
-		break;
+		return cgn_logic_or(expr);
 	case BinaryExpr::Kind::Equals: 
-		cgn_equals(expr);
-		break;
+		return cgn_equals(expr);
 	case BinaryExpr::Kind::NEquals: 
-		cgn_not_equals(expr);
-		break;
+		return cgn_not_equals(expr);
 	case BinaryExpr::Kind::LessThan: 
-		cgn_less(expr);
-		break;
+		return cgn_less(expr);
 	case BinaryExpr::Kind::LessThanEquals: 
-		cgn_less_eq(expr);
-		break;
+		return cgn_less_eq(expr);
 	case BinaryExpr::Kind::GreaterThan:
-		cgn_greater(expr);
-		break;
+		return cgn_greater(expr);
 	case BinaryExpr::Kind::GreaterThanEquals:
-		cgn_greater_eq(expr);
-		break;
+		return cgn_greater_eq(expr);
     }
+}
+
+void CGN::visit(CallExpr *expr) {
+
 }
 
 void CGN::visit(CastExpr *expr) {
@@ -816,13 +791,21 @@ void CGN::visit(SubscriptExpr *expr) {
 
 void CGN::visit(UnaryExpr *expr) {
 	switch (expr->getKind()) {
-	case UnaryExpr::Kind::Logic_Not: return cgn_logic_not(expr);
-	case UnaryExpr::Kind::Bitwise_Not: return cgn_not(expr);
-	case UnaryExpr::Kind::Negate: return cgn_neg(expr);
-	case UnaryExpr::Kind::Address_Of: return cgn_addrof(expr);
-	case UnaryExpr::Kind::Dereference: return cgn_deref(expr);
-	case UnaryExpr::Kind::Increment: return cgn_inc(expr);
-	case UnaryExpr::Kind::Decrement: return cgn_dec(expr);
-	default: assert(false && "Unknown unary operator.");
+	case UnaryExpr::Kind::Logic_Not: 
+		return cgn_logic_not(expr);
+	case UnaryExpr::Kind::Bitwise_Not: 
+		return cgn_not(expr);
+	case UnaryExpr::Kind::Negate: 
+		return cgn_neg(expr);
+	case UnaryExpr::Kind::Address_Of: 
+		return cgn_addrof(expr);
+	case UnaryExpr::Kind::Dereference: 
+		return cgn_deref(expr);
+	case UnaryExpr::Kind::Increment: 
+		return cgn_inc(expr);
+	case UnaryExpr::Kind::Decrement: 
+		return cgn_dec(expr);
+	default: 
+		assert(false && "Unknown unary operator.");
     }
 }

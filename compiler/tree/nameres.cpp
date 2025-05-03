@@ -119,6 +119,24 @@ void NameResolution::visit(BinaryExpr *expr) {
     expr->getRHS()->accept(this);
 }
 
+void NameResolution::visit(CallExpr *expr) {
+    NamedDecl *D = m_Scope->lookup(expr->getName());
+    if (!D)
+        fatal("unresolved function reference: " + expr->getName(), 
+            &expr->getMetadata());
+
+    FunctionDecl *F = dynamic_cast<FunctionDecl *>(D);
+    if (!F)
+        fatal("reference exists, but is not a function: " + expr->getName(), 
+            &expr->getMetadata());
+
+    expr->m_Ref = F;
+    expr->m_Type = F->getReturnType();
+        
+    for (auto &A : expr->getArgs())
+        A->accept(this);
+}
+
 void NameResolution::visit(CastExpr *expr) {
     expr->getExpr()->accept(this);
     expr->m_Type = unwrapType(expr->m_Type);

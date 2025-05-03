@@ -27,7 +27,7 @@ class Parser final {
 
     void restore_pos(unsigned pos) {
         m_Stream.setPos(pos);
-        m_Current = m_Stream.get(pos);
+        m_Current = m_Stream.get();
     }
 
     bool match(TokenKind K) const { return m_Current->kind == K; }
@@ -89,6 +89,7 @@ class Parser final {
     CastExpr *parse_cast();
     ParenExpr *parse_paren();
     RefExpr *parse_ref();
+    CallExpr *parse_call();
     SizeofExpr *parse_sizeof();
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();

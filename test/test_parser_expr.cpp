@@ -2213,6 +2213,39 @@ TEST_F(ParseExprTest, Subscript_Ref_Basic) {
     delete unit;
 }
 
+#define CALL_BASIC R"(test::() { foo(1, 2); })"
+TEST_F(ParseExprTest, Call_Basic) {
+    File file = File("", "", "", CALL_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(ES, nullptr);
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(ES->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getArgs().size(), 2);
+
+    IntegerLiteral *IL1 = dynamic_cast<IntegerLiteral *>(CE->getArgs()[0]);
+    EXPECT_NE(IL1, nullptr);
+    
+    IntegerLiteral *IL2 = dynamic_cast<IntegerLiteral *>(CE->getArgs()[1]);
+    EXPECT_NE(IL2, nullptr);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

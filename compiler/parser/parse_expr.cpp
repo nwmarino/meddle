@@ -42,6 +42,12 @@ Expr *Parser::parse_ident() {
     else if (match_keyword("sizeof"))
         return parse_sizeof();
 
+    next(); // identifier
+
+    if (match(TokenKind::SetParen))
+        return parse_call();
+
+    backtrack(1);
     return parse_ref();
 }
 
@@ -212,8 +218,45 @@ RefExpr *Parser::parse_ref() {
     if (!D)
         fatal("unresolved reference: " + name, &md);
 
-    next();
+    next(); // identifier
     return new RefExpr(md, nullptr, name, D);
+}
+
+CallExpr *Parser::parse_call() {
+    if (match(TokenKind::SetParen))
+        backtrack(1);
+
+    Metadata md = m_Current->md;
+    std::vector<Expr *> Args;
+    String callee;
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected callee identifier", &md);
+
+    callee = m_Current->value;
+    next(); // identifier
+
+    if (!match(TokenKind::SetParen))
+        fatal("expected '(' after function name", &m_Current->md);
+    next(); // '('
+
+    while (!match(TokenKind::EndParen)) {
+        Expr *Arg = parse_expr();
+        if (!Arg)
+            fatal("expected function argument", &m_Current->md);
+
+        Args.push_back(Arg);
+
+        if (match(TokenKind::EndParen))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or ')' in function call", &m_Current->md);
+        next(); // ','
+    }
+
+    next(); // ')'
+    return new CallExpr(md, nullptr, callee, nullptr, Args);
 }
 
 SizeofExpr *Parser::parse_sizeof() {

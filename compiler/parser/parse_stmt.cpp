@@ -186,8 +186,10 @@ RetStmt *Parser::parse_ret() {
             fatal("expected return expression", &md);
     }
 
-    if (!match(TokenKind::Semi))
+    if (!match(TokenKind::Semi)) {
+        info("got: " + std::to_string((int) m_Current->kind), &md);
         fatal("expected ';' after return statement", &md);
+    }
 
     next(); // ';'
     return new RetStmt(md, E);    

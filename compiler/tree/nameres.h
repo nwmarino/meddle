@@ -35,6 +35,7 @@ public:
 
     void visit(ArrayExpr *expr) override;
     void visit(BinaryExpr *expr) override;
+    void visit(CallExpr *expr) override;
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
