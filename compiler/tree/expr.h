@@ -30,6 +30,8 @@ public:
     bool isLValue() const { return m_IsLValue; }
 
 	virtual bool isConstant() const { return false; }
+
+	virtual bool isAggregateInit() const { return false; }
 };
 
 class BoolLiteral final : public Expr {
@@ -132,6 +134,37 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	bool isConstant() const override { return true; }
+};
+
+class ArrayExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	std::vector<Expr *> m_Elements;
+
+public:
+	ArrayExpr(const Metadata &M, Type *T, std::vector<Expr *> E)
+	  : Expr(M, T), m_Elements(E) {}
+
+	~ArrayExpr() override {
+		for (auto &E : m_Elements)
+			delete E;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	std::vector<Expr *> getElements() const { return m_Elements; }
+
+	bool isConstant() const override {
+		for (auto &E : m_Elements)
+			if (!E->isConstant())
+				return false;
+			
+		return true;
+	}
+
+	bool isAggregateInit() const override { return true; }
 };
 
 class BinaryExpr final : public Expr {

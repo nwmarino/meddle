@@ -16,6 +16,8 @@ Expr *Parser::parse_expr() {
 Expr *Parser::parse_primary() {
     if (match(TokenKind::Identifier))
         return parse_ident();
+    else if (match(TokenKind::SetBrack))
+        return parse_array();
     else if (match(TokenKind::SetParen))
         return parse_paren();
     else if (match(LiteralKind::Integer))
@@ -100,6 +102,33 @@ NilLiteral *Parser::parse_nil() {
     );
     next();
     return N;
+}
+
+ArrayExpr *Parser::parse_array() {
+    Metadata md = m_Current->md;
+    std::vector<Expr *> Elements;
+    next(); // '['
+
+    while (!match(TokenKind::EndBrack)) {
+        Expr *Elem = parse_expr();
+        if (!Elem)
+            fatal("expected array element", &m_Current->md);
+
+        Elements.push_back(Elem);
+
+        if (match(TokenKind::EndBrack))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or ']' in array literal", &m_Current->md);
+        next(); // ','
+    }
+
+    if (Elements.empty())
+        fatal("array enclosed by [, ] cannot be empty", &m_Current->md);
+
+    next(); // ']'
+    return new ArrayExpr(md, nullptr, Elements);
 }
 
 Expr *Parser::parse_binary(Expr *B, int precedence) {

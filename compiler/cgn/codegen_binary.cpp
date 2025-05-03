@@ -19,23 +19,33 @@ void CGN::cgn_assign(BinaryExpr *BIN) {
 
     mir::Type *ty = cgn_type(BIN->getType());
     mir::DataLayout DL = m_Segment->get_data_layout();
-    bool isAggregate = !DL.is_scalar_ty(ty);
-    unsigned size = DL.get_type_size(ty);
 
-    m_VC = ValueContext::RValue;
-    BIN->getRHS()->accept(this);
-    assert(m_Value && "Binary RHS does not produce a value.");
+    if (BIN->getRHS()->isAggregateInit()) {
+        // The right hand side is some aggregate initializer e.g. struct, array.
+        // It will be responsible for copying itself to the lvalue.
+        m_VC = ValueContext::RValue;
+        m_Place = dest;
+        BIN->getRHS()->accept(this);
+        m_Place = nullptr;
+    } else if (DL.is_scalar_ty(ty)) {
+        // The right hand side is a scalar value which may be passed via regs.
+        m_VC = ValueContext::RValue;
+        BIN->getRHS()->accept(this);
+        assert(m_Value && "Variable initializer does not produce a value.");
 
-    if (size > DL.get_pointer_size() || isAggregate) {
-        m_Builder.build_cpy(
-            dest, 
-            DL.get_type_align(ty), 
-            m_Value, 
-            DL.get_type_align(ty), 
-            size
-        );
-    } else {
         m_Builder.build_store(m_Value, dest);
+    } else {
+        // The right hand side is some non-scalar (aggregate) that is our
+        // responsibility to copy over to the newly created slot.
+        m_VC = ValueContext::LValue;
+        BIN->getRHS()->accept(this);
+        assert(m_Value && "Variable initializer does not produce a value.");
+
+        unsigned size = DL.get_type_size(ty);
+        unsigned align = DL.get_type_align(ty);
+
+        m_Builder.build_cpy(dest, align, m_Value, align, size);
+        m_Value = nullptr;
     }
 }
 

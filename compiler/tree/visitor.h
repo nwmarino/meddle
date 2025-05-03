@@ -20,7 +20,6 @@ class MatchStmt;
 class RetStmt;
 class UntilStmt;
 
-class Expr;
 class BoolLiteral;
 class IntegerLiteral;
 class FloatLiteral;
@@ -28,6 +27,7 @@ class CharLiteral;
 class StringLiteral;
 class NilLiteral;
 
+class ArrayExpr;
 class BinaryExpr;
 class CastExpr;
 class ParenExpr;
@@ -61,6 +61,7 @@ public:
     virtual void visit(StringLiteral *expr) {}
     virtual void visit(NilLiteral *expr) {}
 
+    virtual void visit(ArrayExpr *expr) {}
     virtual void visit(BinaryExpr *expr) {}
     virtual void visit(CastExpr *expr) {}
     virtual void visit(ParenExpr *expr) {}

@@ -85,6 +85,7 @@ class Parser final {
     NilLiteral *parse_nil();
 
     Expr *parse_binary(Expr *B, int precedence);
+    ArrayExpr *parse_array();
     CastExpr *parse_cast();
     ParenExpr *parse_paren();
     RefExpr *parse_ref();

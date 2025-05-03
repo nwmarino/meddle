@@ -4,7 +4,6 @@
 
 Wed. May 7
 
-Array Initializers
 - `SubscriptExpr`
 
 - `CallExpr`

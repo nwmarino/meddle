@@ -201,6 +201,27 @@ void Sema::visit(UntilStmt *stmt) {
     m_Loop = prev;
 }
 
+void Sema::visit(ArrayExpr *expr) {
+    ArrayType *AT = static_cast<ArrayType *>(expr->getType());
+    for (unsigned i = 0, n = expr->getElements().size(); i != n; ++i) {
+        Expr *Elem = expr->getElements().at(i);
+        Elem->accept(this);
+
+        if (typeCheck(
+            Elem->getType(), 
+            AT->getElement(), 
+            &Elem->getMetadata(), 
+            "array element"
+        )) {
+            expr->m_Elements[i] = new CastExpr(
+                Elem->getMetadata(), 
+                expr->getType(), 
+                Elem
+            );
+        }
+    }
+}
+
 void Sema::visit(BinaryExpr *expr) {
     expr->getLHS()->accept(this);
     expr->getRHS()->accept(this);

@@ -219,23 +219,32 @@ void CGN::visit(VarDecl *decl) {
 		if (!decl->hasInit())
 			return;
 
-		m_VC = ValueContext::RValue;
-		decl->getInit()->accept(this);
-		assert(m_Value && "Variable initializer does not produce a value.");
+		if (decl->getInit()->isAggregateInit()) {
+			// The initializer is some aggregate initializer e.g. struct, array.
+			// It will be responsible for copying itself to the slot/place.
+			m_VC = ValueContext::RValue;
+			m_Place = slot;
+			decl->getInit()->accept(this);
+			m_Place = nullptr;
+		} else if (DL.is_scalar_ty(ty)) {
+			// The initializer is a scalar value which may be passed via regs.
+			m_VC = ValueContext::RValue;
+			decl->getInit()->accept(this);
+			assert(m_Value && "Variable initializer does not produce a value.");
 
-		bool isAggregate = !DL.is_scalar_ty(ty);
-		unsigned size = DL.get_type_size(ty);
-
-		if (size > DL.get_pointer_size() || isAggregate) {
-			m_Builder.build_cpy(
-				slot, 
-				DL.get_type_align(ty), 
-				m_Value, 
-				DL.get_type_align(ty), 
-				size
-			);
-		} else {
 			m_Builder.build_store(m_Value, slot);
+		} else {
+			// The initializer is some non-scalar (aggregate) that is our
+			// responsibility to copy over to the newly created slot.
+			m_VC = ValueContext::LValue;
+			decl->getInit()->accept(this);
+			assert(m_Value && "Variable initializer does not produce a value.");
+
+			unsigned size = DL.get_type_size(ty);
+			unsigned align = DL.get_type_align(ty);
+
+			m_Builder.build_cpy(slot, align, m_Value, align, size);
+			m_Value = nullptr;
 		}
 	}
 }
@@ -506,6 +515,45 @@ void CGN::visit(StringLiteral *expr) {
 
 void CGN::visit(NilLiteral *expr) {
 	m_Value = mir::ConstantNil::get(m_Segment, cgn_type(expr->getType()));
+}
+
+void CGN::cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty) {
+    if (ty->isArray()) {
+		ArrayExpr *array = static_cast<ArrayExpr *>(expr);
+		Type *elemTy = static_cast<ArrayType *>(ty)->getElement();
+
+		for (unsigned i = 0, n = array->getElements().size(); i != n; ++i) {
+			mir::Value *elem = m_Builder.build_ap(
+				mir::PointerType::get(m_Segment, cgn_type(elemTy)), 
+				base, 
+				mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), i),
+				m_Opts.NamedMIR ? "agg.elem" : ""
+			);
+			cgn_aggregate_init(elem, array->getElements().at(i), elemTy);
+		}
+	} else {
+		// Scalar type.
+		expr->accept(this);
+		m_Builder.build_store(m_Value, base);
+	}
+
+	/*
+	} else if (ty->is_struct()) {
+        const auto* structExpr = cast<StructExpr>(expr);
+        for (size_t i = 0; i < structExpr->fields.size(); ++i) {
+            auto fieldTy = ty->get_field_type(i);
+
+            Value* fieldPtr = builder.build_ap(fieldTy->get_pointer_to(), basePtr, i);
+            emit_aggregate_init(fieldPtr, structExpr->fields[i], fieldTy);
+	}
+	*/
+}
+
+void CGN::visit(ArrayExpr *expr) {
+	assert(m_Place && "RValue array type needs a destination place.");
+
+	cgn_aggregate_init(m_Place, expr, expr->getType());
+	m_Value = nullptr;
 }
 
 void CGN::visit(BinaryExpr *expr) {

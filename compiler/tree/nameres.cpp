@@ -104,6 +104,16 @@ void NameResolution::visit(UntilStmt *stmt) {
     stmt->getBody()->accept(this);
 }
 
+void NameResolution::visit(ArrayExpr *expr) {
+    for (auto &E : expr->getElements())
+        E->accept(this);
+
+    expr->m_Type = m_Unit->getContext()->getArrayType(
+        expr->getElements()[0]->getType(), 
+        expr->getElements().size()
+    );
+}
+
 void NameResolution::visit(BinaryExpr *expr) {
     expr->getLHS()->accept(this);
     expr->getRHS()->accept(this);

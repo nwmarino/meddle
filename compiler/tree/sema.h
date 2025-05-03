@@ -1,6 +1,7 @@
 #ifndef MEDDLE_SEMA_H
 #define MEDDLE_SEMA_H
 
+#include "expr.h"
 #include "visitor.h"
 #include "../core/options.h"
 
@@ -36,6 +37,7 @@ public:
     void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
 
+    void visit(ArrayExpr *expr) override;
     void visit(BinaryExpr *expr) override;
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;

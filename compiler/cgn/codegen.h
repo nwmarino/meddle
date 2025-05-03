@@ -40,6 +40,7 @@ class CGN final : public Visitor {
     mir::Builder m_Builder;
     mir::Function *m_Function = nullptr;
     mir::Value *m_Value = nullptr;
+    mir::Value *m_Place = nullptr;
     mir::BasicBlock *m_Merge = nullptr;
     mir::BasicBlock *m_Cond = nullptr;
     std::unordered_map<NamedDecl *, String> m_Mangled = {};
@@ -53,6 +54,8 @@ class CGN final : public Visitor {
 
     void declare_function(FunctionDecl *FD);
     void define_function(FunctionDecl *FD);
+
+    void cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty);
 
     void cgn_assign(BinaryExpr *BIN);
     void cgn_add_assign(BinaryExpr *BIN);
@@ -122,6 +125,7 @@ public:
     void visit(StringLiteral *expr) override;
     void visit(NilLiteral *expr) override;
 
+    void visit(ArrayExpr *expr) override;
     void visit(BinaryExpr *expr) override;
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
