@@ -2,6 +2,7 @@
 #include "builder.h"
 #include "function.h"
 #include "inst.h"
+#include "segment.h"
 #include "type.h"
 #include "value.h"
 
@@ -50,7 +51,10 @@ StoreInst *Builder::build_store_offset(Value *V, Value *D, ConstantInt *O) {
     assert(D && "Store destination cannot be null.");
     assert(D->get_type()->is_pointer_ty() && "Store destination must be a place.");
 
-    StoreInst *store = new StoreInst(m_Insert, V, D, O);
+    DataLayout DL = m_Segment->get_data_layout();
+    unsigned align = DL.get_type_align(V->get_type());
+
+    StoreInst *store = new StoreInst(m_Insert, V, D, O, align);
     V->add_use(store);
     D->add_use(store);
     return store;
@@ -64,7 +68,11 @@ Value *Builder::build_load_offset(Type *T, Value *S, ConstantInt *O, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(S && "Load source cannot be null.");
 
-    LoadInst *load = new LoadInst(N.empty() ? m_Segment->get_ssa() : N, T, m_Insert, S, O);
+    DataLayout DL = m_Segment->get_data_layout();
+    unsigned align = DL.get_type_align(T);
+
+    LoadInst *load = new LoadInst(N.empty() ? m_Segment->get_ssa() : N, T, 
+        m_Insert, S, O, align);
     S->add_use(load);
     return load;
 }

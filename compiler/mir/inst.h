@@ -103,13 +103,15 @@ class StoreInst final : public Inst {
     Value *m_Value;
     Value *m_Dest;
     ConstantInt *m_Offset;
+    unsigned m_Align;
 
     StoreInst(
         BasicBlock *P,
         Value *V,
         Value *D,
-        ConstantInt *O = nullptr
-    ) : Inst(P), m_Value(V), m_Dest(D), m_Offset(O) {}
+        ConstantInt *O = nullptr,
+        unsigned Align = 0
+    ) : Inst(P), m_Value(V), m_Dest(D), m_Offset(O), m_Align(Align) {}
 
 public:
     Value *get_value() const { return m_Value; }
@@ -119,6 +121,8 @@ public:
     bool has_offset() const { return m_Offset != nullptr; }
 
     ConstantInt *get_offset() const { return m_Offset; }
+
+    unsigned get_align() const { return m_Align; }
 };
 
 class LoadInst final : public Inst {
@@ -126,14 +130,16 @@ class LoadInst final : public Inst {
 
     Value *m_Source;
     ConstantInt *m_Offset;
+    unsigned m_Align;
 
     LoadInst(
         String N,
         Type *T,
         BasicBlock *P,
         Value *S,
-        ConstantInt *O = nullptr
-    ) : Inst(N, T, P), m_Source(S), m_Offset(O) {}
+        ConstantInt *O = nullptr,
+        unsigned Align = 0
+    ) : Inst(N, T, P), m_Source(S), m_Offset(O), m_Align(Align) {}
 
 public:
     bool produces_value() const override { return true; }
@@ -143,6 +149,8 @@ public:
     bool has_offset() const { return m_Offset != nullptr; }
 
     ConstantInt *get_offset() const { return m_Offset; }
+
+    unsigned get_align() const { return m_Align; }
 
     void print(std::ostream &OS) const override;
 };

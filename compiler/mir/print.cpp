@@ -51,6 +51,7 @@ static void print_store(std::ostream &OS, StoreInst *I) {
         OS << " + ";
         I->get_offset()->print(OS);
     }
+    OS << ", align " << I->get_align();
 }
 
 static void print_load(std::ostream &OS, LoadInst *I) {
@@ -60,6 +61,7 @@ static void print_load(std::ostream &OS, LoadInst *I) {
         OS << " + ";
         I->get_offset()->print(OS);
     }
+    OS << ", align " << I->get_align();
 }
 
 static void print_cpy(std::ostream &OS, CpyInst *I) {

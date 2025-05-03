@@ -4,7 +4,6 @@
 
 Wed. May 7
 
-Provide store, load insts. with align
 More testing with aggregate initializers (non-var and non-call contexts)
 
 Enumerations

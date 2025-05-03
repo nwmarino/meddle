@@ -86,8 +86,8 @@ test :: () -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 42 -> i64* _x
-    $2 := load i64* _x
+    str i64 42 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     ret i64 $2
 }
 )";
@@ -468,7 +468,7 @@ test :: () -> void {
 
 1:
     $2 := trunc i64 5 -> i32
-    str i32 $2 -> i32* _x
+    str i32 $2 -> i32* _x, align 4
     ret
 }
 )";
@@ -506,7 +506,7 @@ test :: () -> void {
 1:
     $2 := trunc i64 5 -> i32
     $3 := sext i32 $2 -> i64
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -543,7 +543,7 @@ test :: () -> void {
 
 1:
     $2 := ftrunc f64 3.140000 -> f32
-    str f32 $2 -> f32* _x
+    str f32 $2 -> f32* _x, align 4
     ret
 }
 )";
@@ -581,7 +581,7 @@ test :: () -> void {
 1:
     $2 := ftrunc f64 3.140000 -> f32
     $3 := fext f32 $2 -> f64
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret
 }
 )";
@@ -618,7 +618,7 @@ test :: () -> void {
 
 1:
     $2 := fp2si f64 3.140000 -> i64
-    str i64 $2 -> i64* _x
+    str i64 $2 -> i64* _x, align 8
     ret
 }
 )";
@@ -655,7 +655,7 @@ test :: () -> void {
 
 1:
     $2 := fp2ui f64 3.140000 -> i64
-    str i64 $2 -> i64* _x
+    str i64 $2 -> i64* _x, align 8
     ret
 }
 )";
@@ -692,7 +692,7 @@ test :: () -> void {
 
 1:
     $2 := si2fp i64 5 -> f64
-    str f64 $2 -> f64* _x
+    str f64 $2 -> f64* _x, align 8
     ret
 }
 )";
@@ -729,7 +729,7 @@ test :: () -> void {
 
 1:
     $2 := ui2fp i64 5 -> f64
-    str f64 $2 -> f64* _x
+    str f64 $2 -> f64* _x, align 8
     ret
 }
 )";
@@ -766,7 +766,7 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
+    str i64* $2 -> i64** _x, align 8
     ret
 }
 )";
@@ -855,7 +855,7 @@ test :: () -> void {
     _x := slot i1, align 1
 
 1:
-    str i1 1 -> i1* _x
+    str i1 1 -> i1* _x, align 1
     ret
 }
 )";
@@ -891,7 +891,7 @@ test :: () -> void {
     _x := slot i1, align 1
 
 1:
-    str i1 0 -> i1* _x
+    str i1 0 -> i1* _x, align 1
     ret
 }
 )";
@@ -927,7 +927,7 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 4 -> i64* _x
+    str i64 4 -> i64* _x, align 8
     ret
 }
 )";
@@ -994,8 +994,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    str i64 1 -> i64* _x
+    str i64 0 -> i64* _x, align 8
+    str i64 1 -> i64* _x, align 8
     ret
 }
 )";
@@ -1071,10 +1071,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := add i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1110,10 +1110,10 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.500000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.500000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fadd f64 $2, f64 3.140000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret
 }
 )";
@@ -1149,10 +1149,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := sub i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1188,10 +1188,10 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fsub f64 $2, f64 1.000000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret
 }
 )";
@@ -1227,10 +1227,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := smul i64 $2, i64 2
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1266,10 +1266,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := umul i64 $2, i64 2
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1305,10 +1305,10 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fmul f64 $2, f64 1.140000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret
 }
 )";
@@ -1344,10 +1344,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := sdiv i64 $2, i64 15
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1383,10 +1383,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := udiv i64 $2, i64 12
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1429,10 +1429,10 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 1.200000 -> f64* _x
-    $2 := load f64* _x
+    str f64 1.200000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fdiv f64 $2, f64 1.230000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret
 }
 )";
@@ -1468,10 +1468,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 12 -> i64* _x
-    $2 := load i64* _x
+    str i64 12 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := srem i64 $2, i64 2
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1507,10 +1507,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 5 -> i64* _x
-    $2 := load i64* _x
+    str i64 5 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := urem i64 $2, i64 3
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1546,10 +1546,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := and i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1585,10 +1585,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := or i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1624,10 +1624,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := xor i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1663,10 +1663,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := shl i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1702,10 +1702,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := ashr i64 $2, i64 2
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1741,10 +1741,10 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := lshr i64 $2, i64 2
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret
 }
 )";
@@ -1780,8 +1780,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_eq i64 $2, i64 1
     ret
 }
@@ -1818,8 +1818,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ne i64 $2, i64 1
     ret
 }
@@ -1856,8 +1856,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_slt i64 $2, i64 1
     ret
 }
@@ -1894,8 +1894,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ult i64 $2, i64 1
     ret
 }
@@ -1932,8 +1932,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fcmp_olt f64 $2, f64 1.000000
     ret
 }
@@ -1971,8 +1971,8 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := reint void* nil -> i64*
     $5 := pcmp_lt i64* $3, i64* $4
     ret
@@ -2010,8 +2010,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_sle i64 $2, i64 1
     ret
 }
@@ -2048,8 +2048,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ule i64 $2, i64 1
     ret
 }
@@ -2086,8 +2086,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fcmp_ole f64 $2, f64 1.000000
     ret
 }
@@ -2125,8 +2125,8 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := reint void* nil -> i64*
     $5 := pcmp_le i64* $3, i64* $4
     ret
@@ -2164,8 +2164,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_sgt i64 $2, i64 1
     ret
 }
@@ -2202,8 +2202,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ugt i64 $2, i64 1
     ret
 }
@@ -2240,8 +2240,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fcmp_ogt f64 $2, f64 1.000000
     ret
 }
@@ -2279,8 +2279,8 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := reint void* nil -> i64*
     $5 := pcmp_gt i64* $3, i64* $4
     ret
@@ -2318,8 +2318,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_sge i64 $2, i64 1
     ret
 }
@@ -2356,8 +2356,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_uge i64 $2, i64 1
     ret
 }
@@ -2394,8 +2394,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fcmp_oge f64 $2, f64 1.000000
     ret
 }
@@ -2433,8 +2433,8 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := reint void* nil -> i64*
     $5 := pcmp_ge i64* $3, i64* $4
     ret
@@ -2472,8 +2472,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := and i64 $2, i64 1
     ret
 }
@@ -2510,8 +2510,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := or i64 $2, i64 1
     ret
 }
@@ -2548,8 +2548,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := xor i64 $2, i64 1
     ret
 }
@@ -2586,8 +2586,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := shl i64 $2, i64 2
     ret
 }
@@ -2624,8 +2624,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := ashr i64 $2, i64 2
     ret
 }
@@ -2662,8 +2662,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := lshr i64 $2, i64 2
     ret
 }
@@ -2700,8 +2700,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := add i64 $2, i64 1
     ret
 }
@@ -2738,8 +2738,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fadd f64 $2, f64 1.000000
     ret
 }
@@ -2776,8 +2776,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := sub i64 $2, i64 1
     ret
 }
@@ -2814,8 +2814,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fsub f64 $2, f64 1.000000
     ret
 }
@@ -2852,8 +2852,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := smul i64 $2, i64 1
     ret
 }
@@ -2890,8 +2890,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := umul i64 $2, i64 1
     ret
 }
@@ -2928,8 +2928,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fmul f64 $2, f64 1.000000
     ret
 }
@@ -2966,8 +2966,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := sdiv i64 $2, i64 1
     ret
 }
@@ -3004,8 +3004,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := udiv i64 $2, i64 1
     ret
 }
@@ -3042,8 +3042,8 @@ test :: () -> void {
     _x := slot f64, align 8
 
 1:
-    str f64 0.000000 -> f64* _x
-    $2 := load f64* _x
+    str f64 0.000000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fdiv f64 $2, f64 1.000000
     ret
 }
@@ -3080,8 +3080,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := srem i64 $2, i64 1
     ret
 }
@@ -3118,8 +3118,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := urem i64 $2, i64 1
     ret
 }
@@ -3156,8 +3156,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ne i64 $2, i64 0
     brif i1 $3, #4, #6
 
@@ -3202,8 +3202,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 0 -> i64* _x
-    $2 := load i64* _x
+    str i64 0 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := icmp_ne i64 $2, i64 0
     brif i1 $3, #6, #4
 
@@ -3248,10 +3248,10 @@ test :: () -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 7 -> i64* _x
-    $2 := load i64* _x
+    str i64 7 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := add i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret i64 $2
 }
 )";
@@ -3287,10 +3287,10 @@ test :: () -> f64 {
     _x := slot f64, align 8
 
 1:
-    str f64 3.140000 -> f64* _x
-    $2 := load f64* _x
+    str f64 3.140000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fadd f64 $2, f64 1.000000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret f64 $3
 }
 )";
@@ -3326,10 +3326,10 @@ test :: () -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 12 -> i64* _x
-    $2 := load i64* _x
+    str i64 12 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := sub i64 $2, i64 1
-    str i64 $3 -> i64* _x
+    str i64 $3 -> i64* _x, align 8
     ret i64 $2
 }
 )";
@@ -3365,10 +3365,10 @@ test :: () -> f64 {
     _x := slot f64, align 8
 
 1:
-    str f64 13.200000 -> f64* _x
-    $2 := load f64* _x
+    str f64 13.200000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fsub f64 $2, f64 1.000000
-    str f64 $3 -> f64* _x
+    str f64 $3 -> f64* _x, align 8
     ret f64 $3
 }
 )";
@@ -3404,8 +3404,8 @@ test :: () -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 42 -> i64* _x
-    $2 := load i64* _x
+    str i64 42 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := not i64 $2
     ret i64 $3
 }
@@ -3442,8 +3442,8 @@ test :: () -> i1 {
     _x := slot i1, align 1
 
 1:
-    str i1 0 -> i1* _x
-    $2 := load i1* _x
+    str i1 0 -> i1* _x, align 1
+    $2 := load i1* _x, align 1
     $3 := xor i1 $2, i1 1
     ret i1 $3
 }
@@ -3480,8 +3480,8 @@ test :: () -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 42 -> i64* _x
-    $2 := load i64* _x
+    str i64 42 -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     $3 := neg i64 $2
     ret i64 $3
 }
@@ -3518,8 +3518,8 @@ test :: () -> f64 {
     _x := slot f64, align 8
 
 1:
-    str f64 3.140000 -> f64* _x
-    $2 := load f64* _x
+    str f64 3.140000 -> f64* _x, align 8
+    $2 := load f64* _x, align 8
     $3 := fneg f64 $2
     ret f64 $3
 }
@@ -3557,9 +3557,9 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
-    str i64 5 -> i64* $3
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
+    str i64 5 -> i64* $3, align 8
     ret
 }
 )";
@@ -3596,9 +3596,9 @@ test :: () -> i64 {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
-    $4 := load i64* $3
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
+    $4 := load i64* $3, align 8
     ret i64 $4
 }
 )";
@@ -3635,8 +3635,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 1:
-    str i64 42 -> i64* _x
-    str i64* _x -> i64** _y
+    str i64 42 -> i64* _x, align 8
+    str i64* _x -> i64** _y, align 8
     ret
 }
 )";
@@ -3673,10 +3673,10 @@ test :: () -> i64* {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := ap i64*, i64* $3, i64 1
-    str i64* $4 -> i64** _x
+    str i64* $4 -> i64** _x, align 8
     ret i64* $3
 }
 )";
@@ -3713,10 +3713,10 @@ test :: () -> i64* {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := ap i64*, i64* $3, i64 -1
-    str i64* $4 -> i64** _x
+    str i64* $4 -> i64** _x, align 8
     ret i64* $4
 }
 )";
@@ -3753,10 +3753,10 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := ap i64*, i64* $3, i64 3
-    str i64* $4 -> i64** _x
+    str i64* $4 -> i64** _x, align 8
     ret
 }
 )";
@@ -3793,10 +3793,10 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := ap i64*, i64* $3, i64 3
-    str i64* $4 -> i64** _x
+    str i64* $4 -> i64** _x, align 8
     ret
 }
 )";
@@ -3833,11 +3833,11 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := neg i64 2
     $5 := ap i64*, i64* $3, i64 $4
-    str i64* $5 -> i64** _x
+    str i64* $5 -> i64** _x, align 8
     ret
 }
 )";
@@ -3874,11 +3874,11 @@ test :: () -> void {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := neg i64 2
     $5 := ap i64*, i64* $3, i64 $4
-    str i64* $5 -> i64** _x
+    str i64* $5 -> i64** _x, align 8
     ret
 }
 )";
@@ -3915,11 +3915,11 @@ test :: () -> void {
 
 1:
     $2 := ap i64*, i64[3]* _x, i64 0
-    str i64 1 -> i64* $2
+    str i64 1 -> i64* $2, align 8
     $3 := ap i64*, i64[3]* _x, i64 1
-    str i64 2 -> i64* $3
+    str i64 2 -> i64* $3, align 8
     $4 := ap i64*, i64[3]* _x, i64 2
-    str i64 3 -> i64* $4
+    str i64 3 -> i64* $4, align 8
     ret
 }
 )";
@@ -3957,11 +3957,11 @@ test :: () -> void {
 
 1:
     $2 := ap i64*, i64[3]* _x, i64 0
-    str i64 1 -> i64* $2
+    str i64 1 -> i64* $2, align 8
     $3 := ap i64*, i64[3]* _x, i64 1
-    str i64 2 -> i64* $3
+    str i64 2 -> i64* $3, align 8
     $4 := ap i64*, i64[3]* _x, i64 2
-    str i64 3 -> i64* $4
+    str i64 3 -> i64* $4, align 8
     cpy i64 24, i64[3]* _x, align 8 -> i64[3]* _y, align 8
     ret
 }
@@ -3999,13 +3999,13 @@ test :: () -> void {
 
 1:
     $2 := ap i64*, i64[2]* _x, i64 0
-    str i64 1 -> i64* $2
+    str i64 1 -> i64* $2, align 8
     $3 := ap i64*, i64[2]* _x, i64 1
-    str i64 2 -> i64* $3
+    str i64 2 -> i64* $3, align 8
     $4 := ap i64*, i64[2]* _x, i64 0
-    str i64 3 -> i64* $4
+    str i64 3 -> i64* $4, align 8
     $5 := ap i64*, i64[2]* _x, i64 1
-    str i64 4 -> i64* $5
+    str i64 4 -> i64* $5, align 8
     ret
 }
 )";
@@ -4043,13 +4043,13 @@ test :: () -> void {
 
 1:
     $2 := ap i64*, i64[2]* _x, i64 0
-    str i64 1 -> i64* $2
+    str i64 1 -> i64* $2, align 8
     $3 := ap i64*, i64[2]* _x, i64 1
-    str i64 2 -> i64* $3
+    str i64 2 -> i64* $3, align 8
     $4 := ap i64*, i64[2]* _y, i64 0
-    str i64 3 -> i64* $4
+    str i64 3 -> i64* $4, align 8
     $5 := ap i64*, i64[2]* _y, i64 1
-    str i64 4 -> i64* $5
+    str i64 4 -> i64* $5, align 8
     cpy i64 16, i64[2]* _x, align 8 -> i64[2]* _y, align 8
     ret
 }
@@ -4087,11 +4087,11 @@ test :: () -> i64 {
 
 1:
     $2 := ap i64*, i64[2]* _x, i64 0
-    str i64 1 -> i64* $2
+    str i64 1 -> i64* $2, align 8
     $3 := ap i64*, i64[2]* _x, i64 1
-    str i64 2 -> i64* $3
+    str i64 2 -> i64* $3, align 8
     $4 := ap i64*, i64[2]* _x, i64 1
-    $5 := load i64* $4
+    $5 := load i64* $4, align 8
     ret i64 $5
 }
 )";
@@ -4128,10 +4128,10 @@ test :: () -> i64 {
 
 1:
     $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
+    str i64* $2 -> i64** _x, align 8
+    $3 := load i64** _x, align 8
     $4 := ap i64*, i64* $3, i64 3
-    $5 := load i64* $4
+    $5 := load i64* $4, align 8
     ret i64 $5
 }
 )";
@@ -4166,11 +4166,11 @@ TEST_F(IntegratedCodegenTest, Function_Aggregate_Return_Basic) {
 test :: (aret i64[3]* %1) -> void {
 2:
     $3 := ap i64*, i64[3]* %1, i64 0
-    str i64 1 -> i64* $3
+    str i64 1 -> i64* $3, align 8
     $4 := ap i64*, i64[3]* %1, i64 1
-    str i64 2 -> i64* $4
+    str i64 2 -> i64* $4, align 8
     $5 := ap i64*, i64[3]* %1, i64 2
-    str i64 3 -> i64* $5
+    str i64 3 -> i64* $5, align 8
     ret
 }
 )";
@@ -4207,11 +4207,11 @@ test :: (aret i64[3]* %1) -> void {
 
 2:
     $3 := ap i64*, i64[3]* _x, i64 0
-    str i64 1 -> i64* $3
+    str i64 1 -> i64* $3, align 8
     $4 := ap i64*, i64[3]* _x, i64 1
-    str i64 2 -> i64* $4
+    str i64 2 -> i64* $4, align 8
     $5 := ap i64*, i64[3]* _x, i64 2
-    str i64 3 -> i64* $5
+    str i64 3 -> i64* $5, align 8
     cpy i64 24, i64[3]* _x, align 8 -> i64[3]* %1, align 8
     ret
 }
@@ -4408,8 +4408,8 @@ foo :: (i64 %x) -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 %x -> i64* _x
-    $2 := load i64* _x
+    str i64 %x -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     ret i64 $2
 }
 )";
@@ -4445,8 +4445,8 @@ test :: () -> void {
     _x := slot i64, align 8
 
 3:
-    str i64 42 -> i64* _x
-    $4 := load i64* _x
+    str i64 42 -> i64* _x, align 8
+    $4 := load i64* _x, align 8
     $5 := call i64 foo(i64 $4)
     ret
 }
@@ -4455,8 +4455,8 @@ foo :: (i64 %x) -> i64 {
     _x := slot i64, align 8
 
 1:
-    str i64 %x -> i64* _x
-    $2 := load i64* _x
+    str i64 %x -> i64* _x, align 8
+    $2 := load i64* _x, align 8
     ret i64 $2
 }
 )";
@@ -4499,11 +4499,11 @@ test :: () -> void {
 foo :: (aret i64[3]* %1) -> void {
 2:
     $3 := ap i64*, i64[3]* %1, i64 0
-    str i64 1 -> i64* $3
+    str i64 1 -> i64* $3, align 8
     $4 := ap i64*, i64[3]* %1, i64 1
-    str i64 2 -> i64* $4
+    str i64 2 -> i64* $4, align 8
     $5 := ap i64*, i64[3]* %1, i64 2
-    str i64 3 -> i64* $5
+    str i64 3 -> i64* $5, align 8
     ret
 }
 )";
@@ -4541,11 +4541,11 @@ test :: () -> void {
 
 4:
     $5 := ap i64*, i64[3]* _x, i64 0
-    str i64 1 -> i64* $5
+    str i64 1 -> i64* $5, align 8
     $6 := ap i64*, i64[3]* _x, i64 1
-    str i64 2 -> i64* $6
+    str i64 2 -> i64* $6, align 8
     $7 := ap i64*, i64[3]* _x, i64 2
-    str i64 3 -> i64* $7
+    str i64 3 -> i64* $7, align 8
     cpy i64 24, i64[3]* _x, align 8 -> i64[3]* _8, align 8
     $9 := call i64 foo(i64[3]* _8)
     ret
@@ -4557,7 +4557,7 @@ foo :: (aarg i64[3]* %x) -> i64 {
 1:
     cpy i64 24, i64[3]* %x, align 8 -> i64[3]* _x, align 8
     $2 := ap i64*, i64[3]* _x, i64 1
-    $3 := load i64* $2
+    $3 := load i64* $2, align 8
     ret i64 $3
 }
 )";
@@ -4595,13 +4595,13 @@ test :: () -> void {
 
 4:
     $6 := ap i64*, i64[3]* _5, i64 0
-    str i64 1 -> i64* $6
+    str i64 1 -> i64* $6, align 8
     $7 := ap i64*, i64[3]* _5, i64 1
-    str i64 2 -> i64* $7
+    str i64 2 -> i64* $7, align 8
     $8 := ap i64*, i64[3]* _5, i64 2
-    str i64 3 -> i64* $8
+    str i64 3 -> i64* $8, align 8
     $9 := call i64 foo(i64[3]* _5)
-    str i64 $9 -> i64* _x
+    str i64 $9 -> i64* _x, align 8
     ret
 }
 
@@ -4611,7 +4611,7 @@ foo :: (aarg i64[3]* %x) -> i64 {
 1:
     cpy i64 24, i64[3]* %x, align 8 -> i64[3]* _x, align 8
     $2 := ap i64*, i64[3]* _x, i64 1
-    $3 := load i64* $2
+    $3 := load i64* $2, align 8
     ret i64 $3
 }
 )";
@@ -4649,11 +4649,11 @@ test :: () -> void {
 
 4:
     $5 := ap i64*, i64[3]* _x, i64 0
-    str i64 1 -> i64* $5
+    str i64 1 -> i64* $5, align 8
     $6 := ap i64*, i64[3]* _x, i64 1
-    str i64 2 -> i64* $6
+    str i64 2 -> i64* $6, align 8
     $7 := ap i64*, i64[3]* _x, i64 2
-    str i64 3 -> i64* $7
+    str i64 3 -> i64* $7, align 8
     cpy i64 24, i64[3]* _x, align 8 -> i64[3]* _8, align 8
     call void foo(i64[3]* _y, i64[3]* _8)
     ret
@@ -4665,7 +4665,7 @@ foo :: (aret i64[3]* %1, aarg i64[3]* %x) -> void {
 2:
     cpy i64 24, i64[3]* %x, align 8 -> i64[3]* _x, align 8
     $3 := ap i64*, i64[3]* _x, i64 1
-    str i64 42 -> i64* $3
+    str i64 42 -> i64* $3, align 8
     cpy i64 24, i64[3]* _x, align 8 -> i64[3]* %1, align 8
     ret
 }
