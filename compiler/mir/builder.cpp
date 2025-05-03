@@ -26,6 +26,20 @@ PHINode *Builder::build_phi(Type *T, String N) {
     return new PHINode(N.empty() ? m_Segment->get_ssa() : N, T, m_Insert);
 }
 
+Value *Builder::build_ap(Type *T, Value *S, Value *Idx, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(T && "Result type cannot be null.");
+    assert(S && "AP source cannot be null.");
+    assert(Idx && "AP index cannot be null.");
+    assert(S->get_type()->is_pointer_ty() && "AP source must be a place.");
+    assert(Idx->get_type()->is_integer_ty() && "AP index must be an integer.");
+
+    APInst *AP = new APInst(N.empty() ? m_Segment->get_ssa() : N, T, m_Insert, S, Idx);
+    S->add_use(AP);
+    Idx->add_use(AP);
+    return AP;
+}
+
 StoreInst *Builder::build_store(Value *V, Value *D) {
     return build_store_offset(V, D, nullptr);
 }

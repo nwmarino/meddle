@@ -111,6 +111,17 @@ bool DataLayout::is_scalar_ty(Type *T) const {
     }
 }
 
+unsigned DataLayout::get_struct_member_offset(StructType *T, unsigned Idx) {
+    unsigned offset = 0;
+    for (unsigned i = 0; i < Idx; ++i) {
+        Type *M = T->get_member(i);
+        unsigned align = get_type_align(M);
+        offset = align_to(offset, align) + get_type_size(M);
+    }
+
+    return align_to(offset, get_type_align(T->get_member(Idx)));
+}
+
 Segment::Segment(const Target &T) : m_Target(T), m_Layout(T.get_data_layout()) {
     m_Types["i1"] = new IntegerType(IntegerType::Kind::Int1);
     m_Types["i8"] = new IntegerType(IntegerType::Kind::Int8);

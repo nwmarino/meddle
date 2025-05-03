@@ -75,6 +75,8 @@ public:
     bool is_big_endian() const;
 
     bool is_scalar_ty(Type *T) const;
+
+    unsigned get_struct_member_offset(StructType *T, unsigned Idx);
 };
 
 class Segment final {

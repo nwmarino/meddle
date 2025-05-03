@@ -35,6 +35,13 @@ static void print_phi(std::ostream &OS, PHINode *I) {
     }
 }
 
+static void print_ap(std::ostream &OS, APInst *I) {
+    OS << "$" << get_printed_name(I) << " := ap " << I->get_type()->get_name() << ", ";
+    I->get_source()->print(OS);
+    OS << ", ";
+    I->get_index()->print(OS);
+}
+
 static void print_store(std::ostream &OS, StoreInst *I) {
     OS << "str ";
     I->get_value()->print(OS);
@@ -299,6 +306,8 @@ static void print_block(std::ostream &OS, BasicBlock *BB) {
         OS << "    ";
         if (auto *I = dynamic_cast<PHINode *>(curr))
             print_phi(OS, I);
+        else if (auto *I = dynamic_cast<APInst *>(curr))
+            print_ap(OS, I);
         else if (auto *I = dynamic_cast<StoreInst *>(curr))
             print_store(OS, I);
         else if (auto *I = dynamic_cast<LoadInst *>(curr))
@@ -479,6 +488,10 @@ void ConstantAggregate::print(std::ostream &OS) const {
 }
 
 void PHINode::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " $" << get_printed_name(this);
+}
+
+void APInst::print(std::ostream &OS) const {
     OS << get_type()->get_name() << " $" << get_printed_name(this);
 }
 

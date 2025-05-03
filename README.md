@@ -4,14 +4,6 @@
 
 Wed. May 7
 
-Unary Expressions
-- `!` Logic Not (prefix)
-- `~` Bitwise Not (prefix)
-- `&` Address-of (prefix)
-- `*` Dereference (prefix)
-- `++` Increment (pre/post-fix)
-- `--` Decrement (pre/post-fix)
-
 Pointer Arithmetic
 - AP Instruction
 - +, -, +=, -=, ++, --
@@ -33,8 +25,6 @@ Structures
 - `MemberExpr`
 - `MethodCallExpr`
 - `TypeSpecExpr`
-
-
 
 Multi-package Support
 - `UseDecl` declarations

@@ -3300,11 +3300,6 @@ test :: () -> f64 {
     delete unit;
 }
 
-#define UNARY_PTR_INCREMENT R"(test::() i64* { mut x: i64* = nil; ret x++; })"
-TEST_F(IntegratedCodegenTest, Unary_Ptr_Increment) {
-    EXPECT_EQ(1, 0);
-}
-
 #define UNARY_INT_DECREMENT R"(test::() i64 { mut x: i64 = 12; ret x--; })"
 TEST_F(IntegratedCodegenTest, Unary_Int_Decrement) {
     File file = File("", "", "", UNARY_INT_DECREMENT);
@@ -3381,11 +3376,6 @@ test :: () -> f64 {
 
     delete seg;
     delete unit;
-}
-
-#define UNARY_PTR_DECREMENT R"(test::() i64* { mut x: i64* = nil; ret x--; })"
-TEST_F(IntegratedCodegenTest, Unary_Ptr_Decrement) {
-    EXPECT_EQ(1, 0);
 }
 
 #define UNARY_BITWISE_NOT R"(test::() i64 { mut x: i64 = 42; ret ~x; })"
@@ -3656,13 +3646,33 @@ test :: () -> void {
     delete unit;
 }
 
+#define UNARY_PTR_INCREMENT R"(test::() i64* { mut x: i64* = nil; ret x++; })"
+TEST_F(IntegratedCodegenTest, Unary_Ptr_Increment) {
+    EXPECT_EQ(1, 0);
+}
+
+#define UNARY_PTR_DECREMENT R"(test::() i64* { mut x: i64* = nil; ret x--; })"
+TEST_F(IntegratedCodegenTest, Unary_Ptr_Decrement) {
+    EXPECT_EQ(1, 0);
+}
+
 #define BINARY_PTR_ARITH_ADD R"()"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Add) {
     EXPECT_EQ(1, 0);
 }
 
+#define BINARY_PTR_ARITH_ADD_ASSIGN R"()"
+TEST_F(IntegratedCodegenTest, Pointer_Arith_Add_Assign) {
+    EXPECT_EQ(1, 0);
+}
+
 #define BINARY_PTR_ARITH_SUB R"()"
 TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub) {
+    EXPECT_EQ(1, 0);
+}
+
+#define BINARY_PTR_ARITH_SUB_ASSIGN R"()"
+TEST_F(IntegratedCodegenTest, Pointer_Arith_Sub_Assign) {
     EXPECT_EQ(1, 0);
 }
 

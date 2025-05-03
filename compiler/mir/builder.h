@@ -45,6 +45,8 @@ public:
 
     PHINode *build_phi(Type *T, String N = "");
 
+    Value *build_ap(Type *T, Value *S, Value *Idx, String N = "");
+
     StoreInst *build_store(Value *V, Value *D);
 
     StoreInst *build_store_offset(Value *V, Value *D, ConstantInt *O);

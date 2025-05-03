@@ -73,6 +73,30 @@ public:
     void print(std::ostream &OS) const override;
 };
 
+class APInst final : public Inst {
+    friend class Builder;
+
+    Value *m_Source;
+    Value *m_Idx;
+
+    APInst(
+        String N,
+        Type *T,
+        BasicBlock *P,
+        Value *S,
+        Value *Idx
+    ) : Inst(N, T, P), m_Source(S), m_Idx(Idx) {}
+
+public:
+    bool produces_value() const override { return true; }
+
+    Value *get_source() const { return m_Source; }
+
+    Value *get_index() const { return m_Idx; }
+
+    void print(std::ostream &OS) const override;
+};
+
 class StoreInst final : public Inst {
     friend class Builder;
 
