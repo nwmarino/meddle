@@ -39,5 +39,5 @@ VarDecl::~VarDecl() {
 
 ParamDecl::ParamDecl(const Attributes &A, const Metadata &M, const String &N,
                      Type *T, unsigned I)
-    : VarDecl(A, M, N, T, nullptr, false, false), m_Index(I), 
+    : VarDecl(A, M, N, T, nullptr, true, false), m_Index(I), 
       m_Parent(nullptr) {}

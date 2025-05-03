@@ -50,13 +50,15 @@ FunctionDecl *Parser::parse_function(const Token &name) {
         if (param_ty->isVoid())
             fatal("parameter type cannot be 'void'", &m_Current->md);
 
-        params.push_back(new ParamDecl(
-            m_Attributes,
+        ParamDecl *param = new ParamDecl(
+            Attributes(),
             param_md,
             param_name,
             param_ty,
             params.size()
-        ));
+        );
+        scope->addDecl(param);
+        params.push_back(param);
 
         if (match(TokenKind::EndParen))
             break;
@@ -100,6 +102,7 @@ FunctionDecl *Parser::parse_function(const Token &name) {
         params, 
         body
     );
+    exit_scope();
     m_Scope->addDecl(fn);
     return fn;
 }

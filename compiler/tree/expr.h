@@ -413,7 +413,7 @@ class SubscriptExpr final : public Expr {
 
 public:
 	SubscriptExpr(const Metadata &M, Type *T, Expr *B, Expr *I)
-	  : Expr(M, T), m_Base(B), m_Index(I) {}
+	  : Expr(M, T, true), m_Base(B), m_Index(I) {}
 
 	~SubscriptExpr() override {
 		delete m_Base;

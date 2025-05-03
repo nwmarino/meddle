@@ -1,5 +1,6 @@
 #include "basicblock.h"
 #include "builder.h"
+#include "function.h"
 #include "inst.h"
 #include "type.h"
 #include "value.h"
@@ -125,6 +126,22 @@ RetInst *Builder::build_ret(Value *V) {
     RetInst *ret = new RetInst(m_Insert, V);
     V->add_use(ret);
     return ret;
+}
+
+CallInst *Builder::build_call(Function *C, std::vector<Value *> &Args, String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(C && "Call target cannot be null.");
+
+    if (C->get_return_ty()->is_void_ty())
+        N = "";
+    else if (N.empty())
+        N = m_Segment->get_ssa();
+
+    CallInst *call = new CallInst(N, C->get_return_ty(), m_Insert, C, Args);
+    C->add_use(call);
+    for (Value *arg : Args)
+        arg->add_use(call);
+    return call;
 }
 
 Value *Builder::build_add(Value *LV, Value *RV, String N) {

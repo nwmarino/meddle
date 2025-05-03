@@ -228,6 +228,30 @@ public:
     Value *get_value() const { return m_Value; }
 };
 
+class CallInst final : public Inst {
+    friend class Builder;
+
+    Value *m_Callee;
+    std::vector<Value *> m_Args;
+
+    CallInst(
+        String N,
+        Type *T,
+        BasicBlock *P,
+        Value *C,
+        std::vector<Value *> A
+    ) : Inst(N, T, P), m_Callee(C), m_Args(std::move(A)) {}
+
+public:
+    bool produces_value() const override { return is_named(); }
+
+    Value *get_callee() const { return m_Callee; }
+
+    const std::vector<Value *> &get_args() const { return m_Args; }
+
+    void print(std::ostream &OS) const override;
+};
+
 class BinopInst final : public Inst {
     friend class Builder;
 

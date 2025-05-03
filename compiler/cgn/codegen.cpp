@@ -204,7 +204,7 @@ void CGN::define_function(FunctionDecl *FD) {
 
 	// For each argument in the function, if it was given a slot node, store
 	// the value of the argument to it in the beginning of the function.
-	for (unsigned i = 0, n = FD->getNumParams(); i != n; ++i) {
+	for (unsigned i = 0, n = FN->get_args().size(); i != n; ++i) {
 		mir::Argument *arg = FN->get_arg(i);
 		if (arg->hasARetAttribute()) {
 			// The aggregate return argument should not be moved.
@@ -308,13 +308,17 @@ void CGN::visit(VarDecl *decl) {
 			// The initializer is some non-scalar (aggregate) that is our
 			// responsibility to copy over to the newly created slot.
 			m_VC = ValueContext::LValue;
+			m_Place = slot;
 			decl->getInit()->accept(this);
 			assert(m_Value && "Variable initializer does not produce a value.");
+			m_Place = nullptr;
 
 			unsigned size = DL.get_type_size(ty);
 			unsigned align = DL.get_type_align(ty);
 
-			m_Builder.build_cpy(slot, align, m_Value, align, size);
+			if (m_Value != slot)
+				m_Builder.build_cpy(slot, align, m_Value, align, size);
+			
 			m_Value = nullptr;
 		}
 	}
@@ -652,7 +656,7 @@ void CGN::visit(ArrayExpr *expr) {
 	assert(m_Place && "RValue array type needs a destination place.");
 
 	cgn_aggregate_init(m_Place, expr, expr->getType());
-	m_Value = nullptr;
+	m_Value = m_Place;
 }
 
 void CGN::visit(BinaryExpr *expr) {
@@ -721,7 +725,62 @@ void CGN::visit(BinaryExpr *expr) {
 }
 
 void CGN::visit(CallExpr *expr) {
+	mir::Function *callee = m_Segment->get_function(mangle_name(expr->getCallee()));
+	assert(callee && "Callee does not exist.");
 
+	std::vector<mir::Value *> args;
+	args.reserve(expr->getNumArgs());
+	mir::Value *ARet = nullptr;
+	mir::Type *ty = cgn_type(expr->getType());
+
+	if (callee->hasARetAttribute()) {
+		ARet = m_Place ? m_Place : m_Builder.build_slot(ty, m_Opts.NamedMIR ? "aret.tmp" : "");
+		args.push_back(ARet);
+	}
+
+    for (unsigned i = 0; i != expr->getNumArgs(); ++i) {
+        Expr *arg = expr->getArg(i);
+		
+		if (callee->hasArgAttribute(ARet ? i + 1 : i, mir::Attribute::AArg)) {
+			// Aggregate arguments must be copied before being passed to the
+			// callee, since the caller is always responsible for cloning the
+			// argument, regardless if its to be spilled in the callee.
+			mir::DataLayout DL = m_Segment->get_data_layout();
+			mir::Type *aargTy = cgn_type(arg->getType());
+			mir::Slot *aargSlot = m_Builder.build_slot(aargTy, 
+				m_Opts.NamedMIR ? "aarg.tmp" : "");
+
+			unsigned align = DL.get_type_align(aargTy);
+			unsigned size = DL.get_type_size(aargTy);
+
+			m_VC = ValueContext::LValue;
+			m_Place = aargSlot;
+			arg->accept(this);
+			m_Place = nullptr;
+
+			// Emit a copy from the original aggregate to the new temporary
+			// slot for it.
+			if (m_Value != aargSlot) {
+				assert(m_Value && "Call argument does not produce a value.");
+				m_Builder.build_cpy(aargSlot, align, m_Value, align, size);
+			}
+
+			args.push_back(aargSlot);
+        } else {
+			m_VC = ValueContext::RValue;
+			arg->accept(this);
+			assert(m_Value && "Call argument does not produce a value.");
+            args.push_back(m_Value);
+		}
+    }
+
+	mir::CallInst *call = m_Builder.build_call(callee, args, 
+		m_Opts.NamedMIR ? "call.tmp" : "");
+
+	if (ARet)
+		m_Value = ARet;
+	else
+		m_Value = call;
 }
 
 void CGN::visit(CastExpr *expr) {

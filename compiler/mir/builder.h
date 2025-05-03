@@ -65,6 +65,8 @@ public:
 
     RetInst *build_ret(Value *V);
 
+    CallInst *build_call(Function *C, std::vector<Value *> &Args, String N = "");
+
     Value *build_add(Value *LV, Value *RV, String N = "");
 
     Value *build_sub(Value *LV, Value *RV, String N = "");

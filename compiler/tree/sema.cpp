@@ -263,6 +263,10 @@ void Sema::visit(BinaryExpr *expr) {
             assert(RE && "Non-referencing deference expression.");
             LVal = dynamic_cast<VarDecl *>(RE->getRef());
         }
+    } else if (auto *E = dynamic_cast<SubscriptExpr *>(expr->getLHS())) {
+        RefExpr *RE = dynamic_cast<RefExpr *>(E->getBase());
+        assert(RE && "Non-referencing subscript expression.");
+        LVal = dynamic_cast<VarDecl *>(RE->getRef());
     }
 
     assert(LVal && "LHS must be a reference.");

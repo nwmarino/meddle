@@ -92,6 +92,22 @@ static void print_ret(std::ostream &OS, RetInst *I) {
     }
 }
 
+static void print_call(std::ostream &OS, CallInst *I) {
+    if (I->produces_value()) {
+        OS << "$" << get_printed_name(I) << " := ";
+    }
+
+    OS << "call ";
+    I->get_callee()->print(OS);
+    OS << "(";
+    for (auto &Arg : I->get_args()) {
+        Arg->print(OS);
+        if (Arg != I->get_args().back())
+            OS << ", ";
+    }
+    OS << ")";
+}
+
 static void print_binop(std::ostream &OS, BinopInst *I) {
     OS << "$" << get_printed_name(I) << " := ";
     switch (I->get_kind()) {
@@ -320,6 +336,8 @@ static void print_block(std::ostream &OS, BasicBlock *BB) {
             print_jmp(OS, I);
         else if (auto *I = dynamic_cast<RetInst *>(curr))
             print_ret(OS, I);
+        else if (auto *I = dynamic_cast<CallInst *>(curr))
+            print_call(OS, I);
         else if (auto *I = dynamic_cast<BinopInst *>(curr))
             print_binop(OS, I);
         else if (auto *I = dynamic_cast<UnopInst *>(curr))
@@ -511,6 +529,11 @@ void APInst::print(std::ostream &OS) const {
 }
 
 void LoadInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " $" << get_printed_name(this);
+}
+
+void CallInst::print(std::ostream &OS) const {
+    assert(produces_value() && "Call does not produce a value.");
     OS << get_type()->get_name() << " $" << get_printed_name(this);
 }
 
