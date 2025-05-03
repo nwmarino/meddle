@@ -4,8 +4,6 @@
 
 Wed. May 7
 
-- `SubscriptExpr`
-
 - `CallExpr`
   - Aggregate Returns (aret)
   - Aggregate Arguments (aarg)

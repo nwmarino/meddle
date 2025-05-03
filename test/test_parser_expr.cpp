@@ -2171,6 +2171,48 @@ TEST_F(ParseExprTest, Array_Basic) {
     delete unit;
 }
 
+#define SUBSCRIPT_REF_BASIC R"(test::() { mut x: i64[2] = [1, 2]; x[1]; })"
+TEST_F(ParseExprTest, Subscript_Ref_Basic) {
+    File file = File("", "", "", SUBSCRIPT_REF_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    SubscriptExpr *SE = dynamic_cast<SubscriptExpr *>(ES->getExpr());
+    EXPECT_NE(SE, nullptr);
+    EXPECT_NE(SE->getBase(), nullptr);
+    EXPECT_NE(SE->getIndex(), nullptr);
+
+    RefExpr *RE = dynamic_cast<RefExpr *>(SE->getBase());
+    EXPECT_NE(RE, nullptr);
+    
+    IntegerLiteral *IL = dynamic_cast<IntegerLiteral *>(SE->getIndex());
+    EXPECT_NE(IL, nullptr);
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

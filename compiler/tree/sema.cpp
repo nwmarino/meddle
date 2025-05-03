@@ -281,6 +281,29 @@ void Sema::visit(ParenExpr *expr) {
     expr->m_Expr->accept(this);
 }
 
+void Sema::visit(SubscriptExpr *expr) {
+    expr->getBase()->accept(this);
+    expr->getIndex()->accept(this);
+
+    if (expr->getBase()->isAggregateInit())
+        fatal("cannot subscript into an array initializer", 
+              &expr->getMetadata());
+
+    Type *baseTy = expr->getBase()->getType();
+    if (baseTy->isArray()) {
+        expr->m_Type = static_cast<ArrayType *>(baseTy)->getElement();
+    } else if (baseTy->isPointer()) {
+        expr->m_Type = static_cast<PointerType *>(baseTy)->getPointee();
+    } else {
+        fatal("subscript [] base type must be an array or pointer, got '" + 
+            baseTy->getName() + "'", &expr->getMetadata());
+    } 
+
+    if (!expr->getIndex()->getType()->isInt())
+        fatal("subscript [] index type must be an integer, got '" +
+              expr->getIndex()->getType()->getName() + "'", &expr->getMetadata());
+}
+
 void Sema::visit(UnaryExpr *expr) {
     expr->getExpr()->accept(this);
 

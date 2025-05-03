@@ -143,6 +143,11 @@ void NameResolution::visit(SizeofExpr *expr) {
     expr->m_Target = unwrapType(expr->getTarget());
 }
 
+void NameResolution::visit(SubscriptExpr *expr) {
+    expr->getBase()->accept(this);
+    expr->getIndex()->accept(this);
+}
+
 void NameResolution::visit(UnaryExpr *expr) {
     expr->getExpr()->accept(this);
     expr->m_Type = expr->getExpr()->getType();

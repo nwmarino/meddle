@@ -33,6 +33,7 @@ class CastExpr;
 class ParenExpr;
 class RefExpr;
 class SizeofExpr;
+class SubscriptExpr;
 class UnaryExpr;
 
 class Visitor {
@@ -67,6 +68,7 @@ public:
     virtual void visit(ParenExpr *expr) {}
     virtual void visit(RefExpr *expr) {}
     virtual void visit(SizeofExpr *expr) {}
+    virtual void visit(SubscriptExpr *expr) {}
     virtual void visit(UnaryExpr *expr) {}
 };
 

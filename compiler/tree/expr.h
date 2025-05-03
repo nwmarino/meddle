@@ -369,6 +369,33 @@ public:
 	Type *getTarget() const { return m_Target; }
 };
 
+class SubscriptExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Base;
+	Expr *m_Index;
+
+public:
+	SubscriptExpr(const Metadata &M, Type *T, Expr *B, Expr *I)
+	  : Expr(M, T), m_Base(B), m_Index(I) {}
+
+	~SubscriptExpr() override {
+		delete m_Base;
+		delete m_Index;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getBase() const { return m_Base; }
+
+	Expr *getIndex() const { return m_Index; }
+
+	bool isConstant() const override
+	{ return m_Base->isConstant() && m_Index->isConstant(); }
+};
+
 class UnaryExpr final : public Expr {
 	friend class CGN;
 	friend class NameResolution;

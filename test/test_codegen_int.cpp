@@ -4060,6 +4060,87 @@ test :: () -> void {
     delete unit;
 }
 
+#define SUBSCRIPT_ARRAY_BASIC R"(test::() i64 { mut x: i64[2] = [1, 2]; ret x[1]; })"
+TEST_F(IntegratedCodegenTest, Subscript_Array_Basic) {
+    File file = File("", "", "", SUBSCRIPT_ARRAY_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i64 {
+    _x := slot i64[2], align 8
+
+1:
+    $2 := ap i64*, i64[2]* _x, i64 0
+    str i64 1 -> i64* $2
+    $3 := ap i64*, i64[2]* _x, i64 1
+    str i64 2 -> i64* $3
+    $4 := ap i64*, i64[2]* _x, i64 1
+    $5 := load i64* $4
+    ret i64 $5
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define SUBSCRIPT_PTR_BASIC R"(test::() i64 { mut x: i64* = nil; ret x[3]; })"
+TEST_F(IntegratedCodegenTest, Subscript_Ptr_Basic) {
+    File file = File("", "", "", SUBSCRIPT_PTR_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> i64 {
+    _x := slot i64*, align 8
+
+1:
+    $2 := reint void* nil -> i64*
+    str i64* $2 -> i64** _x
+    $3 := load i64** _x
+    $4 := ap i64*, i64* $3, i64 3
+    $5 := load i64* $4
+    ret i64 $5
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

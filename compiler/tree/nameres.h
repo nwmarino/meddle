@@ -1,6 +1,7 @@
 #ifndef MEDDLE_NAME_RESOLUTION_H
 #define MEDDLE_NAME_RESOLUTION_H
 
+#include "expr.h"
 #include "scope.h"
 #include "visitor.h"
 #include "../core/options.h"
@@ -38,6 +39,7 @@ public:
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
     void visit(SizeofExpr *expr) override;
+    void visit(SubscriptExpr *expr) override;
     void visit(UnaryExpr *expr) override;
 };
 

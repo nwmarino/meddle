@@ -256,10 +256,25 @@ Expr *Parser::parse_unary_postfix() {
     while (1) {
         UnaryExpr::Kind op = get_un_operator();
         if (UnaryExpr::isPostfixOp(op)) {
+            // Operator is a recognized postfix unary operator.
             Metadata md = m_Current->md;
             next();
 
             E = new UnaryExpr(md, nullptr, op, E, true);
+        } else if (match(TokenKind::SetBrack)) {
+            // Token is not an operator, but a subscript beginning '['.
+            Metadata md = m_Current->md;
+            next(); // '['
+
+            Expr *Idx = parse_expr();
+            if (!Idx)
+                fatal("expected subscript index", &m_Current->md);
+
+            if (!match(TokenKind::EndBrack))
+                fatal("expected ']' after subscript index", &m_Current->md);
+            next(); // ']'
+
+            E = new SubscriptExpr(md, nullptr, E, Idx);
         } else
             break;
     }

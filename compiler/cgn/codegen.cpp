@@ -785,6 +785,35 @@ void CGN::visit(SizeofExpr *expr) {
 		DL.get_type_size(T));
 }
 
+void CGN::visit(SubscriptExpr *expr) {
+	ValueContext oldVC = m_VC;
+	mir::Value *base = nullptr;
+	mir::Value *idx = nullptr;
+	mir::Type *ty = cgn_type(expr->getType());
+	mir::Type *ptrTy = mir::PointerType::get(m_Segment, ty);
+
+	m_VC = ValueContext::LValue;
+	if (expr->getBase()->getType()->isPointer()) 
+		m_VC = ValueContext::RValue;
+
+	expr->getBase()->accept(this);
+	assert(m_Value && "Subscript base does not produce a value.");
+	base = m_Value;
+
+    m_VC = ValueContext::RValue;
+    expr->getIndex()->accept(this);
+    assert(m_Value && "Subscript index does not produce a value.");
+    idx = m_Value;
+
+    m_Value = m_Builder.build_ap(ptrTy, base, idx, 
+		m_Opts.NamedMIR ? "ss.ptr" : "");
+
+    if (oldVC == ValueContext::RValue) {
+        m_Value = m_Builder.build_load(ty, m_Value, 
+			m_Opts.NamedMIR ? "ss.val" : "");
+	}
+}
+
 void CGN::visit(UnaryExpr *expr) {
 	switch (expr->getKind()) {
 	case UnaryExpr::Kind::Logic_Not: return cgn_logic_not(expr);
