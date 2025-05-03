@@ -338,6 +338,15 @@ static void print_data(std::ostream &OS, Data *D) {
     OS << ", align " << D->get_align() << "\n";
 }
 
+static void print_arg(std::ostream &OS, Argument *A) {
+    if (A->hasAArgAttribute())
+        OS << "aarg ";
+    if (A->hasARetAttribute())
+        OS << "aret ";
+
+    OS << A->get_type()->get_name() << " %" << A->get_name();
+}
+
 static void print_slot(std::ostream &OS, Slot *S) {
     OS << "_" << get_printed_name(S) << " := slot " 
        << S->get_alloc_type()->get_name() << ", align " << S->get_align();
@@ -346,7 +355,9 @@ static void print_slot(std::ostream &OS, Slot *S) {
 static void print_function(std::ostream &OS, Function *FN) {
     OS << get_printed_name(FN) << " :: (";
     for (auto &A : FN->get_args()) {
-
+        print_arg(OS, A);
+        if (A != FN->get_args().back())
+            OS << ", ";
     }
 
     OS << ") -> " << FN->get_return_ty()->get_name();
@@ -417,6 +428,10 @@ void Segment::print(std::ostream &OS) const {
         if (++i != m_Functions.size())
             OS << "\n";
     }
+}
+
+void Argument::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " %" << get_printed_name(this);
 }
 
 void Function::print(std::ostream &OS) const {

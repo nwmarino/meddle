@@ -4,6 +4,7 @@
 #include "type.h"
 #include "value.h"
 
+#include <cstdint>
 #include <fstream>
 #include <unordered_map>
 
@@ -14,12 +15,33 @@ class Function;
 class Segment;
 class SlotNode;
 
-struct Attributes final {
+enum class Attribute : uint8_t {
+    AArg,
+    ARet,
+};
 
+struct Attributes final {
+    uint32_t bits = 0;
+
+    void set(Attribute attr) {
+        bits |= (1 << static_cast<uint32_t>(attr));
+    }
+
+    void clear(Attribute attr) {
+        bits &= ~(1 << static_cast<uint32_t>(attr));
+    }
+
+    bool has(Attribute attr) const {
+        return bits & (1 << static_cast<uint32_t>(attr));
+    }
+
+    void clear() {
+        bits = 0;
+    }
 };
 
 class Argument final : public Value {
-    Attributes attrs;
+    Attributes m_Attrs;
 
     /// The parent function of this argument.
     Function *m_Parent;
@@ -36,13 +58,23 @@ public:
     Argument(String N, Type *T, Function *P, unsigned I, Slot *S = nullptr)
         : Value(N, T), m_Parent(P), m_Index(I), m_Slot(S) {}
 
+    const Attributes &get_attrs() const { return m_Attrs; }
+
     Function *get_parent() const { return m_Parent; }
 
     unsigned get_index() const { return m_Index; }
 
     Slot *get_slot() const { return m_Slot; }
 
+    void set_slot(Slot *S) { m_Slot = S; }
+
     void print(std::ostream &OS) const override;
+
+    void add_attribute(Attribute attr) { m_Attrs.set(attr); }
+
+    bool hasAArgAttribute() const { return m_Attrs.has(Attribute::AArg); }
+
+    bool hasARetAttribute() const { return m_Attrs.has(Attribute::ARet); }
 };
 
 class Function final : public Value {
@@ -53,7 +85,7 @@ public:
     };
 
 private:
-    Attributes attrs;
+    Attributes m_Attrs;
 
     Linkage m_Linkage;
 
@@ -75,6 +107,8 @@ public:
              std::vector<Argument *> Args);
 
     ~Function() override;
+
+    const Attributes &get_attrs() const { return m_Attrs; }
 
     Segment *get_parent() const { return m_Parent; }
 
@@ -112,6 +146,22 @@ public:
     void detach();
 
     void print(std::ostream &OS) const override;
+
+    void add_attribute(Attribute attr) { m_Attrs.set(attr); }
+
+    bool hasArgAttribute(unsigned i, Attribute attr) const {
+        if (i >= m_Args.size())
+            return false;
+
+        return m_Args.at(i)->get_attrs().has(attr);
+    }
+
+    bool hasARetAttribute() const {
+        if (m_Args.empty())
+            return false;
+
+        return m_Args.at(0)->hasARetAttribute();
+    }
 };
 
 } // namespace mir

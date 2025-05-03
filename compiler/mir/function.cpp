@@ -6,12 +6,6 @@
 
 using namespace mir;
 
-void Argument::print(std::ostream &OS) const {
-    OS << get_name() << " : " << get_type()->get_name();
-    if (m_Slot)
-        OS << " = " << m_Slot->get_name();
-}
-
 Function::Function(String N, FunctionType *FT, Linkage L, Segment *P, 
                    std::vector<Argument *> Args) 
     : Value(N, FT), m_Linkage(L), m_Parent(P), m_Args(Args) 

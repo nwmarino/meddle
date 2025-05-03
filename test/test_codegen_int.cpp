@@ -4141,21 +4141,201 @@ test :: () -> i64 {
     delete unit;
 }
 
+#define FUNCTION_AGGREGATE_RETURN_BASIC R"(test::() i64[3] { ret [1, 2, 3]; })"
+TEST_F(IntegratedCodegenTest, Function_Aggregate_Return_Basic) {
+    File file = File("", "", "", FUNCTION_AGGREGATE_RETURN_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: (aret i64[3]* %1) -> void {
+2:
+    $3 := ap i64*, i64[3]* %1, i64 0
+    str i64 1 -> i64* $3
+    $4 := ap i64*, i64[3]* %1, i64 1
+    str i64 2 -> i64* $4
+    $5 := ap i64*, i64[3]* %1, i64 2
+    str i64 3 -> i64* $5
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define FUNCTION_AGGREGATE_RETURN_REF R"(test::() i64[3] { mut x: i64[3] = [1, 2, 3]; ret x; })"
+TEST_F(IntegratedCodegenTest, Function_Aggregate_Return_Reference) {
+    File file = File("", "", "", FUNCTION_AGGREGATE_RETURN_REF);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: (aret i64[3]* %1) -> void {
+    _x := slot i64[3], align 8
+
+2:
+    $3 := ap i64*, i64[3]* _x, i64 0
+    str i64 1 -> i64* $3
+    $4 := ap i64*, i64[3]* _x, i64 1
+    str i64 2 -> i64* $4
+    $5 := ap i64*, i64[3]* _x, i64 2
+    str i64 3 -> i64* $5
+    cpy i64 24, i64[3]* _x, align 8 -> i64[3]* %1, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define FUNCTION_AGGREGATE_ARG_BASIC R"(test::(x: i64[3]) { ret; })"
+TEST_F(IntegratedCodegenTest, Function_Aggregate_Arg_Basic) {
+    File file = File("", "", "", FUNCTION_AGGREGATE_ARG_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: (aarg i64[3]* %x) -> void {
+    _x := slot i64[3], align 8
+
+1:
+    cpy i64 24, i64[3]* %x, align 8 -> i64[3]* _x, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define FUNCTION_AGGREGATE_ARG_MANY R"(test::(x: i64[1], y: i64[2], z: i64[3]) { ret; })"
+TEST_F(IntegratedCodegenTest, Function_Aggregate_Arg_Many) {
+    File file = File("", "", "", FUNCTION_AGGREGATE_ARG_MANY);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: (aarg i64[1]* %x, aarg i64[2]* %y, aarg i64[3]* %z) -> void {
+    _z := slot i64[3], align 8
+    _y := slot i64[2], align 8
+    _x := slot i64[1], align 8
+
+1:
+    cpy i64 8, i64[1]* %x, align 8 -> i64[1]* _x, align 8
+    cpy i64 16, i64[2]* %y, align 8 -> i64[2]* _y, align 8
+    cpy i64 24, i64[3]* %z, align 8 -> i64[3]* _z, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 #define CALL_VOID_BASIC R"(foo::() { ret; } test::() { foo(); })"
+TEST_F(IntegratedCodegenTest, Call_Void_Basic) {
+
+}
 
 #define CALL_TYPED_BASIC R"(foo::() i64 { ret 42; } test::() { foo(); })"
+TEST_F(IntegratedCodegenTest, Call_Typed_Basic) {
+
+}
 
 #define CALL_ARGS_BASIC R"(foo::(x: i64) i64 { ret x; } test::() { foo(42); })"
+TEST_F(IntegratedCodegenTest, Call_Args_Basic) {
+
+}
 
 #define CALL_ARGS_RVALUE_BASIC R"(foo::(x: i64) i64 { ret x; } test::() { mut x: i64 = 42; foo(x); })"
+TEST_F(IntegratedCodegenTest, Call_Args_RValue_Basic) {
+
+}
 
 #define CALL_AGGREGATE_ARRAY_RETURN_BASIC R"(foo::() i64[3] { ret [1, 2, 3]; } test::() { mut x: i64[3] = foo(); })"
+TEST_F(IntegratedCodegenTest, Call_Aggregate_Array_Return_Basic) {
+
+}
 
 #define CALL_AGGREGATE_ARRAY_ARG_REF_BASIC R"(foo::(x: i64[3]) i64 { ret x[1]; } test::() { mut x: i64[3] = [1, 2, 3]; foo(x); })"
+TEST_F(IntegratedCodegenTest, Call_Aggregate_Array_Arg_Ref_Basic) {
+
+}
 
 #define CALL_AGGREGATE_ARRAY_ARG_INIT_BASIC R"(foo::(x: i64[3]) i64 { ret x[1]; } test::() { mut x: i64 = foo([1, 2, 3]); })"
+TEST_F(IntegratedCodegenTest, Call_Aggregate_Array_Arg_Init_Basic) {
 
+}
 #define CALL_AGGREGATE_ARRAY_RETURN_AGGREGATE_ARRAY_ARG_BASIC R"(foo::(x: i64[3]) i64[3] { x[1] = 42; ret x; } test::() { mut x: i64[3] = [1, 2, 3]; mut y: i64[3] = foo(x); })"
+TEST_F(IntegratedCodegenTest, Call_Aggregate_Array_Return_And_Aggregate_Array_Arg_Basic) {
+
+}
 
 } // namespace test
 

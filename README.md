@@ -5,8 +5,8 @@
 Wed. May 7
 
 - `CallExpr`
-  - Aggregate Returns (aret)
-  - Aggregate Arguments (aarg)
+
+Provide Store, Load Instructions with Alignment
 
 Enumerations
 - `EnumDecl`

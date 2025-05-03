@@ -86,13 +86,23 @@ mir::Type *CGN::cgn_type(Type *T) {
 		return mir::ArrayType::get(m_Segment, cgn_type(AT->getElement()), 
 			AT->getSize());
 	} else if (auto *FT = dynamic_cast<FunctionType *>(T)) {
+		mir::Type *retTy = nullptr;
 		std::vector<mir::Type *> params = {};
 		params.reserve(FT->getNumParams());
-		for (auto &P : FT->getParams())
-			params.push_back(cgn_type(P));
 
-		return mir::FunctionType::get(m_Segment, params, 
-				cgn_type(FT->getReturnType()));
+		if (FT->getReturnType()->isArray())
+			retTy = m_Builder.get_void_ty();
+		else
+			retTy = cgn_type(FT->getReturnType());
+		
+		for (auto &P : FT->getParams()) {
+			if (P->isArray())
+				params.push_back(mir::PointerType::get(m_Segment, cgn_type(P)));
+			else
+				params.push_back(cgn_type(P));
+		}
+
+		return mir::FunctionType::get(m_Segment, params, retTy);
 	} else if (auto *PT = dynamic_cast<PointerType *>(T)) {
 		return mir::PointerType::get(m_Segment, cgn_type(PT->getPointee()));
 	}
@@ -116,22 +126,63 @@ CGN::TypeClass CGN::type_class(Type *T) const {
 }
 
 void CGN::declare_function(FunctionDecl *FD) {
+	// Lowering of function types have special behavior: aggregate parameters
+	// are wrapped in pointers and return types are converted to void.
 	mir::FunctionType *FT = static_cast<mir::FunctionType *>
 		(cgn_type(FD->getType()));
 
 	mir::Function::Linkage L = mir::Function::Linkage::Internal;
 	mir::Function *FN = new mir::Function(mangle_name(FD), FT, L, m_Segment, {});
 
+	std::vector<mir::Argument *> args;
+	args.reserve(FD->getNumParams());
+
+	Type *retTy = FD->getReturnType();
+	bool isAggregateRet = retTy->isArray(); // || retTy->isStruct();
+	if (isAggregateRet) {
+		assert(FN->get_return_ty()->is_void_ty() 
+			&& "Function returns aggregate, but MIR function not void.");
+
+		// Aggregate return types are passed via pointer with the `ARet`
+		// attribute on the first parameter, which we implicitly inject here.
+		mir::Argument *aret = new mir::Argument(
+			m_Opts.NamedMIR ? "aret.ptr" : m_Segment->get_ssa(),
+			mir::PointerType::get(m_Segment, cgn_type(FD->getReturnType())),
+			FN,
+			0,
+			nullptr // No slot, rets should copy themselves to this argument.
+		);
+		aret->add_attribute(mir::Attribute::ARet);
+		args.push_back(aret);
+	}
+
 	// For every parameter in the function, create a new argument with the
 	// lowered type. Also, build a slot node in the function for the parameter.
-	std::vector<mir::Argument *> args = {};
-	args.reserve(FD->getNumParams());
-	for (unsigned i = 0, n = FD->getNumParams(); i != n; ++i) {
-		ParamDecl *param = FD->getParam(i);
+	for (unsigned i = 0; i != FD->getNumParams(); ++i) {
+		ParamDecl *P = FD->getParam(i);
+		Type *paramTy = P->getType();
 
-		mir::Type *ty = cgn_type(param->getType());
-		mir::Slot *slot = m_Builder.build_slot(ty, param->getName());
-		args.push_back(new mir::Argument(param->getName(), ty, FN, i, nullptr));
+		mir::Type *ty = FT->get_param_type(i);
+		mir::Slot *slot = nullptr;
+		mir::Argument *arg = new mir::Argument(P->getName(), ty, FN, 
+			args.size(), slot);
+
+		bool isAggregateParam = paramTy->isArray(); // || paramTy->isStruct();
+		if (isAggregateParam) {
+			// Aggregate parameters are passed via pointer with the `AParam`
+			// attribute on the given parameter.
+			//
+			// Later, during actual code generation for this function, a copy
+			// is made from the passed in argument to the created slot.
+			arg->add_attribute(mir::Attribute::AArg);
+			mir::PointerType *PT = static_cast<mir::PointerType *>(ty);
+			slot = m_Builder.build_slot(PT->get_pointee(), P->getName(), FN);
+		} else {
+			slot = m_Builder.build_slot(ty, P->getName(), FN);
+		}
+
+		arg->set_slot(slot);
+		args.push_back(arg);
 	}
 
 	FN->set_args(args);
@@ -142,6 +193,7 @@ void CGN::define_function(FunctionDecl *FD) {
 	assert(FN && "Unable to find function in segment.");
 
 	// Skip codegen for empty functions.
+	// TODO: Also stop here for imported functions.
 	if (FD->empty())
 		return;
 
@@ -154,8 +206,27 @@ void CGN::define_function(FunctionDecl *FD) {
 	// the value of the argument to it in the beginning of the function.
 	for (unsigned i = 0, n = FD->getNumParams(); i != n; ++i) {
 		mir::Argument *arg = FN->get_arg(i);
-		if (arg->get_slot())
+		if (arg->hasARetAttribute()) {
+			// The aggregate return argument should not be moved.
+			continue;
+		} else if (arg->hasAArgAttribute()) {
+			// Aggregate arguments passed via pointer need to be copied to their
+			// destination slot.
+			mir::Slot *slot = arg->get_slot();
+			assert(slot && "Slot does not exist for argument with AArg attribute.");
+
+			mir::DataLayout DL = m_Segment->get_data_layout();
+			mir::PointerType *PT = static_cast<mir::PointerType *>(arg->get_type());
+			mir::Type *ty = PT->get_pointee();
+
+			m_Builder.build_cpy(slot, DL.get_type_align(ty), arg, 
+				DL.get_type_align(ty), DL.get_type_size(ty));
+		} else if (arg->get_slot() != nullptr) {
+			// We assume that the lowered function is correct and any arguments
+			// without the `AArg` attribute are scalar and can be moved with a
+			// store.
 			m_Builder.build_store(arg, arg->get_slot());
+		}
 	}
 
 	m_Function = FN;
@@ -164,7 +235,7 @@ void CGN::define_function(FunctionDecl *FD) {
 	// If the function's tail block does not terminate on its own, then insert
 	// a return if the function is void. Otherwise, emit an error.
 	if (!m_Builder.get_insert()->has_terminator()) {
-		if (FD->getReturnType()->isVoid())
+		if (FN->get_return_ty()->is_void_ty())
 			m_Builder.build_ret_void();
 		else {
 			fatal("function does not return a value: " + FD->getName(), 
@@ -428,11 +499,39 @@ void CGN::visit(RetStmt *stmt) {
 		m_Builder.build_ret_void();
 		return;
 	}
-	
-	m_VC = ValueContext::RValue;
-	stmt->getExpr()->accept(this);
-	assert(m_Value && "'ret' expression does not produce a value.");
-	m_Builder.build_ret(m_Value);
+
+	mir::Type *ty = cgn_type(stmt->getExpr()->getType());
+	mir::DataLayout DL = m_Segment->get_data_layout();
+
+	if (stmt->getExpr()->isAggregateInit()) {
+		assert(m_Function->hasARetAttribute() && 
+			"Return type is an aggregate, but function has no ARet.");
+
+		m_VC = ValueContext::RValue;
+		m_Place = m_Function->get_arg(0);
+		stmt->getExpr()->accept(this);
+		m_Place = nullptr;
+	} else if (DL.is_scalar_ty(ty)) {
+		m_VC = ValueContext::RValue;
+		stmt->getExpr()->accept(this);
+		assert(m_Value && "Return expression does not produce a value.");
+
+		m_Builder.build_ret(m_Value);
+	} else {
+		assert(m_Function->hasARetAttribute() && 
+			"Return type is an aggregate, but function has no ARet.");
+
+		m_VC = ValueContext::LValue;
+		stmt->getExpr()->accept(this);
+		assert(m_Value && "Return expression does not produce a value.");
+
+		unsigned size = DL.get_type_size(ty);
+		unsigned align = DL.get_type_align(ty);
+
+		m_Builder.build_cpy(m_Function->get_arg(0), align, m_Value, 
+			align, size);
+		m_Value = nullptr;
+	}
 }
 
 void CGN::visit(UntilStmt *stmt) {

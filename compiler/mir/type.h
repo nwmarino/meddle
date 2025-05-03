@@ -177,6 +177,11 @@ public:
     Type *get_return_type() const { return m_Ret; }    
 
     const std::vector<Type *> &get_param_types() const { return m_Params; }
+
+    Type *get_param_type(unsigned i) const {
+        assert(i < m_Params.size() && "Index out of range.");
+        return m_Params.at(i);
+    }
 };
 
 class PointerType final : public Type {
