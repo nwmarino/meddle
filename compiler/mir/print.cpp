@@ -63,7 +63,9 @@ static void print_load(std::ostream &OS, LoadInst *I) {
 }
 
 static void print_cpy(std::ostream &OS, CpyInst *I) {
-    OS << "cpy i64 " << I->get_size() << ", ";
+    OS << "cpy ";
+    I->get_size()->print(OS);
+    OS << ", ";
     I->get_source()->print(OS);
     OS << ", align " << I->get_source_align() << " -> ";
     I->get_dest()->print(OS);

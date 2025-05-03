@@ -55,7 +55,7 @@ public:
     
     Value *build_load_offset(Type *T, Value *S, ConstantInt *O, String N = "");
 
-    CpyInst *build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL, unsigned Sz);
+    CpyInst *build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL, Value *Sz);
 
     BrifInst *build_brif(Value *C, BasicBlock *T, BasicBlock *F);
 

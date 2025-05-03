@@ -44,7 +44,8 @@ void CGN::cgn_assign(BinaryExpr *BIN) {
         unsigned size = DL.get_type_size(ty);
         unsigned align = DL.get_type_align(ty);
 
-        m_Builder.build_cpy(dest, align, m_Value, align, size);
+        m_Builder.build_cpy(dest, align, m_Value, align,
+            mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), size));
         m_Value = nullptr;
     }
 }

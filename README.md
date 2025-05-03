@@ -4,9 +4,8 @@
 
 Wed. May 7
 
-- `CallExpr`
-
-Provide Store, Load Instructions with Alignment
+Provide store, load insts. with align
+More testing with aggregate initializers (non-var and non-call contexts)
 
 Enumerations
 - `EnumDecl`

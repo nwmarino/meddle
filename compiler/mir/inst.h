@@ -154,7 +154,7 @@ class CpyInst final : public Inst {
     unsigned m_SrcAlign;
     Value *m_Dest;
     unsigned m_DestAlign;
-    unsigned m_Size;
+    Value *m_Size;
 
     CpyInst(
         BasicBlock *P,
@@ -162,7 +162,7 @@ class CpyInst final : public Inst {
         unsigned SAL,
         Value *D,
         unsigned DAL,
-        unsigned Sz
+        Value *Sz
     ) : Inst(P), m_Source(S), m_SrcAlign(SAL), m_Dest(D), m_DestAlign(DAL), 
         m_Size(Sz) {}
 
@@ -175,7 +175,7 @@ public:
 
     unsigned get_dest_align() const { return m_DestAlign; }
 
-    unsigned get_size() const { return m_Size; }
+    Value *get_size() const { return m_Size; }
 };
 
 class BrifInst final : public Inst {

@@ -70,13 +70,13 @@ Value *Builder::build_load_offset(Type *T, Value *S, ConstantInt *O, String N) {
 }
 
 CpyInst *Builder::build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL, 
-                            unsigned Sz) {
+                            Value *Sz) {
     assert(m_Insert && "No insertion point set.");
     assert(D && "Copy destination cannot be null.");
     assert(D->get_type()->is_pointer_ty() && "Copy destination must be a place.");
     assert(S && "Copy source cannot be null.");
     assert(S->get_type()->is_pointer_ty() && "Copy source must be a place.");
-    assert(Sz > 0 && "Copy size must be greater than zero.");
+    assert(Sz->get_type()->is_integer_ty() && "Copy size must be an integer.");
 
     CpyInst *cpy = new CpyInst(m_Insert, S, SAL, D, DAL, Sz);
     D->add_use(cpy);

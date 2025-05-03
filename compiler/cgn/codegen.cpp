@@ -219,8 +219,15 @@ void CGN::define_function(FunctionDecl *FD) {
 			mir::PointerType *PT = static_cast<mir::PointerType *>(arg->get_type());
 			mir::Type *ty = PT->get_pointee();
 
-			m_Builder.build_cpy(slot, DL.get_type_align(ty), arg, 
-				DL.get_type_align(ty), DL.get_type_size(ty));
+			m_Builder.build_cpy(
+				slot, 
+				DL.get_type_align(ty), 
+				arg, 
+				DL.get_type_align(ty), 
+				mir::ConstantInt::get(
+					m_Segment, m_Builder.get_i64_ty(), DL.get_type_size(ty)
+				)
+			);
 		} else if (arg->get_slot() != nullptr) {
 			// We assume that the lowered function is correct and any arguments
 			// without the `AArg` attribute are scalar and can be moved with a
@@ -316,8 +323,17 @@ void CGN::visit(VarDecl *decl) {
 			unsigned size = DL.get_type_size(ty);
 			unsigned align = DL.get_type_align(ty);
 
-			if (m_Value != slot)
-				m_Builder.build_cpy(slot, align, m_Value, align, size);
+			if (m_Value != slot) {
+				m_Builder.build_cpy(
+					slot, 
+					align, 
+					m_Value, 
+					align, 
+					mir::ConstantInt::get(
+						m_Segment, m_Builder.get_i64_ty(), size
+					)
+				);
+			}
 			
 			m_Value = nullptr;
 		}
@@ -533,7 +549,7 @@ void CGN::visit(RetStmt *stmt) {
 		unsigned align = DL.get_type_align(ty);
 
 		m_Builder.build_cpy(m_Function->get_arg(0), align, m_Value, 
-			align, size);
+			align, mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), size));
 		m_Value = nullptr;
 	}
 }
@@ -762,7 +778,8 @@ void CGN::visit(CallExpr *expr) {
 			// slot for it.
 			if (m_Value != aargSlot) {
 				assert(m_Value && "Call argument does not produce a value.");
-				m_Builder.build_cpy(aargSlot, align, m_Value, align, size);
+				m_Builder.build_cpy(aargSlot, align, m_Value, align, 
+					mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), size));
 			}
 
 			args.push_back(aargSlot);
