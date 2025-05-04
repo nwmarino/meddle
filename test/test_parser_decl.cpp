@@ -486,6 +486,51 @@ TEST_F(ParseDeclTest, Struct_Associated_Function_Basic) {
     delete unit;
 }
 
+#define STRUCT_METHOD_FIELD_REF R"(box :: { x: i64, foo :: () i64 { ret x; } })"
+TEST_F(ParseDeclTest, Struct_Method_Field_Ref) {
+    File file = File("", "", "", STRUCT_METHOD_FIELD_REF);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    StructDecl *SD = dynamic_cast<StructDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(SD, nullptr);
+    EXPECT_EQ(SD->getName(), "box");
+    EXPECT_EQ(SD->getFunctions().size(), 1);
+    EXPECT_EQ(SD->getFields().size(), 1);
+
+    FieldDecl *FLD = SD->getFields()[0];
+    EXPECT_EQ(FLD->getName(), "x");
+    EXPECT_EQ(FLD->getType()->getName(), "i64");
+    EXPECT_EQ(FLD->getInit(), nullptr);
+
+    FunctionDecl *FD = SD->getFunctions()[0];
+    EXPECT_EQ(FD->getName(), "foo");
+    EXPECT_EQ(FD->getReturnType()->getName(), "i64");
+    EXPECT_EQ(FD->getParams().size(), 0);
+    EXPECT_NE(FD->getBody(), nullptr);
+    EXPECT_EQ(FD->getParent(), SD);
+    EXPECT_EQ(FD->isMethod(), true);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FD->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(RS, nullptr);
+    EXPECT_NE(RS->getExpr(), nullptr);
+
+    RefExpr *VRE = dynamic_cast<RefExpr *>(RS->getExpr());
+    EXPECT_NE(VRE, nullptr);
+    EXPECT_EQ(VRE->getName(), "x");
+    EXPECT_EQ(VRE->getRef(), FLD);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

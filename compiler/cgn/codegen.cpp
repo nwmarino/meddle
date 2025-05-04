@@ -255,6 +255,11 @@ void CGN::define_function(FunctionDecl *FD) {
 		}
 	}
 
+	if (FD->isMethod()) {
+		assert(FN->get_args().size() > 0 && "Method has no arguments.");
+		m_Self = FN->get_arg(0)->get_slot();
+	}
+
 	m_Function = FN;
 	FD->getBody()->accept(this);
 
@@ -270,6 +275,7 @@ void CGN::define_function(FunctionDecl *FD) {
 	}
 
 	m_Function = nullptr;
+	m_Self = nullptr;
 }
 
 void CGN::visit(TranslationUnit *unit) {
@@ -948,6 +954,33 @@ void CGN::visit(ParenExpr *expr) {
 
 void CGN::visit(RefExpr *expr) {
 	NamedDecl *ref = expr->getRef();
+
+	if (auto *field = dynamic_cast<FieldDecl *>(ref)) {
+		assert(m_Self && "Reference to field decl, but no self set.");
+
+		unsigned field_idx = field->getIndex();
+		mir::Type *field_ty = cgn_type(expr->getType());
+		mir::Value *self_ptr = m_Builder.build_load(
+			mir::PointerType::get(
+				m_Segment, cgn_type(field->getParent()->getDefinedType())
+			), 
+			m_Self
+		);
+
+		mir::Value *field_ptr = m_Builder.build_ap(
+			mir::PointerType::get(m_Segment, field_ty), 
+			self_ptr, 
+			mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), field_idx)
+		);
+
+		if (m_VC == ValueContext::LValue)
+			m_Value = field_ptr;
+		else
+			m_Value = m_Builder.build_load(field_ty, field_ptr);
+
+		return;
+	}
+
 	mir::Slot *slot = m_Function->get_slot(expr->getName());
 	assert(slot && "Slot does not exist in function.");
 	

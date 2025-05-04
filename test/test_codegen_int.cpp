@@ -4867,6 +4867,47 @@ box.foo :: (box* %self) -> void {
     delete unit;
 }
 
+#define STRUCT_METHOD_FIELD_REF R"(box :: { x: i64, foo :: (self: box*) i64 { ret x; } })"
+TEST_F(IntegratedCodegenTest, Struct_Method_Field_Ref) {
+    File file = File("", "", "", STRUCT_METHOD_FIELD_REF);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64 }
+
+box.foo :: (box* %self) -> i64 {
+    _self := slot box*, align 8
+
+1:
+    str box* %self -> box** _self, align 8
+    $2 := load box** _self, align 8
+    $3 := ap i64*, box* $2, i64 0
+    $4 := load i64* $3, align 8
+    ret i64 $4
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

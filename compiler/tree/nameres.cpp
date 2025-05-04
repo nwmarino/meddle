@@ -187,10 +187,14 @@ void NameResolution::visit(RefExpr *expr) {
         }
     }
 
+    expr->m_Ref = ND;
+    
     if (auto *VD = dynamic_cast<VarDecl *>(ND)) {
         expr->m_Type = VD->getType();
     } else if (auto *EVD = dynamic_cast<EnumVariantDecl *>(ND)) {
         expr->m_Type = EVD->getType();
+    } else if (auto *FD = dynamic_cast<FieldDecl *>(ND)) {
+        expr->m_Type = FD->getType();
     } else {
         fatal("reference exists, but is not a variable: " + expr->getName(), 
             &expr->getMetadata());
