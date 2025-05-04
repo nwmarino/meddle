@@ -10,6 +10,8 @@ class VarDecl;
 class ParamDecl;
 class EnumVariantDecl;
 class EnumDecl;
+class FieldDecl;
+class StructDecl;
 
 class BreakStmt;
 class ContinueStmt;
@@ -49,6 +51,8 @@ public:
     virtual void visit(ParamDecl *decl) {}
     virtual void visit(EnumVariantDecl *decl) {}
     virtual void visit(EnumDecl *decl) {}
+    virtual void visit(FieldDecl *decl) {}
+    virtual void visit(StructDecl *decl) {}
 
     virtual void visit(BreakStmt *stmt) {}
     virtual void visit(ContinueStmt *stmt) {}

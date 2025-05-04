@@ -74,10 +74,38 @@ void Sema::visit(TranslationUnit *U) {
 
 void Sema::visit(FunctionDecl *decl) {
     m_Function = decl;
-    for (auto &P : decl->getParams())
-        P->accept(this);
+
+    if (decl->isMethod()) {
+        // Semantically validate method functions.
+        //
+        // The first parameter of a method should be named `self`, and should
+        // be typed with a pointer to the type of the parent structure.
+
+        if (decl->getNumParams() < 1) 
+            fatal("method must have at least one parameter", &decl->getMetadata());
+
+        ParamDecl *F = decl->getParam(0);
+        if (F->getName() != "self") {
+            fatal("first parameter of method must be named 'self'", 
+                  &F->getMetadata());
+        }
+
+        if (!F->getType()->isPointer()) {
+            fatal("first parameter of method must be a pointer type", 
+                &F->getMetadata());
+        }
+      
+        PointerType *PT = dynamic_cast<PointerType *>(F->getType());
+        assert(PT);
+        if (!PT->getPointee()->compare(decl->getParent()->getDefinedType())) {
+            fatal("first parameter of method must be a pointer to the parent struct type", 
+                &F->getMetadata());
+        }
+    }
+
     if (decl->getBody())
         decl->getBody()->accept(this);
+    
     m_Function = nullptr;
 }
 
@@ -99,8 +127,17 @@ void Sema::visit(VarDecl *decl) {
     }
 }
 
-void Sema::visit(ParamDecl *decl) {
+void Sema::visit(FieldDecl *decl) {
+    if (decl->hasInit())
+        decl->getInit()->accept(this);
+}
 
+void Sema::visit(StructDecl *decl) {
+    for (auto &F : decl->getFields())
+        F->accept(this);
+
+    for (auto &F : decl->getFunctions())
+        F->accept(this);
 }
 
 void Sema::visit(BreakStmt *stmt) {

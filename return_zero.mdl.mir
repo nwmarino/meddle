@@ -1,57 +1,10 @@
 target :: x86_64 linux system_v
 
-global :: readonly i64 5, align 8
-
-test :: () -> i32 {
-13:
-    jmp #14
-
-14 (13):
-    $15 := icmp_eq i64 5, i64 1
-    brif i1 $15, #16, #18
-
-16 (14):
-    $17 := trunc i64 0 -> i32
-    ret i32 $17
-
-18 (14):
-    $19 := icmp_eq i64 5, i64 2
-    brif i1 $19, #20, #22
-
-20 (18):
-    $21 := trunc i64 42 -> i32
-    ret i32 $21
-
-22 (18):
-    $23 := trunc i64 1 -> i32
-    ret i32 $23
-}
-
-main :: () -> void {
-    _x := slot i64*, align 8
+box :: type { i64, i1 }
+box.foo :: (box* %self) -> void {
+    _self := slot box*, align 8
 
 1:
-    $2 := reint void* nil -> i64*
-    str i64* $2 -> i64** _x
-    $3 := load i64** _x
-    jmp #4
-
-4 (1):
-    $5 := reint void* nil -> i64*
-    $6 := pcmp_eq i64* $3, i64* $5
-    brif i1 $6, #7, #8
-
-7 (4):
-    ret
-
-8 (4):
-    $9 := int2ptr i64 5 -> i64*
-    $10 := pcmp_eq i64* $3, i64* $9
-    brif i1 $10, #11, #12
-
-11 (8):
-    ret
-
-12 (8):
+    str box* %self -> box** _self, align 8
     ret
 }

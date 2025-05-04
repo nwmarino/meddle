@@ -17,6 +17,8 @@ Decl *Parser::parse_decl() {
 
     if (match(TokenKind::SetParen))
         return parse_function(name);
+    else if (match(TokenKind::SetBrace))
+        return parse_struct(name);
     else if (match_keyword("fix") || match_keyword("mut"))
         return parse_global_var(name);
     else
@@ -256,4 +258,91 @@ EnumDecl *Parser::parse_enum(const Token &name) {
     ty->setDecl(Enum);
     m_Scope->addDecl(Enum);
     return Enum;
+}
+
+StructDecl *Parser::parse_struct(const Token &name) {
+    Runes runes = m_Runes;
+    StructType *ty = nullptr;
+    Scope *scope = enter_scope();
+    std::vector<FieldDecl *> Fields;
+    std::vector<FunctionDecl *> Functions;
+
+    if (!match(TokenKind::SetBrace))
+        fatal("expected '{' after struct binding", &m_Current->md);
+    next(); // '{'
+
+    while (!match(TokenKind::EndBrace)) {
+        parse_runes();
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected named declaration", &m_Current->md);
+
+        Token member_name = *m_Current;
+        next();
+
+        if (match(TokenKind::Colon)) {
+            next(); // ':'
+
+            Type *field_ty = parse_type(true);
+            Expr *field_init = nullptr;
+
+            if (match(TokenKind::Equals)) {
+                next(); // '='
+                field_init = parse_expr();
+                if (!field_init)
+                    fatal("expected expression after '='", &m_Current->md);
+
+                if (!field_init->isConstant()) {
+                    fatal("struct field must be initialized with a constant", 
+                          &m_Current->md);
+                }
+            }
+
+            FieldDecl *F = new FieldDecl(m_Runes, member_name.md, 
+                member_name.value, field_ty, Fields.size(), field_init);
+            m_Scope->addDecl(F);
+            Fields.push_back(F);
+
+            if (match(TokenKind::Comma))
+                next(); // ','
+            else if (match(TokenKind::EndBrace))
+                break;
+            else {
+                fatal("expected ',' or '}' in struct member list", 
+                      &m_Current->md);
+            }
+        } else if (match(TokenKind::Path)) {
+            next(); // '::'
+            
+            FunctionDecl *F = parse_function(member_name);
+            if (!F)
+                fatal("expected function declaration", &m_Current->md);
+
+            Functions.push_back(F);
+        } else {
+            fatal("expected field or method declaration", &m_Current->md);
+        }
+    }
+
+    next(); // '}'
+    exit_scope();
+
+    std::vector<Type *> fieldTys = {};
+    for (auto &F : Fields)
+        fieldTys.push_back(F->getType());
+
+    ty = StructType::create(m_Context, name.value, fieldTys);
+
+    StructDecl *Struct = new StructDecl(
+        runes,
+        name.md,
+        name.value,
+        ty,
+        scope,
+        Fields,
+        Functions
+    );
+    ty->setDecl(Struct);
+    m_Scope->addDecl(Struct);
+    return Struct;
 }

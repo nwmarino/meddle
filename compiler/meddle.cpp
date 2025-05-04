@@ -74,7 +74,6 @@ int main(int argc, char **argv) {
     units.push_back(parser.get());
 
     for (auto &unit : units) {
-        unit->getContext()->sanitate();
         NameResolution NR = NameResolution(opts, unit);
         Sema sema = Sema(opts, unit);
     }
@@ -88,11 +87,13 @@ int main(int argc, char **argv) {
     for (auto &unit : units) {
         mir::Segment *seg = new mir::Segment(target);
         assert(seg && "Unable to create segment.");
-        CGN cgn = CGN(opts, unit, seg);
+        CGN *cgn = new CGN(opts, unit, seg);
         segments.push_back(seg);
 
         std::ofstream OS = std::ofstream(unit->getFile().filename + ".mir");
         seg->print(OS);
+
+        delete cgn;
     }
 
     std::chrono::time_point<std::chrono::high_resolution_clock> frontend;

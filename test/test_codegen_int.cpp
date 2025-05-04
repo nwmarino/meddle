@@ -4799,6 +4799,74 @@ test :: () -> void {
     delete unit;
 }
 
+#define STRUCT_BASIC R"(box :: { x: i64, y: f64 })"
+TEST_F(IntegratedCodegenTest, Struct_Basic) {
+    File file = File("", "", "", STRUCT_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, f64 }
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define STRUCT_METHOD_BASIC R"(box :: { x: i64, y: bool, foo :: (self: box*) { ret; } })"
+TEST_F(IntegratedCodegenTest, Struct_Method_Basic) {
+    File file = File("", "", "", STRUCT_METHOD_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i1 }
+
+box.foo :: (box* %self) -> void {
+    _self := slot box*, align 8
+
+1:
+    str box* %self -> box** _self, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

@@ -19,6 +19,7 @@ static Type *unwrapType(Type *T) {
 
 NameResolution::NameResolution(const Options &opts, TranslationUnit *U) 
   : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()) {
+    m_Unit->getContext()->sanitate();
     U->accept(this);
 }
 
@@ -59,10 +60,39 @@ void NameResolution::visit(VarDecl *decl) {
     }
 }
 
+void NameResolution::visit(FieldDecl *decl) {
+    if (m_Phase == Phase::Shallow) {
+        if (decl->m_Type)
+            decl->m_Type = unwrapType(decl->getType());
+    } else if (m_Phase == Phase::Recurse) {
+        if (decl->getInit())
+            decl->getInit()->accept(this);
+        
+        if (!decl->m_Type) {
+            assert(decl->getInit() != nullptr && "Cannot infer type.");
+            decl->m_Type = decl->getInit()->getType();
+        }
+    }
+}
+
+void NameResolution::visit(StructDecl *decl) {
+    m_Scope = decl->getScope();
+
+    for (auto &F : decl->getFields())
+        F->accept(this);
+
+    for (auto &F : decl->getFunctions())
+        F->accept(this);
+
+    m_Scope = m_Scope->getParent();
+}
+
 void NameResolution::visit(CompoundStmt *stmt) {
     m_Scope = stmt->getScope();
+    
     for (auto &S : stmt->getStmts())
         S->accept(this);
+
     m_Scope = m_Scope->getParent();
 }
 

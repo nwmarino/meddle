@@ -1,6 +1,7 @@
 #ifndef MEDDLE_SEMA_H
 #define MEDDLE_SEMA_H
 
+#include "decl.h"
 #include "expr.h"
 #include "visitor.h"
 #include "../core/options.h"
@@ -24,7 +25,8 @@ public:
 
     void visit(FunctionDecl *decl) override;
     void visit(VarDecl *decl) override;
-    void visit(ParamDecl *decl) override;
+    void visit(FieldDecl *decl) override;
+    void visit(StructDecl *decl) override;
 
     void visit(BreakStmt *stmt) override;
     void visit(ContinueStmt *stmt) override;

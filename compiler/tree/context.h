@@ -15,10 +15,12 @@ class TranslationUnit;
 class Context final {
     friend class TranslationUnit;
     friend class EnumType;
+    friend class StructType;
 
     TranslationUnit *m_Unit;
     std::unordered_map<String, Type *> m_Types;
     std::unordered_map<String, EnumType *> m_Enums;
+    std::unordered_map<String, StructType *> m_Structs;
     std::vector<FunctionType *> m_FunctionTypes;
     std::vector<TypeResult *> m_Results;
 

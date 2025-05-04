@@ -13,25 +13,26 @@ namespace meddle {
 class Scope;
 class Stmt;
 class ParamDecl;
+class StructDecl;
 
 enum class Rune : uint8_t {
+    Associated,
     NoMangle,
-    Scoped,
 };
 
 struct Runes final {
     uint32_t bits = 0;
 
-    void set(Rune attr) {
-        bits |= (1 << static_cast<uint32_t>(attr));
+    void set(Rune rune) {
+        bits |= (1 << static_cast<uint32_t>(rune));
     }
 
-    void clear(Rune attr) {
-        bits &= ~(1 << static_cast<uint32_t>(attr));
+    void clear(Rune rune) {
+        bits &= ~(1 << static_cast<uint32_t>(rune));
     }
 
-    bool has(Rune attr) const {
-        return bits & (1 << static_cast<uint32_t>(attr));
+    bool has(Rune rune) const {
+        return bits & (1 << static_cast<uint32_t>(rune));
     }
 
     void clear() {
@@ -76,11 +77,12 @@ class FunctionDecl final : public NamedDecl {
     Scope *m_Scope;
     std::vector<ParamDecl *> m_Params;
     Stmt *m_Body;
+    StructDecl *m_Parent;
 
 public:
     FunctionDecl(const Runes &R, const Metadata &M, const String &N, 
                  FunctionType *T, Scope *S, std::vector<ParamDecl *> P, 
-                 Stmt *B);
+                 Stmt *B, StructDecl *SP = nullptr);
 
     ~FunctionDecl() override;
 
@@ -106,6 +108,15 @@ public:
     Stmt *getBody() const { return m_Body; }
 
     bool empty() const { return m_Body == nullptr; }
+
+    StructDecl *getParent() const { return m_Parent; }
+
+    void setParent(StructDecl *P) { m_Parent = P; }
+
+    bool hasParent() const { return m_Parent != nullptr; }
+
+    bool isMethod() const 
+    { return hasParent() && !m_Runes.has(Rune::Associated); }
 };
 
 class VarDecl : public NamedDecl {
@@ -217,7 +228,8 @@ public:
 
     void accept(Visitor *V) override { V->visit(this); }
 
-    const std::vector<EnumVariantDecl *> &getVariants() const { return m_Variants; }
+    const std::vector<EnumVariantDecl *> &getVariants() const 
+    { return m_Variants; }
 
     unsigned getNumVariants() const { return m_Variants.size(); }
 
@@ -232,6 +244,97 @@ public:
                 return V;
 
         return nullptr;
+    }
+};
+
+class FieldDecl final : public NamedDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Type *m_Type;
+    Expr *m_Init;
+    unsigned m_Index;
+    StructDecl *m_Parent;
+
+public:
+    FieldDecl(const Runes &R, const Metadata &M, const String &N, Type *T, 
+              unsigned Idx, Expr *I = nullptr, StructDecl *P = nullptr)
+      : NamedDecl(R, M, N), m_Type(T), m_Init(I), m_Index(Idx), m_Parent(P) {}
+
+    ~FieldDecl() override {
+        if (m_Init)
+            delete m_Init;
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Type *getType() const { return m_Type; }
+
+    Expr *getInit() const { return m_Init; }
+
+    bool hasInit() const { return m_Init != nullptr; }
+
+    unsigned getIndex() const { return m_Index; }
+
+    StructDecl *getParent() const { return m_Parent; }
+
+    void setParent(StructDecl *P) { m_Parent = P; }
+};
+
+class StructDecl final : public TypeDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Scope *m_Scope;
+    std::vector<FieldDecl *> m_Fields;
+    std::vector<FunctionDecl *> m_Functions;
+
+public:
+    StructDecl(const Runes &R, const Metadata &M, const String &N, 
+               StructType *T, Scope *S, std::vector<FieldDecl *> F, 
+               std::vector<FunctionDecl *> Funcs);
+
+    ~StructDecl() override;
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Scope *getScope() const { return m_Scope; }
+
+    const std::vector<FieldDecl *> &getFields() const { return m_Fields; }
+
+    unsigned getNumFields() const { return m_Fields.size(); }
+
+    FieldDecl *getField(unsigned i) const {
+        assert(i < m_Fields.size());
+        return m_Fields[i];
+    }
+
+    FieldDecl *getField(const String &N) const {
+        for (auto *F : m_Fields)
+            if (F->getName() == N)
+                return F;
+
+        return nullptr;
+    }
+
+    const std::vector<FunctionDecl *> &getFunctions() const 
+    { return m_Functions; }
+
+    FunctionDecl *getFunction(const String &N) const {
+        for (auto *F : m_Functions)
+            if (F->getName() == N)
+                return F;
+
+        return nullptr;
+    }
+
+    unsigned getNumFunctions() const { return m_Functions.size(); }
+
+    FunctionDecl *getFunction(unsigned i) const {
+        assert(i < m_Functions.size());
+        return m_Functions[i];
     }
 };
 

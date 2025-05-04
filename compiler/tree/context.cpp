@@ -19,6 +19,9 @@ Context::~Context() {
     for (auto &[N, T] : m_Enums)
         delete T;
 
+    for (auto &[N, T] : m_Structs)
+        delete T;
+
     for (auto &FT : m_FunctionTypes)
         delete FT;
 
@@ -55,6 +58,10 @@ Type *Context::getType(const String &N) {
     if (enum_it != m_Enums.end())
         return enum_it->second;
 
+    auto struct_it = m_Structs.find(N);
+    if (struct_it != m_Structs.end())
+        return struct_it->second;
+
     //NamedDecl *D = m_Unit->getScope()->lookup(N);
     // if (D and D is a type def)
     //   return D's type
@@ -73,7 +80,7 @@ Type *Context::getType(const String &N) {
 
     auto LBrack = N.find_last_of('[');
     auto RBrack = N.find_last_of(']');
-    if (LBrack && RBrack) {
+    if (LBrack != std::string::npos && RBrack != std::string::npos) {
         Type *element = getType(N.substr(0, LBrack));
         if (!element)
             return nullptr;

@@ -5,12 +5,12 @@
 Wed. May 7
 
 Structures
-- `StructDecl`
 - `StructInitExpr`
   - `FieldInitExpr`
 - `MemberExpr`
 - `MethodCallExpr`
 - `TypeSpecExpr`
+  - Expand for Structs
 
 Multi-package Support
 - `UseDecl` declarations

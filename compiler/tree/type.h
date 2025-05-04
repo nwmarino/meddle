@@ -14,6 +14,7 @@ namespace meddle {
 class Context;
 
 class EnumDecl;
+class StructDecl;
 
 class Type {
 protected:
@@ -34,6 +35,8 @@ public:
     bool isArray() const { return m_Name.back() == ']'; }
 
     bool isPointer() const { return m_Name.back() == '*'; }
+
+    virtual bool isStruct() const { return false; }
     
     virtual bool isSInt() const { return false; }
 
@@ -71,7 +74,7 @@ public:
 
     const Metadata &getMetadata() const { return m_Metadata; }
 
-    bool isQualified() const override { return m_Underlying != nullptr; }
+    bool isQualified() const override { return false; }
 
     bool canCastTo(Type *T) const override
     { assert(false && "Cannot cast this non-concrete type."); }
@@ -214,6 +217,49 @@ public:
 
     void setDecl(EnumDecl *E) { m_Decl = E; }
 
+    bool isUInt() const override { return m_Underlying->isUInt(); }
+
+    bool isUInt(unsigned N) const override { return m_Underlying->isUInt(N); }
+
+    bool isSInt() const override { return m_Underlying->isSInt(); }
+
+    bool isSInt(unsigned N) const override { return m_Underlying->isSInt(N); }
+
+    bool canCastTo(Type *T) const override;
+
+    bool canImplCastTo(Type *T) const override;
+
+    bool compare(Type *T) const override;
+};
+
+class StructType final : public Type {
+    friend class Context;
+
+    std::vector<Type *> m_Fields;
+    StructDecl *m_Decl;
+
+    StructType(const String &N, std::vector<Type *> F, StructDecl *D = nullptr) 
+        : Type(N), m_Fields(F), m_Decl(D) {}
+
+public:
+    static StructType *get(Context *C, String N);
+    static StructType *create(Context *C, String N, std::vector<Type *> F, StructDecl *D = nullptr);
+
+    const std::vector<Type *> &getFields() const { return m_Fields; }
+
+    Type *getField(unsigned i) const {
+        assert(i < m_Fields.size() && "Index out of range.");
+        return m_Fields.at(i);
+    }
+
+    unsigned getNumFields() const { return m_Fields.size(); }
+
+    StructDecl *getDecl() const { return m_Decl; }
+
+    void setDecl(StructDecl *S) { m_Decl = S; }
+
+    bool isStruct() const override { return true; }
+
     bool canCastTo(Type *T) const override;
 
     bool canImplCastTo(Type *T) const override;
@@ -222,10 +268,6 @@ public:
 };
 
 /*
-class StructType final : public Type {
-    std::vector<Type *> m_Fields;
-};
-
 class TemplateParamType final : public Type {
 
 };

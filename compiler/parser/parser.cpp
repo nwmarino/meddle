@@ -211,10 +211,10 @@ void Parser::parse_runes() {
             fatal("expected rune identifier", &m_Current->md);
 
         String name = m_Current->value;
-        if (name == "no_mangle")
+        if (name == "associated")
+            m_Runes.set(Rune::Associated);
+        else if (name == "no_mangle")
             m_Runes.set(Rune::NoMangle);
-        else if (name == "scoped")
-            m_Runes.set(Rune::Scoped);
         else
             warn("unknown rune: " + name, &m_Current->md);
 

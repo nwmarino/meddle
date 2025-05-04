@@ -222,5 +222,47 @@ bool EnumType::canImplCastTo(Type *T) const {
 
 bool EnumType::compare(Type *T) const {
     assert(T && "Type cannot be null.");
-    return m_Name == T->getName();
+    return this == T;
+}
+
+StructType *StructType::get(Context *C, String N) {
+    assert(C && "Context cannot be null.");
+    assert(!N.empty() && "Name cannot be empty.");
+
+    for (auto &T : C->m_Structs)
+        if (T.first == N)
+            return T.second;
+
+    return nullptr;
+}
+
+StructType *StructType::create(Context *C, String N, std::vector<Type *> F, 
+                               StructDecl *D) {
+    assert(C && "Context cannot be null.");
+    assert(!N.empty() && "Name cannot be empty.");
+
+    if (StructType *ST = get(C, N)) {
+        fatal(
+            "duplicate enum type: " + N,
+            D ? &D->getMetadata() : nullptr
+        );
+    }
+
+    return C->m_Structs[N] = new StructType(N, F, D);
+}
+
+
+bool StructType::canCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return this == T;
+}
+
+bool StructType::canImplCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return this == T;
+}
+
+bool StructType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return this == T;
 }

@@ -426,17 +426,22 @@ void Segment::print(std::ostream &OS) const {
 
     OS << "\n\n";
 
+    bool addTypeNL = false;
     for (auto &[ String, Type ] : m_Types) {
         if (!Type->is_struct_ty())
             continue;
 
         StructType *ST = static_cast<StructType *>(Type);
-        OS << "struct " << ST->get_name() << " { ";
+        OS << ST->get_name() << " :: type { ";
         for (auto &M: ST->get_members())
-            OS << M->get_name() << (M != ST->get_members().back() ? ",\n" : "\n");
+            OS << M->get_name() << (M != ST->get_members().back() ? ", " : "");
 
-        OS << " }";
+        OS << " }\n";
+        addTypeNL = true;
     }
+
+    if (addTypeNL && !m_Functions.empty())
+        OS << "\n";
 
     for (auto &[ String, Data ] : m_Data)
         print_data(OS, Data);

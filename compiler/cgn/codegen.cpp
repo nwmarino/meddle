@@ -7,6 +7,7 @@
 #include "../mir/basicblock.h"
 #include "../mir/builder.h"
 #include "../mir/function.h"
+#include <cassert>
 
 using namespace meddle;
 
@@ -20,8 +21,20 @@ String CGN::mangle_name(NamedDecl *D) {
 	if (it != m_Mangled.end())
 		return it->second;
 
-	m_Mangled[D] = D->getName();
-	return D->getName();
+	String mangled;
+
+	if (auto *F = dynamic_cast<FunctionDecl *>(D)) {
+		if (F->isMethod()) {
+			mangled = F->getParent()->getName() + "." + F->getName();
+		} else {
+			mangled = F->getName();
+		}
+	} else {
+		mangled = D->getName();
+	}
+
+	m_Mangled[D] = mangled;
+	return mangled;
 }
 
 mir::Value *CGN::inject_cmp(mir::Value *V) {
@@ -107,6 +120,10 @@ mir::Type *CGN::cgn_type(Type *T) {
 		return mir::PointerType::get(m_Segment, cgn_type(PT->getPointee()));
 	} else if (auto *ET = dynamic_cast<EnumType *>(T)) {
 		return cgn_type(ET->getUnderlying());
+	} else if (auto *ST = dynamic_cast<StructType *>(T)) {
+		mir::StructType *mirTy = mir::StructType::get(m_Segment, ST->getName());
+		assert(mirTy && "Struct type not lowered.");
+		return mirTy;
 	}
 
 	assert(false && "Unable to generate a type.");
@@ -342,7 +359,20 @@ void CGN::visit(VarDecl *decl) {
 	}
 }
 
-void CGN::visit(ParamDecl *decl) {}
+void CGN::visit(StructDecl *decl) {
+	if (m_Phase == Phase::Declare) {
+		std::vector<mir::Type *> memberTys;
+
+		for (auto &F : decl->getFields())
+			memberTys.push_back(cgn_type(F->getType()));
+
+		mir::StructType *ST = mir::StructType::create(
+			m_Segment, decl->getName(), memberTys);
+	}
+	
+	for (auto &F : decl->getFunctions())
+		F->accept(this);
+}
 
 void CGN::visit(BreakStmt *stmt) {
 	m_Builder.build_jmp(m_Merge);

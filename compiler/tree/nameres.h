@@ -1,6 +1,7 @@
 #ifndef MEDDLE_NAME_RESOLUTION_H
 #define MEDDLE_NAME_RESOLUTION_H
 
+#include "decl.h"
 #include "expr.h"
 #include "scope.h"
 #include "visitor.h"
@@ -23,6 +24,8 @@ public:
 
     void visit(FunctionDecl *decl) override;
     void visit(VarDecl *decl) override;
+    void visit(FieldDecl *decl) override;
+    void visit(StructDecl *decl) override;
     
     void visit(CompoundStmt *stmt) override;
     void visit(DeclStmt *stmt) override;
