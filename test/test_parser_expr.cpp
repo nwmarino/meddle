@@ -1706,9 +1706,9 @@ TEST_F(ParseExprTest, Binary_Precedence_Assignment_Basic) {
     delete unit;
 }
 
-#define UNARY_PREFIX_NEG R"(test::() { mut x: i64 = -5;})"
+#define NEG_INTEGER R"(test::() { mut x: i64 = -5;})"
 TEST_F(ParseExprTest, Unary_Prefix_Neg) {
-    File file = File("", "", "", UNARY_PREFIX_NEG);
+    File file = File("", "", "", NEG_INTEGER);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
@@ -1731,13 +1731,9 @@ TEST_F(ParseExprTest, Unary_Prefix_Neg) {
     EXPECT_EQ(VD->getName(), "x");
     EXPECT_NE(VD->getInit(), nullptr);
 
-    UnaryExpr *US = dynamic_cast<UnaryExpr *>(VD->getInit());
-    EXPECT_NE(US, nullptr);
-    EXPECT_EQ(US->getKind(), UnaryExpr::Kind::Negate);
-    EXPECT_EQ(US->isPostfix(), false);
-
-    IntegerLiteral *RHS = dynamic_cast<IntegerLiteral *>(US->getExpr());
-    EXPECT_NE(RHS, nullptr);
+    IntegerLiteral *INT = dynamic_cast<IntegerLiteral *>(VD->getInit());
+    EXPECT_NE(INT, nullptr);
+    EXPECT_EQ(INT->getValue(), -5);
 
     delete unit;
 }

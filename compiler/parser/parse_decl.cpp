@@ -4,7 +4,7 @@
 using namespace meddle;
 
 Decl *Parser::parse_decl() {
-    parse_attributes();
+    parse_runes();
 
     if (!match(TokenKind::Identifier))
         fatal("expected declaration identifier", &m_Current->md);
@@ -19,8 +19,8 @@ Decl *Parser::parse_decl() {
         return parse_function(name);
     else if (match_keyword("fix") || match_keyword("mut"))
         return parse_global_var(name);
-
-    return nullptr;
+    else
+        return parse_enum(name);
 }
 
 FunctionDecl *Parser::parse_function(const Token &name) {
@@ -51,7 +51,7 @@ FunctionDecl *Parser::parse_function(const Token &name) {
             fatal("parameter type cannot be 'void'", &m_Current->md);
 
         ParamDecl *param = new ParamDecl(
-            Attributes(),
+            Runes(),
             param_md,
             param_name,
             param_ty,
@@ -94,7 +94,7 @@ FunctionDecl *Parser::parse_function(const Token &name) {
     m_Context->addType(ty);
 
     FunctionDecl *fn = new FunctionDecl(
-        m_Attributes, 
+        m_Runes, 
         name.md, 
         name.value, 
         ty, 
@@ -132,7 +132,7 @@ VarDecl *Parser::parse_global_var(const Token &name) {
     next(); // ';'
 
     VarDecl *var = new VarDecl(
-        m_Attributes,
+        m_Runes,
         name.md,
         name.value,
         T,
@@ -180,7 +180,7 @@ VarDecl *Parser::parse_var(bool mut) {
         fatal("expected ';' after variable declaration", &m_Current->md);
 
     VarDecl *var = new VarDecl(
-        Attributes(),
+        Runes(),
         md,
         name,
         T,
@@ -190,4 +190,76 @@ VarDecl *Parser::parse_var(bool mut) {
     );
     m_Scope->addDecl(var);
     return var;
+}
+
+EnumDecl *Parser::parse_enum(const Token &name) {
+    Type *var_ty = nullptr;
+    std::vector<EnumVariantDecl *> Variants;
+
+    var_ty = parse_type(true);
+
+    if (!match(TokenKind::SetBrace))
+        fatal("expected '{' after enum type", &m_Current->md);
+    next(); // '{'
+
+    long curr_val = 0;
+    while (!match(TokenKind::EndBrace)) {
+        Metadata var_md = m_Current->md;
+        String var_name;
+        long var_val = curr_val;
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected enum variant name", &var_md);
+
+        var_name = m_Current->value;
+        next();
+
+        if (match(TokenKind::Equals)) {
+            next(); // '='
+
+            if (!match(LiteralKind::Integer))
+                fatal("expected integer literal after '='", &m_Current->md);
+            
+            var_val = std::stol(m_Current->value);
+            curr_val = var_val + 1;
+            next(); // integer literal
+        }
+
+        EnumVariantDecl *Variant = new EnumVariantDecl(
+            Runes(),
+            var_md,
+            var_name,
+            var_ty,
+            var_val
+        );
+
+        if (!m_Runes.has(Rune::Scoped))
+            m_Scope->addDecl(Variant);
+
+        Variants.push_back(Variant);
+
+        if (match(TokenKind::EndBrace))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or '}' in enum variant list", &m_Current->md);
+        next(); // ','
+    }
+
+    next(); // '}'
+
+    if (Variants.empty())
+        fatal("enum must have at least one variant", &m_Current->md);
+
+    EnumType *enum_ty = EnumType::create(m_Context, name.value, var_ty);
+    EnumDecl *Enum = new EnumDecl(
+        m_Runes,
+        name.md,
+        name.value,
+        enum_ty,
+        Variants
+    );
+    enum_ty->setDecl(Enum);
+    m_Scope->addDecl(Enum);
+    return Enum;
 }

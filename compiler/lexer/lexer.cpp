@@ -53,7 +53,9 @@ Token Lexer::lex() {
             break;
 
         case '-':
-            if (next() == '-') {
+            if (isdigit(next())) {
+                goto DEFAULT;
+            } else if (next() == '-') {
                 kind = TokenKind::MinusMinus;
                 move(2);
             } else if (next() == '=') {
@@ -361,10 +363,17 @@ Token Lexer::lex() {
             move();
             break;
         
+        DEFAULT:
         default: {
-            if (isdigit(curr())) {
+            if (isdigit(curr()) || curr() == '-') {
                 kind = TokenKind::Literal;
                 literal = LiteralKind::Integer;
+
+                if (curr() == '-') {
+                    value += curr();
+                    move();
+                }
+
                 while (isdigit(curr()) || curr() == '.') {
                     if (curr() == '.') {
                         if (!isdigit(next()) || literal == LiteralKind::Float)

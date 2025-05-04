@@ -1,4 +1,9 @@
+#include "context.h"
+#include "decl.h"
 #include "type.h"
+#include "../core/logger.h"
+
+#include <cassert>
 
 using namespace meddle;
 
@@ -177,4 +182,45 @@ bool FunctionType::compare(Type *T) const {
             return false;
 
     return m_Ret->compare(FT->m_Ret);
+}
+
+EnumType *EnumType::get(Context *C, String N) {
+    assert(C && "Context cannot be null.");
+    assert(!N.empty() && "Name cannot be empty.");
+
+    for (auto &T : C->m_Enums)
+        if (T.first == N)
+            return T.second;
+
+    return nullptr;
+}
+
+EnumType *EnumType::create(Context *C, String N, Type *U, EnumDecl *D) {
+    assert(C && "Context cannot be null.");
+    assert(!N.empty() && "Name cannot be empty.");
+    assert(U && "Underlying type cannot be null.");
+
+    if (EnumType *ET = get(C, N)) {
+        fatal(
+            "duplicate enum type: " + N,
+            D ? &D->getMetadata() : nullptr
+        );
+    }
+
+    return C->m_Enums[N] = new EnumType(N, U, D);
+}
+
+bool EnumType::canCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return m_Underlying->canCastTo(T);
+}
+
+bool EnumType::canImplCastTo(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return m_Underlying->canImplCastTo(T);
+}
+
+bool EnumType::compare(Type *T) const {
+    assert(T && "Type cannot be null.");
+    return m_Underlying->compare(T);
 }

@@ -15,7 +15,7 @@ class Parser final {
     Scope *m_Scope;
     const Token *m_Current;
     unsigned m_Saved;
-    Attributes m_Attributes;
+    Runes m_Runes;
 
     void next() { m_Current = m_Stream.get(); }
 
@@ -56,12 +56,13 @@ class Parser final {
     UnaryExpr::Kind get_un_operator() const;
 
     Type *parse_type(bool produce = true);
-    void parse_attributes();
+    void parse_runes();
 
     Decl *parse_decl();
     FunctionDecl *parse_function(const Token &name);
     VarDecl *parse_global_var(const Token &name);
     VarDecl *parse_var(bool mut);
+    EnumDecl *parse_enum(const Token &name);
 
     Stmt *parse_stmt();
     BreakStmt *parse_break();

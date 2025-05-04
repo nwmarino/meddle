@@ -11,6 +11,10 @@ using String = std::string;
 
 namespace meddle {
 
+class Context;
+
+class EnumDecl;
+
 class Type {
 protected:
     String m_Name;
@@ -180,7 +184,7 @@ public:
     unsigned getNumParams() const { return m_Params.size(); }
 
     void setParamType(Type *T, unsigned i) {
-        assert(i <= m_Params.size());
+        assert(i <= m_Params.size() && "Index out of range.");
         m_Params[i] = T;
     }
 
@@ -191,11 +195,33 @@ public:
     bool compare(Type *T) const override;
 };
 
-/*
 class EnumType final : public Type {
+    friend class Context;
+
     Type *m_Underlying;
+    EnumDecl *m_Decl;
+
+    EnumType(const String &N, Type *U, EnumDecl *E = nullptr)
+      : Type(N), m_Underlying(U), m_Decl(E) {}
+
+public:
+    static EnumType *get(Context *C, String N);
+    static EnumType *create(Context *C, String N, Type *U, EnumDecl *D = nullptr);
+
+    Type *getUnderlying() const { return m_Underlying; }
+
+    EnumDecl *getDecl() const { return m_Decl; }
+
+    void setDecl(EnumDecl *E) { m_Decl = E; }
+
+    bool canCastTo(Type *T) const override;
+
+    bool canImplCastTo(Type *T) const override;
+
+    bool compare(Type *T) const override;
 };
 
+/*
 class StructType final : public Type {
     std::vector<Type *> m_Fields;
 };

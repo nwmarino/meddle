@@ -339,6 +339,45 @@ TEST_F(ParseDeclTest, Var_Global_Mut_Init) {
     delete unit;
 }
 
+#define ENUM_BASIC R"(Colors :: i64 { Red = 0, Blue = 1, Green, Yellow = 4, Orange })"
+TEST_F(ParseDeclTest, Enum_Basic) {
+    File file = File("", "", "", ENUM_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    EnumDecl *ED = dynamic_cast<EnumDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(ED, nullptr);
+    EXPECT_EQ(ED->getName(), "Colors");
+    EXPECT_EQ(ED->getDefinedType()->getName(), "Colors");
+    EXPECT_EQ(ED->getVariants().size(), 5);
+
+    EnumVariantDecl *EV1 = ED->getVariants()[0];
+    EXPECT_EQ(EV1->getName(), "Red");
+    EXPECT_EQ(EV1->getValue(), 0);
+
+    EnumVariantDecl *EV2 = ED->getVariants()[1];
+    EXPECT_EQ(EV2->getName(), "Blue");
+    EXPECT_EQ(EV2->getValue(), 1);
+
+    EnumVariantDecl *EV3 = ED->getVariants()[2];
+    EXPECT_EQ(EV3->getName(), "Green");
+    EXPECT_EQ(EV3->getValue(), 2);
+
+    EnumVariantDecl *EV4 = ED->getVariants()[3];
+    EXPECT_EQ(EV4->getName(), "Yellow");
+    EXPECT_EQ(EV4->getValue(), 4);
+
+    EnumVariantDecl *EV5 = ED->getVariants()[4];
+    EXPECT_EQ(EV5->getName(), "Orange");
+    EXPECT_EQ(EV5->getValue(), 5);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

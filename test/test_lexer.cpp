@@ -220,7 +220,7 @@ TEST_F(LexerTest, LexNegativeInteger) {
     Lexer lexer = Lexer(File("", "", "", "test::() {mut x: i64 = -5;}"));
     TokenStream stream = lexer.unwrap();
 
-    EXPECT_EQ(stream.getTokens().size(), 15);
+    EXPECT_EQ(stream.getTokens().size(), 14);
     EXPECT_EQ(stream.get(0)->kind, TokenKind::Identifier);
     EXPECT_EQ(stream.get(0)->value, "test");
     EXPECT_EQ(stream.get(1)->kind, TokenKind::Path);
@@ -235,13 +235,12 @@ TEST_F(LexerTest, LexNegativeInteger) {
     EXPECT_EQ(stream.get(8)->kind, TokenKind::Identifier);
     EXPECT_EQ(stream.get(8)->value, "i64");
     EXPECT_EQ(stream.get(9)->kind, TokenKind::Equals);
-    EXPECT_EQ(stream.get(10)->kind, TokenKind::Minus);
-    EXPECT_EQ(stream.get(11)->kind, TokenKind::Literal);
-    EXPECT_EQ(stream.get(11)->literal, LiteralKind::Integer);
-    EXPECT_EQ(stream.get(11)->value, "5");
-    EXPECT_EQ(stream.get(12)->kind, TokenKind::Semi);
-    EXPECT_EQ(stream.get(13)->kind, TokenKind::EndBrace);
-    EXPECT_EQ(stream.get(14)->kind, TokenKind::Eof);
+    EXPECT_EQ(stream.get(10)->kind, TokenKind::Literal);
+    EXPECT_EQ(stream.get(10)->literal, LiteralKind::Integer);
+    EXPECT_EQ(stream.get(10)->value, "-5");
+    EXPECT_EQ(stream.get(11)->kind, TokenKind::Semi);
+    EXPECT_EQ(stream.get(12)->kind, TokenKind::EndBrace);
+    EXPECT_EQ(stream.get(13)->kind, TokenKind::Eof);
 }
 
 } // namespace test

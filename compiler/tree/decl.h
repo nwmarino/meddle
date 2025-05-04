@@ -6,6 +6,7 @@
 #include "visitor.h"
 
 #include <cassert>
+#include <cstdint>
 
 namespace meddle {
 
@@ -13,22 +14,44 @@ class Scope;
 class Stmt;
 class ParamDecl;
 
-struct Attributes final {
-    unsigned no_mangle:1;
+enum class Rune : uint8_t {
+    NoMangle,
+    Scoped,
+};
+
+struct Runes final {
+    uint32_t bits = 0;
+
+    void set(Rune attr) {
+        bits |= (1 << static_cast<uint32_t>(attr));
+    }
+
+    void clear(Rune attr) {
+        bits &= ~(1 << static_cast<uint32_t>(attr));
+    }
+
+    bool has(Rune attr) const {
+        return bits & (1 << static_cast<uint32_t>(attr));
+    }
+
+    void clear() {
+        bits = 0;
+    }
 };
 
 class Decl {
 protected:
-    Attributes m_Attrs;
+    Runes m_Runes;
     Metadata m_Metadata;
 
 public:
-    Decl(const Attributes &A, const Metadata &M) : m_Attrs(A), m_Metadata(M) {}
+    Decl(const Runes &R, const Metadata &M) : m_Runes(R), m_Metadata(M) {}
+
     virtual ~Decl() = default;
 
     virtual void accept(Visitor *V) = 0;
 
-    const Attributes &getAttributes() const { return m_Attrs; }
+    const Runes &getRunes() const { return m_Runes; }
 
     const Metadata &getMetadata() const { return m_Metadata; }
 };
@@ -38,8 +61,8 @@ protected:
     String m_Name;
 
 public:
-    NamedDecl(const Attributes &A, const Metadata &M, const String &N) 
-      : Decl(A, M), m_Name(N) {}
+    NamedDecl(const Runes &R, const Metadata &M, const String &N) 
+      : Decl(R, M), m_Name(N) {}
 
     String getName() const { return m_Name; }
 };
@@ -55,7 +78,7 @@ class FunctionDecl final : public NamedDecl {
     Stmt *m_Body;
 
 public:
-    FunctionDecl(const Attributes &A, const Metadata &M, const String &N, 
+    FunctionDecl(const Runes &R, const Metadata &M, const String &N, 
                  FunctionType *T, Scope *S, std::vector<ParamDecl *> P, 
                  Stmt *B);
 
@@ -97,10 +120,13 @@ protected:
     bool m_Global;
 
 public:
-    VarDecl(const Attributes &A, const Metadata &M, const String &N, 
+    VarDecl(const Runes &R, const Metadata &M, const String &N, 
             Type *T, Expr *I, bool mut, bool global);
 
-    ~VarDecl() override;
+    ~VarDecl() override {
+        if (hasInit())
+            delete m_Init;
+    }
 
     void accept(Visitor *V) override { V->visit(this); }
 
@@ -124,7 +150,7 @@ class ParamDecl final : public VarDecl {
     FunctionDecl *m_Parent;
 
 public:
-    ParamDecl(const Attributes &A, const Metadata &M, const String &N,
+    ParamDecl(const Runes &A, const Metadata &M, const String &N,
               Type *T, unsigned I);
 
     void accept(Visitor *V) override { V->visit(this); }
@@ -134,6 +160,79 @@ public:
     FunctionDecl *getParent() const { return m_Parent; }
 
     void setParent(FunctionDecl *P) { m_Parent = P; }
+};
+
+class TypeDecl : public NamedDecl {
+protected:
+    Type *m_Type;
+
+public:
+    TypeDecl(const Runes &A, const Metadata &M, const String &N, Type *T)
+      : NamedDecl(A, M, N), m_Type(T) {}
+
+    virtual ~TypeDecl() = default;
+
+    Type *getDefinedType() const { return m_Type; }
+
+    void setDefinedType(Type *T) { m_Type = T; }
+};
+
+class EnumVariantDecl final : public NamedDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    Type *m_Type;
+    long m_Value;
+
+public:
+    EnumVariantDecl(const Runes &R, const Metadata &M, const String &N, 
+                    Type *T, long V)
+      : NamedDecl(R, M, N), m_Type(T), m_Value(V) {}
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    Type *getType() const { return m_Type; }
+
+    long getValue() const { return m_Value; }
+};
+
+class EnumDecl final : public TypeDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    std::vector<EnumVariantDecl *> m_Variants;
+
+public:
+    EnumDecl(const Runes &R, const Metadata &M, const String &N, 
+             EnumType *T, std::vector<EnumVariantDecl *> V)
+      : TypeDecl(R, M, N, T), m_Variants(V) {}
+
+    ~EnumDecl() override {
+        for (auto *V : m_Variants)
+            delete V;
+        m_Variants.clear();
+    }
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    const std::vector<EnumVariantDecl *> &getVariants() const { return m_Variants; }
+
+    unsigned getNumVariants() const { return m_Variants.size(); }
+
+    EnumVariantDecl *getVariant(unsigned i) const {
+        assert(i < m_Variants.size() && "Index out of range.");
+        return m_Variants[i];
+    }
+
+    EnumVariantDecl *getVariant(const String &N) const {
+        for (auto *V : m_Variants)
+            if (V->getName() == N)
+                return V;
+
+        return nullptr;
+    }
 };
 
 } // namespace meddle

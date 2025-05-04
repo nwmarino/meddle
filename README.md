@@ -4,10 +4,11 @@
 
 Wed. May 7
 
-More testing with aggregate initializers (non-var and non-call contexts)
-
-Enumerations
-- `EnumDecl`
+Specifiers and the `::` Operator
+- `TempSpecExpr`
+- `EnumSpecExpr`
+- `TypeSpecExpr`
+- `PkgSpecExpr`
 
 Structures
 - `StructDecl`

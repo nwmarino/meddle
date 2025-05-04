@@ -14,24 +14,18 @@ class TranslationUnit;
 
 class Context final {
     friend class TranslationUnit;
+    friend class EnumType;
 
     TranslationUnit *m_Unit;
     std::unordered_map<String, Type *> m_Types;
+    std::unordered_map<String, EnumType *> m_Enums;
     std::vector<FunctionType *> m_FunctionTypes;
     std::vector<TypeResult *> m_Results;
 
 public:
     Context(TranslationUnit *U);
-    ~Context() {
-        for (auto &[N, T] : m_Types)
-            delete T;
 
-        for (auto &FT : m_FunctionTypes)
-            delete FT;
-
-        for (auto &R : m_Results)
-            delete R;
-    }
+    ~Context();
 
     Type *getBoolType() const { return m_Types.at("bool"); }
     Type *getVoidType() const { return m_Types.at("void"); }

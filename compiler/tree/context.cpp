@@ -12,6 +12,20 @@ Context::Context(TranslationUnit *U) : m_Unit(U) {
     }
 }
 
+Context::~Context() {
+    for (auto &[N, T] : m_Types)
+        delete T;
+
+    for (auto &[N, T] : m_Enums)
+        delete T;
+
+    for (auto &FT : m_FunctionTypes)
+        delete FT;
+
+    for (auto &R : m_Results)
+        delete R;
+}
+
 void Context::addType(Type *T) {
     if (Type *existing = m_Types[T->getName()]) {
         // If a type exists with the same name already and is not a type

@@ -194,7 +194,7 @@ Type *Parser::parse_type(bool produce) {
     return nullptr;
 }
 
-void Parser::parse_attributes() {
+void Parser::parse_runes() {
     if (!match(TokenKind::Sign))
         return;
 
@@ -206,15 +206,17 @@ void Parser::parse_attributes() {
         next();
     }
 
-    for (;;) {
+    while (1) {
         if (!match(TokenKind::Identifier))
-            fatal("expected attribute identifier", &m_Current->md);
+            fatal("expected rune identifier", &m_Current->md);
 
         String name = m_Current->value;
         if (name == "no_mangle")
-            m_Attributes.no_mangle = 1;
+            m_Runes.set(Rune::NoMangle);
+        else if (name == "scoped")
+            m_Runes.set(Rune::Scoped);
         else
-            warn("unknown attribute: " + name, &m_Current->md);
+            warn("unknown rune: " + name, &m_Current->md);
 
         next();
 
@@ -225,7 +227,7 @@ void Parser::parse_attributes() {
             }
 
             if (!match(TokenKind::Comma))
-                fatal("expected ']' after attribute list", &m_Current->md);
+                fatal("expected ']' after rune list", &m_Current->md);
 
             next();
         } else
