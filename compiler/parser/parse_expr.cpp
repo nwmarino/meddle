@@ -46,6 +46,8 @@ Expr *Parser::parse_ident() {
 
     if (match(TokenKind::SetParen))
         return parse_call();
+    else if (match(TokenKind::Path))
+        return parse_spec();
 
     backtrack(1);
     return parse_ref();
@@ -274,6 +276,31 @@ SizeofExpr *Parser::parse_sizeof() {
     next(); // '>'
 
     return new SizeofExpr(md, m_Context->getU64Type(), T);
+}
+
+TempSpecExpr *Parser::parse_spec() {
+    if (match(TokenKind::Path))
+        backtrack(1);
+
+    Metadata md = m_Current->md;
+    String name;
+    Expr *E = nullptr;
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected callee identifier", &md);
+
+    name = m_Current->value;
+    next(); // identifier
+
+    if (!match(TokenKind::Path))
+        fatal("expected '::'", &m_Current->md);
+    next(); // '::'
+
+    E = parse_expr();
+    if (!E)
+        fatal("expected expression after '::' operator", &m_Current->md);
+
+    return new TempSpecExpr(md, name, E);
 }
 
 Expr *Parser::parse_unary_prefix() {

@@ -2242,6 +2242,42 @@ TEST_F(ParseExprTest, Call_Basic) {
     delete unit;
 }
 
+#define SPEC_ENUM_BASIC R"(Colors :: i64 { Red } test :: () { mut x: Colors = Colors::Red; })"
+TEST_F(ParseExprTest, Spec_Enum_Basic) {
+    File file = File("", "", "", SPEC_ENUM_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    TempSpecExpr *SP = dynamic_cast<TempSpecExpr *>(VD->getInit());
+    EXPECT_NE(SP, nullptr);
+    EXPECT_EQ(SP->getName(), "Colors");
+
+    RefExpr *RE = dynamic_cast<RefExpr *>(SP->getExpr());
+    EXPECT_NE(RE, nullptr);
+    EXPECT_EQ(RE->getName(), "Red");
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

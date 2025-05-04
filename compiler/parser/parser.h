@@ -78,6 +78,7 @@ class Parser final {
     Expr *parse_expr();
     Expr *parse_primary();
     Expr *parse_ident();
+
     BoolLiteral *parse_bool();
     IntegerLiteral *parse_int();
     FloatLiteral *parse_fp();
@@ -92,6 +93,7 @@ class Parser final {
     RefExpr *parse_ref();
     CallExpr *parse_call();
     SizeofExpr *parse_sizeof();
+    TempSpecExpr *parse_spec();
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();
 

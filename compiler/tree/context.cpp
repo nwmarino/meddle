@@ -47,9 +47,13 @@ void Context::addType(Type *T) {
 }
 
 Type *Context::getType(const String &N) {
-    auto it = m_Types.find(N);
-    if (it != m_Types.end())
-        return it->second;
+    auto pool_it = m_Types.find(N);
+    if (pool_it != m_Types.end())
+        return pool_it->second;
+
+    auto enum_it = m_Enums.find(N);
+    if (enum_it != m_Enums.end())
+        return enum_it->second;
 
     //NamedDecl *D = m_Unit->getScope()->lookup(N);
     // if (D and D is a type def)
