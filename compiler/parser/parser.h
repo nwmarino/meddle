@@ -16,6 +16,7 @@ class Parser final {
     const Token *m_Current;
     unsigned m_Saved;
     Runes m_Runes;
+    bool m_AllowUnresolved = false;
 
     void next() { m_Current = m_Stream.get(); }
 
@@ -93,7 +94,7 @@ class Parser final {
     RefExpr *parse_ref();
     CallExpr *parse_call();
     SizeofExpr *parse_sizeof();
-    TempSpecExpr *parse_spec();
+    TypeSpecExpr *parse_spec();
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();
 

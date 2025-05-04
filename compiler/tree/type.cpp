@@ -222,5 +222,5 @@ bool EnumType::canImplCastTo(Type *T) const {
 
 bool EnumType::compare(Type *T) const {
     assert(T && "Type cannot be null.");
-    return m_Underlying->compare(T);
+    return m_Name == T->getName();
 }

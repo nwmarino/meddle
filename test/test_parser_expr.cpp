@@ -2266,13 +2266,13 @@ TEST_F(ParseExprTest, Spec_Enum_Basic) {
     EXPECT_NE(VD, nullptr);
     EXPECT_EQ(VD->getName(), "x");
     EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_EQ(VD->getType()->getName(), "Colors");
 
-    TempSpecExpr *SP = dynamic_cast<TempSpecExpr *>(VD->getInit());
+    TypeSpecExpr *SP = dynamic_cast<TypeSpecExpr *>(VD->getInit());
     EXPECT_NE(SP, nullptr);
     EXPECT_EQ(SP->getName(), "Colors");
 
-    RefExpr *RE = dynamic_cast<RefExpr *>(SP->getExpr());
-    EXPECT_NE(RE, nullptr);
+    RefExpr *RE = SP->getExpr();
     EXPECT_EQ(RE->getName(), "Red");
     
     delete unit;

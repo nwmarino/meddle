@@ -4,12 +4,6 @@
 
 Wed. May 7
 
-Specifiers and the `::` Operator
-- `TempSpecExpr`
-- `EnumSpecExpr`
-- `TypeSpecExpr`
-- `PkgSpecExpr`
-
 Structures
 - `StructDecl`
 - `StructInitExpr`

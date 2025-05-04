@@ -41,6 +41,7 @@ public:
     void visit(RefExpr *expr) override;
     void visit(SizeofExpr *expr) override;
     void visit(SubscriptExpr *expr) override;
+    void visit(TypeSpecExpr *expr) override;
     void visit(UnaryExpr *expr) override;
 };
 

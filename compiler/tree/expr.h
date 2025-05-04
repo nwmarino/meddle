@@ -8,6 +8,7 @@
 namespace meddle {
 
 class NamedDecl;
+class TypeDecl;
 class RefExpr;
 
 class Expr {
@@ -430,20 +431,22 @@ public:
 	{ return m_Base->isConstant() && m_Index->isConstant(); }
 };
 
-class TempSpecExpr final : public RefExpr {
-	Expr *m_Expr;
+class TypeSpecExpr final : public RefExpr {
+	RefExpr *m_Expr;
 
 public:
-	TempSpecExpr(const Metadata &M, String N, Expr *E)
+	TypeSpecExpr(const Metadata &M, String N, RefExpr *E)
 	  : RefExpr(M, nullptr, N), m_Expr(E) {}
 
-	~TempSpecExpr() override {
+	~TypeSpecExpr() override {
 		delete m_Expr;
 	}
 
 	void accept(Visitor *V) override { V->visit(this); }
 
-	Expr *getExpr() const { return m_Expr; }
+	RefExpr *getExpr() const { return m_Expr; }
+
+	TypeDecl *getTypeDecl() const;
 };
 
 class UnaryExpr final : public Expr {

@@ -335,6 +335,10 @@ void Sema::visit(SubscriptExpr *expr) {
               expr->getIndex()->getType()->getName() + "'", &expr->getMetadata());
 }
 
+void Sema::visit(TypeSpecExpr *expr) {
+    expr->getExpr()->accept(this);
+}
+
 void Sema::visit(UnaryExpr *expr) {
     expr->getExpr()->accept(this);
 

@@ -4763,6 +4763,42 @@ test :: () -> void {
     delete unit;
 }
 
+#define SPEC_ENUM_BASIC R"(Colors :: i64 { Red } test :: () { mut x: Colors = Colors::Red; })"
+TEST_F(IntegratedCodegenTest, Spec_Enum_Basic) {
+    File file = File("", "", "", SPEC_ENUM_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+1:
+    str i64 0 -> i64* _x, align 8
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

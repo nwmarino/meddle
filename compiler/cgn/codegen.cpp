@@ -105,6 +105,8 @@ mir::Type *CGN::cgn_type(Type *T) {
 		return mir::FunctionType::get(m_Segment, params, retTy);
 	} else if (auto *PT = dynamic_cast<PointerType *>(T)) {
 		return mir::PointerType::get(m_Segment, cgn_type(PT->getPointee()));
+	} else if (auto *ET = dynamic_cast<EnumType *>(T)) {
+		return cgn_type(ET->getUnderlying());
 	}
 
 	assert(false && "Unable to generate a type.");
@@ -961,6 +963,15 @@ void CGN::visit(SubscriptExpr *expr) {
     if (oldVC == ValueContext::RValue) {
         m_Value = m_Builder.build_load(ty, m_Value, 
 			m_Opts.NamedMIR ? "ss.val" : "");
+	}
+}
+
+void CGN::visit(TypeSpecExpr *expr) {
+	RefExpr *ref = expr->getExpr();
+
+	if (auto *EVD = dynamic_cast<EnumVariantDecl *>(ref->getRef())) {
+		m_Value = mir::ConstantInt::get(m_Segment, cgn_type(EVD->getType()), 
+			EVD->getValue());
 	}
 }
 

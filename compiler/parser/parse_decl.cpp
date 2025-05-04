@@ -193,10 +193,8 @@ VarDecl *Parser::parse_var(bool mut) {
 }
 
 EnumDecl *Parser::parse_enum(const Token &name) {
-    Type *var_ty = nullptr;
     std::vector<EnumVariantDecl *> Variants;
-
-    var_ty = parse_type(true);
+    EnumType *ty = EnumType::create(m_Context, name.value, parse_type(true));
 
     if (!match(TokenKind::SetBrace))
         fatal("expected '{' after enum type", &m_Current->md);
@@ -229,12 +227,9 @@ EnumDecl *Parser::parse_enum(const Token &name) {
             Runes(),
             var_md,
             var_name,
-            var_ty,
+            ty,
             var_val
         );
-
-        if (!m_Runes.has(Rune::Scoped))
-            m_Scope->addDecl(Variant);
 
         Variants.push_back(Variant);
 
@@ -251,15 +246,14 @@ EnumDecl *Parser::parse_enum(const Token &name) {
     if (Variants.empty())
         fatal("enum must have at least one variant", &m_Current->md);
 
-    EnumType *enum_ty = EnumType::create(m_Context, name.value, var_ty);
     EnumDecl *Enum = new EnumDecl(
         m_Runes,
         name.md,
         name.value,
-        enum_ty,
+        ty,
         Variants
     );
-    enum_ty->setDecl(Enum);
+    ty->setDecl(Enum);
     m_Scope->addDecl(Enum);
     return Enum;
 }

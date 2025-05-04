@@ -149,12 +149,22 @@ void NameResolution::visit(ParenExpr *expr) {
 
 void NameResolution::visit(RefExpr *expr) {
     NamedDecl *ND = expr->getRef();
-    assert(ND && "Reference not resolved.");
+    if (!ND) {
+        ND = m_Scope->lookup(expr->getName());
+        if (!ND) {
+            fatal("unresolved reference: " + expr->getName(), 
+                &expr->getMetadata());
+        }
+    }
 
-    if (auto *VD = dynamic_cast<VarDecl *>(ND))
+    if (auto *VD = dynamic_cast<VarDecl *>(ND)) {
         expr->m_Type = VD->getType();
-    else
-        fatal("bad reference", &expr->getMetadata());
+    } else if (auto *EVD = dynamic_cast<EnumVariantDecl *>(ND)) {
+        expr->m_Type = EVD->getType();
+    } else {
+        fatal("reference exists, but is not a variable: " + expr->getName(), 
+            &expr->getMetadata());
+    }
 }
 
 void NameResolution::visit(SizeofExpr *expr) {
@@ -164,6 +174,37 @@ void NameResolution::visit(SizeofExpr *expr) {
 void NameResolution::visit(SubscriptExpr *expr) {
     expr->getBase()->accept(this);
     expr->getIndex()->accept(this);
+}
+
+void NameResolution::visit(TypeSpecExpr *expr) {
+    NamedDecl *ND = m_Scope->lookup(expr->getName());
+    if (!ND) {
+        fatal("unresolved type reference: " + expr->getName(), 
+            &expr->getMetadata());
+    }
+
+    TypeDecl *TD = dynamic_cast<TypeDecl *>(ND);
+    if (!TD) {
+        fatal("reference exists, but is not a type: " + expr->getName(), 
+            &expr->getMetadata());
+    }
+
+    if (auto *D = dynamic_cast<EnumDecl *>(TD)) {
+        auto *R = dynamic_cast<RefExpr *>(expr->getExpr());
+        if (!R) {
+            fatal("expected reference expression after '::' operator", 
+                &expr->getMetadata());
+        }
+
+        R->m_Ref = D->getVariant(R->getName());
+        if (!R->m_Ref) {
+            fatal("unresolved enum variant: " + R->getName(), 
+                &expr->getMetadata());
+        }
+    } // else if struct, set m_Scope to struct type and pass over.
+
+    expr->getExpr()->accept(this);
+    expr->m_Type = expr->getExpr()->getType();
 }
 
 void NameResolution::visit(UnaryExpr *expr) {

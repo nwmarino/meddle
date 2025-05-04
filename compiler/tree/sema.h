@@ -43,6 +43,7 @@ public:
     void visit(CastExpr *expr) override;
     void visit(ParenExpr *expr) override;
     void visit(SubscriptExpr *expr) override;
+    void visit(TypeSpecExpr *expr) override;
     void visit(UnaryExpr *expr) override;
 };
 

@@ -217,7 +217,7 @@ RefExpr *Parser::parse_ref() {
     String name = m_Current->value;
 
     NamedDecl *D = m_Scope->lookup(name);
-    if (!D)
+    if (!D && !m_AllowUnresolved)
         fatal("unresolved reference: " + name, &md);
 
     next(); // identifier
@@ -278,7 +278,7 @@ SizeofExpr *Parser::parse_sizeof() {
     return new SizeofExpr(md, m_Context->getU64Type(), T);
 }
 
-TempSpecExpr *Parser::parse_spec() {
+TypeSpecExpr *Parser::parse_spec() {
     if (match(TokenKind::Path))
         backtrack(1);
 
@@ -296,11 +296,20 @@ TempSpecExpr *Parser::parse_spec() {
         fatal("expected '::'", &m_Current->md);
     next(); // '::'
 
-    E = parse_expr();
+    if (!match(TokenKind::Identifier))
+        fatal("expected identifier after '::' operator", &m_Current->md);
+
+    m_AllowUnresolved = true;
+    E = parse_ident();
     if (!E)
         fatal("expected expression after '::' operator", &m_Current->md);
 
-    return new TempSpecExpr(md, name, E);
+    m_AllowUnresolved = false;
+    RefExpr *RE = dynamic_cast<RefExpr *>(E);
+    if (!RE)
+        fatal("expected reference expression after '::' operator", &m_Current->md);
+
+    return new TypeSpecExpr(md, name, RE);
 }
 
 Expr *Parser::parse_unary_prefix() {
