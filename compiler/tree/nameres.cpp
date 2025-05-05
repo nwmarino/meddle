@@ -208,6 +208,40 @@ void NameResolution::visit(CastExpr *expr) {
     expr->m_Type = unwrapType(expr->m_Type);
 }
 
+void NameResolution::visit(MethodCallExpr *expr) {
+    expr->getBase()->accept(this);
+
+    StructType *st = nullptr;
+    if (expr->getBase()->getType()->isStruct()) {
+        st = static_cast<StructType *>(expr->getBase()->getType());
+    } else if (expr->getBase()->getType()->isPointer()) {
+        auto *pt = static_cast<PointerType *>(expr->getBase()->getType());
+        auto *pte = pt->getPointee();
+
+        if (!pte->isStruct()) {
+            fatal("method call base is a pointer, but not a pointer to a struct", 
+                &expr->getMetadata());
+        }
+
+        st = static_cast<StructType *>(pte);
+    } else {
+        fatal("expected struct type on base for method call", &expr->getMetadata());
+    }
+
+    StructDecl *sd = static_cast<StructDecl *>(st->getDecl());
+    FunctionDecl *mthd = sd->getFunction(expr->getName());
+    if (!mthd) {
+        fatal("method '" + expr->getName() + "' does not exist in struct '" + 
+            sd->getName() + "'", &expr->getMetadata());
+    }
+
+    expr->m_Ref = mthd;
+    expr->m_Type = mthd->getReturnType();
+
+    for (auto &A : expr->getArgs())
+        A->accept(this);
+}
+
 void NameResolution::visit(ParenExpr *expr) {
     expr->m_Expr->accept(this);
     expr->m_Type = expr->getExpr()->getType();

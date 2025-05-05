@@ -346,6 +346,42 @@ void Sema::visit(CastExpr *expr) {
     }
 }
 
+void Sema::visit(MethodCallExpr *expr) {
+    FunctionDecl *callee = expr->getCallee();
+
+    if (!callee->isMethod()) {
+        fatal("method call on non-method function: " + callee->getName(), 
+            &expr->getMetadata());
+    }
+
+    // Check that the argument count matches the methods parameter count.
+    //
+    // We do +1 here because the `self` parameter is implicitly filled in from
+    // the base expression.
+    if (expr->getNumArgs() + 1 != callee->getNumParams()) {
+        fatal("method call argument count mismatch, got " + 
+            std::to_string(expr->getNumArgs() + 1) + ", expected" + 
+            std::to_string(callee->getNumParams()), &expr->getMetadata());
+    }
+
+    // Pass over each argument and type check it with the corresponding param.
+    for (unsigned i = 0; i != expr->getNumArgs(); ++i) {
+        Expr *arg = expr->getArg(i);
+        arg->accept(this);
+
+        // Params are offset by 1 because, again, the first parameter is `self`.
+        ParamDecl *param = callee->getParam(i + 1);
+
+        if (typeCheck(arg->getType(), param->getType(), &arg->getMetadata(), "argument")) {
+            expr->m_Args[i] = new CastExpr(
+                arg->getMetadata(), 
+                param->getType(), 
+                arg
+            );
+        }
+    }
+}
+
 void Sema::visit(ParenExpr *expr) {
     expr->m_Expr->accept(this);
 }

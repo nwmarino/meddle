@@ -358,13 +358,40 @@ Expr *Parser::parse_unary_postfix() {
             // Token is not an operator, but an access with '.'
             next(); // '.'
 
-            if (!match(TokenKind::Identifier))
-                fatal("expected field name after '.' operator", &m_Current->md);
+            if (!match(TokenKind::Identifier)) {
+                fatal("expected struct member name after '.' operator", 
+                    &m_Current->md);
+            }
 
-            String field = m_Current->value;
+            String member = m_Current->value;
             next(); // identifier
 
-            E = new AccessExpr(md, nullptr, field, E);
+            if (match(TokenKind::SetParen)) {
+                // The member is followed by a '(', so this is a method call.
+                next(); // '('
+                std::vector<Expr *> Args;
+                
+                while (!match(TokenKind::EndParen)) {
+                    Expr *arg = parse_expr();
+                    if (!arg)
+                        fatal("expected method call argument" , &m_Current->md);
+
+                    Args.push_back(arg);
+
+                    if (match(TokenKind::EndParen))
+                        break;
+
+                    if (!match(TokenKind::Comma))
+                        fatal("expected ',' or ')' in method call", &m_Current->md);
+                    next(); // ','
+                }
+
+                next(); // ')'
+
+                E = new MethodCallExpr(md, nullptr, member, E, nullptr, Args);
+            } else {
+                E = new AccessExpr(md, nullptr, member, E);
+            }
         } else
             break;
     }

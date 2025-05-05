@@ -3,6 +3,7 @@
 
 #include "type.h"
 #include "visitor.h"
+
 #include <cassert>
 
 namespace meddle {
@@ -377,16 +378,17 @@ public:
 	Expr *getBase() const { return m_Base; }
 };
 
-class CallExpr final : public RefExpr {
+class CallExpr : public RefExpr {
 	friend class CGN;
 	friend class NameResolution;
 	friend class Sema;
 
+protected:
 	std::vector<Expr *> m_Args;
 
 public:
-	CallExpr(const Metadata &M, Type *T, String N, NamedDecl *C = nullptr, 
-			 std::vector<Expr *> Args = {})
+	CallExpr(const Metadata &M, Type *T, const String &N, 
+			 NamedDecl *C = nullptr, std::vector<Expr *> Args = {})
 	  : RefExpr(M, T, N, C), m_Args(Args) {}
 
 	~CallExpr() override {
@@ -406,6 +408,30 @@ public:
 	unsigned getNumArgs() const { return m_Args.size(); }
 
 	FunctionDecl *getCallee() const;
+};
+
+class MethodCallExpr final : public CallExpr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Base;
+
+public:
+	MethodCallExpr(const Metadata &M, Type *T, const String &N, Expr *B, 
+				   NamedDecl *C = nullptr, std::vector<Expr *> Args = {})
+	  : CallExpr(M, T, N, C, Args), m_Base(B) {}
+
+	~MethodCallExpr() {
+		delete m_Base;
+
+		for (auto &A : m_Args)
+			delete A;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getBase() const { return m_Base; }
 };
 
 class SizeofExpr final : public Expr {

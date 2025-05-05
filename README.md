@@ -7,7 +7,6 @@ Wed. May 7
 Structures
 - `StructInitExpr`
   - `FieldInitExpr`
-- `MethodCallExpr`
 - Replicate all MIR Aggregate Tests for Structs
 
 Multi-package Support

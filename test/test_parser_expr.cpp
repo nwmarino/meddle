@@ -2313,6 +2313,38 @@ TEST_F(ParseExprTest, Spec_Struct_Basic) {
     delete unit;
 }
 
+#define METHOD_CALL_BASIC R"(test :: () { mut x: box* = nil; x.foo(); })"
+TEST_F(ParseExprTest, Method_Call_Basic) {
+    File file = File("", "", "", METHOD_CALL_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+
+    MethodCallExpr *MEC = dynamic_cast<MethodCallExpr *>(ES->getExpr());
+    EXPECT_NE(MEC, nullptr);
+    EXPECT_NE(MEC->getBase(), nullptr);
+    EXPECT_EQ(MEC->getName(), "foo");
+
+    RefExpr *RE = dynamic_cast<RefExpr *>(MEC->getBase());
+    EXPECT_NE(RE, nullptr);
+    EXPECT_EQ(RE->getName(), "x");
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle
