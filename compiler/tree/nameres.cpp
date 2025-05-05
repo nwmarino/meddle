@@ -46,10 +46,15 @@ void NameResolution::visit(FunctionDecl *decl) {
 }
 
 void NameResolution::visit(VarDecl *decl) {
-    if (m_Phase == Phase::Shallow) {
+    if (m_Phase == Phase::Shallow && decl->isGlobal()) {
         if (decl->m_Type)
             decl->m_Type = unwrapType(decl->getType());
     } else if (m_Phase == Phase::Recurse) {
+        if (!decl->isGlobal()) {
+            if (decl->m_Type)
+                decl->m_Type = unwrapType(decl->getType());
+        }
+
         if (decl->getInit())
             decl->getInit()->accept(this);
         

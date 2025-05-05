@@ -4990,9 +4990,63 @@ test :: () -> i32 {
     delete unit;
 }
 
-#define SPEC_STRUCT_BASIC R"(Color :: { x: i64, $associated foo :: () i64 { ret 42; } } test :: () { mut x: i64 = Color::foo(); })"
-TEST_F(IntegratedCodegenTest, Spec_Struct_Basic) {
-    File file = File("", "", "", SPEC_STRUCT_BASIC);
+#define SPEC_STRUCT_METHOD_BASIC R"(Color :: { x: i64, foo :: (self: Color*) i64 { ret x; } } test :: () { mut x: Color* = nil; mut y: i64 = Color::foo(x); })"
+TEST_F(IntegratedCodegenTest, Spec_Struct_Method_Basic) {
+    File file = File("", "", "", SPEC_STRUCT_METHOD_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+Color :: type { i64 }
+
+test :: () -> void {
+    _y := slot i64, align 8
+    _x := slot Color*, align 8
+
+5:
+    $6 := reint void* nil -> Color*
+    str Color* $6 -> Color** _x, align 8
+    $7 := load Color** _x, align 8
+    $8 := call i64 Color.foo(Color* $7)
+    str i64 $8 -> i64* _y, align 8
+    ret
+}
+
+Color.foo :: (Color* %self) -> i64 {
+    _self := slot Color*, align 8
+
+1:
+    str Color* %self -> Color** _self, align 8
+    $2 := load Color** _self, align 8
+    $3 := ap i64*, Color* $2, i64 0
+    $4 := load i64* $3, align 8
+    ret i64 $4
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define SPEC_STRUCT_ASSOCIATED_BASIC R"(Color :: { x: i64, $associated foo :: () i64 { ret 42; } } test :: () { mut x: i64 = Color::foo(); })"
+TEST_F(IntegratedCodegenTest, Spec_Struct_Associated_Basic) {
+    File file = File("", "", "", SPEC_STRUCT_ASSOCIATED_BASIC);
     Lexer lexer = Lexer(file);
     TokenStream stream = lexer.unwrap();
     Parser parser = Parser(file, stream);
