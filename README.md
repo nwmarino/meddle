@@ -5,9 +5,8 @@
 Wed. May 7
 
 Structures
-- `StructInitExpr`
-  - `FieldInitExpr`
-- Replicate all MIR Aggregate Tests for Structs
+- `InitExpr`
+- Replicate all MIR aggregate tests for structs & method calls
 
 Multi-package Support
 - `UseDecl` declarations

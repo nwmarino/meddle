@@ -891,7 +891,7 @@ void CGN::visit(MethodCallExpr *expr) {
     for (unsigned i = 0; i != expr->getNumArgs(); ++i) {
         Expr *arg = expr->getArg(i);
 		
-		if (callee->hasArgAttribute(ARet ? i + 1 : i, mir::Attribute::AArg)) {
+		if (callee->hasArgAttribute(ARet ? i + 2 : i + 1, mir::Attribute::AArg)) {
 			// Aggregate arguments must be copied before being passed to the
 			// callee, since the caller is always responsible for cloning the
 			// argument, regardless if its to be spilled in the callee.
@@ -926,7 +926,7 @@ void CGN::visit(MethodCallExpr *expr) {
     }
 
 	mir::CallInst *call = m_Builder.build_call(callee, args, 
-		m_Opts.NamedMIR ? "call.tmp" : "");
+		m_Opts.NamedMIR ? "mcall.tmp" : "");
 
 	if (ARet)
 		m_Value = ARet;
