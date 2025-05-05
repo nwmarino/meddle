@@ -36,6 +36,8 @@ class ArrayExpr;
 class BinaryExpr;
 class CallExpr;
 class CastExpr;
+class FieldInitExpr;
+class InitExpr;
 class MethodCallExpr;
 class ParenExpr;
 class RefExpr;
@@ -79,6 +81,8 @@ public:
     virtual void visit(BinaryExpr *expr) {}
     virtual void visit(CallExpr *expr) {}
     virtual void visit(CastExpr *expr) {}
+    virtual void visit(FieldInitExpr *expr) {}
+    virtual void visit(InitExpr *expr) {}
     virtual void visit(MethodCallExpr *expr) {}
     virtual void visit(ParenExpr *expr) {}
     virtual void visit(RefExpr *expr) {}

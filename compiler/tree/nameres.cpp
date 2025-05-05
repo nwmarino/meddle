@@ -195,10 +195,10 @@ void NameResolution::visit(CallExpr *expr) {
     if (!F)
         fatal("reference exists, but is not a function: " + expr->getName(), 
             &expr->getMetadata());
-
+    
     expr->m_Ref = F;
     expr->m_Type = F->getReturnType();
-        
+
     for (auto &A : expr->getArgs())
         A->accept(this);
 }
@@ -206,6 +206,37 @@ void NameResolution::visit(CallExpr *expr) {
 void NameResolution::visit(CastExpr *expr) {
     expr->getExpr()->accept(this);
     expr->m_Type = unwrapType(expr->m_Type);
+}
+
+void NameResolution::visit(FieldInitExpr *expr) {
+    expr->getExpr()->accept(this);
+    expr->m_Type = expr->getExpr()->getType();
+}
+
+void NameResolution::visit(InitExpr *expr) {
+    for (auto &F : expr->getFields())
+        F->accept(this);
+
+    expr->m_Type = unwrapType(expr->getType());
+
+    if (!expr->getType()->isStruct()) {
+        fatal("expected struct type for aggregate initializer", 
+            &expr->getMetadata());
+    }
+
+    StructType *sTy = static_cast<StructType *>(expr->getType());
+    StructDecl *SD = static_cast<StructDecl *>(sTy->getDecl());
+
+    for (auto &F : expr->getFields()) {
+        FieldDecl *fld = SD->getField(F->getName());
+        if (!fld) {
+            fatal("field '" + F->getName() + "' does not exist in struct '" + 
+                SD->getName() + "'", &expr->getMetadata());
+        }
+
+        F->m_Ref = fld;
+        F->accept(this);
+    }
 }
 
 void NameResolution::visit(MethodCallExpr *expr) {

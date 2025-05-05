@@ -2345,6 +2345,54 @@ TEST_F(ParseExprTest, Method_Call_Basic) {
     delete unit;
 }
 
+#define STRUCT_INIT_BASIC R"(test :: () { mut x = box { a: 1, b: 2 }; })"
+TEST_F(ParseExprTest, Struct_Init_Basic) {
+    File file = File("", "", "", STRUCT_INIT_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    InitExpr *IE = dynamic_cast<InitExpr *>(VD->getInit());
+    EXPECT_NE(IE, nullptr);
+    EXPECT_EQ(IE->getFields().size(), 2);
+
+    FieldInitExpr *F1 = dynamic_cast<FieldInitExpr *>(IE->getFields()[0]);
+    EXPECT_NE(F1, nullptr);
+    EXPECT_EQ(F1->getName(), "a");
+
+    IntegerLiteral *IL1 = dynamic_cast<IntegerLiteral *>(F1->getExpr());
+    EXPECT_NE(IL1, nullptr);
+    EXPECT_EQ(IL1->getValue(), 1);
+
+    FieldInitExpr *F2 = dynamic_cast<FieldInitExpr *>(IE->getFields()[1]);
+    EXPECT_NE(F2, nullptr);
+    EXPECT_EQ(F2->getName(), "b");
+
+    IntegerLiteral *IL2 = dynamic_cast<IntegerLiteral *>(F2->getExpr());
+    EXPECT_NE(IL2, nullptr);
+    EXPECT_EQ(IL2->getValue(), 2);
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

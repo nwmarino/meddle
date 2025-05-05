@@ -5,6 +5,7 @@
 #include "type.h"
 #include "unit.h"
 #include "../core/logger.h"
+#include "visitor.h"
 
 using namespace meddle;
 
@@ -344,6 +345,26 @@ void Sema::visit(CastExpr *expr) {
         fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 
               "' to '" + expr->getCast()->getName() + "'", &expr->getMetadata());
     }
+}
+
+void Sema::visit(FieldInitExpr *expr) {
+    expr->getExpr()->accept(this);
+    expr->m_Type = expr->getExpr()->getType();
+
+    FieldDecl *fld = static_cast<FieldDecl *>(expr->getRef());
+
+    if (typeCheck(expr->getType(), fld->getType(), &expr->getMetadata(), "field initializer")) {
+        expr->m_Expr = new CastExpr(
+            expr->getExpr()->getMetadata(), 
+            fld->getType(), 
+            expr->getExpr()
+        );
+    }
+}
+
+void Sema::visit(InitExpr *expr) {
+    for (auto &F : expr->getFields())
+        F->accept(this);
 }
 
 void Sema::visit(MethodCallExpr *expr) {

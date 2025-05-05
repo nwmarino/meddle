@@ -42,15 +42,26 @@ Expr *Parser::parse_ident() {
     else if (match_keyword("sizeof"))
         return parse_sizeof();
 
+    unsigned identPos = save_pos();
     next(); // identifier
 
-    if (match(TokenKind::SetParen))
+    switch (m_Current->kind) {
+    case TokenKind::SetParen:
+        restore_pos(identPos);
         return parse_call();
-    else if (match(TokenKind::Path))
+
+    case TokenKind::SetBrace:
+        restore_pos(identPos);
+        return parse_init();
+
+    case TokenKind::Path:
+        restore_pos(identPos);
         return parse_spec();
 
-    backtrack(1);
-    return parse_ref();
+    default:
+        restore_pos(identPos);
+        return parse_ref();
+    }
 }
 
 BoolLiteral *Parser::parse_bool() {
@@ -225,9 +236,6 @@ RefExpr *Parser::parse_ref() {
 }
 
 CallExpr *Parser::parse_call() {
-    if (match(TokenKind::SetParen))
-        backtrack(1);
-
     Metadata md = m_Current->md;
     std::vector<Expr *> Args;
     String callee;
@@ -279,9 +287,6 @@ SizeofExpr *Parser::parse_sizeof() {
 }
 
 TypeSpecExpr *Parser::parse_spec() {
-    if (match(TokenKind::Path))
-        backtrack(1);
-
     Metadata md = m_Current->md;
     String name;
     Expr *E = nullptr;
@@ -310,6 +315,55 @@ TypeSpecExpr *Parser::parse_spec() {
         fatal("expected reference expression after '::' operator", &m_Current->md);
 
     return new TypeSpecExpr(md, name, RE);
+}
+
+InitExpr *Parser::parse_init() {
+    if (match(TokenKind::SetBrace))
+        backtrack(1);
+
+    Metadata md = m_Current->md;
+    Type *T = parse_type(true);
+    std::vector<FieldInitExpr *> Fields;
+
+    if (!match(TokenKind::SetBrace))
+        fatal("expected '{' after type name", &m_Current->md);
+    next(); // '{'
+
+    while (!match(TokenKind::EndBrace)) {
+        Metadata field_md = m_Current->md;
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected field name", &m_Current->md);
+
+        String name = m_Current->value;
+        next(); // identifier
+
+        if (!match(TokenKind::Colon))
+            fatal("expected ':' after field name", &m_Current->md);
+        next(); // ':'
+
+        Expr *E = parse_expr();
+        if (!E)
+            fatal("expected field initializer expression", &m_Current->md);
+
+        Fields.push_back(
+            new FieldInitExpr(field_md, nullptr, name, E)
+        );
+
+        if (match(TokenKind::EndBrace))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or '}' in initializer list", &m_Current->md);
+        next(); // ','
+    }
+
+    next(); // '}'
+
+    if (Fields.empty())
+        fatal("initializer enclosed by {, } cannot be empty", &m_Current->md);
+
+    return new InitExpr(md, T, Fields);
 }
 
 Expr *Parser::parse_unary_prefix() {

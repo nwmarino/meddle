@@ -434,6 +434,59 @@ public:
 	Expr *getBase() const { return m_Base; }
 };
 
+class FieldInitExpr final : public RefExpr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Expr;
+
+public:
+	FieldInitExpr(const Metadata &M, Type *T, String N, Expr *E)
+	  : RefExpr(M, T, N), m_Expr(E) {}
+
+	~FieldInitExpr() override {
+		delete m_Expr;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getExpr() const { return m_Expr; }
+
+	bool isConstant() const override { return m_Expr->isConstant(); }
+};
+
+class InitExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	std::vector<FieldInitExpr *> m_Fields;
+
+public:
+	InitExpr(const Metadata &M, Type *T, std::vector<FieldInitExpr *> F)
+	  : Expr(M, T), m_Fields(F) {}
+
+	~InitExpr() override {
+		for (auto &F : m_Fields)
+			delete F;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	std::vector<FieldInitExpr *> getFields() const { return m_Fields; }
+
+	bool isConstant() const override {
+		for (auto &F : m_Fields)
+			if (!F->isConstant())
+				return false;
+
+		return true;
+	}
+
+	bool isAggregateInit() const override { return true; }
+};
+
 class SizeofExpr final : public Expr {
 	friend class CGN;
 	friend class NameResolution;

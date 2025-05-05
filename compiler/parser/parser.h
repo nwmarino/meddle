@@ -27,7 +27,7 @@ class Parser final {
     unsigned save_pos() { return m_Saved = m_Stream.getPos(); }
 
     void restore_pos(unsigned pos) {
-        m_Stream.setPos(pos);
+        m_Stream.setPos(pos - 1);
         m_Current = m_Stream.get();
     }
 
@@ -96,6 +96,7 @@ class Parser final {
     CallExpr *parse_call();
     SizeofExpr *parse_sizeof();
     TypeSpecExpr *parse_spec();
+    InitExpr *parse_init();
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();
 
