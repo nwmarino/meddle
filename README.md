@@ -7,10 +7,8 @@ Wed. May 7
 Structures
 - `StructInitExpr`
   - `FieldInitExpr`
-- `MemberExpr`
 - `MethodCallExpr`
-- `TypeSpecExpr`
-  - Expand for Structs
+- Replicate all MIR Aggregate Tests for Structs
 
 Multi-package Support
 - `UseDecl` declarations

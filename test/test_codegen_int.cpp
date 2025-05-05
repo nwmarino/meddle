@@ -4990,6 +4990,50 @@ test :: () -> i32 {
     delete unit;
 }
 
+#define SPEC_STRUCT_BASIC R"(Color :: { x: i64, $associated foo :: () i64 { ret 42; } } test :: () { mut x: i64 = Color::foo(); })"
+TEST_F(IntegratedCodegenTest, Spec_Struct_Basic) {
+    File file = File("", "", "", SPEC_STRUCT_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+Color :: type { i64 }
+
+test :: () -> void {
+    _x := slot i64, align 8
+
+2:
+    $3 := call i64 Color.foo()
+    str i64 $3 -> i64* _x, align 8
+    ret
+}
+
+Color.foo :: () -> i64 {
+1:
+    ret i64 42
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

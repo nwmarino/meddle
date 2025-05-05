@@ -266,9 +266,24 @@ void NameResolution::visit(TypeSpecExpr *expr) {
             fatal("unresolved enum variant: " + R->getName(), 
                 &expr->getMetadata());
         }
-    } // else if struct, set m_Scope to struct type and pass over.
 
-    expr->getExpr()->accept(this);
+        expr->getExpr()->accept(this);
+    } else if (auto *S = dynamic_cast<StructDecl *>(TD)) {
+        if (!dynamic_cast<CallExpr *>(expr->getExpr()))
+            fatal("expected call expression after '::' operator on structure", 
+                &expr->getMetadata());
+
+        Scope *old_scope = m_Scope;
+        m_Scope = S->getScope();
+        
+        expr->getExpr()->accept(this);
+        m_Scope = old_scope;
+    } else {
+        fatal("invalid type specifier: " + expr->getName(), 
+            &expr->getMetadata());
+    }
+
+    
     expr->m_Type = expr->getExpr()->getType();
 }
 

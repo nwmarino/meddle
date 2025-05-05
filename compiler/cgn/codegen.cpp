@@ -24,7 +24,7 @@ String CGN::mangle_name(NamedDecl *D) {
 	String mangled;
 
 	if (auto *F = dynamic_cast<FunctionDecl *>(D)) {
-		if (F->isMethod()) {
+		if (F->hasParent()) {
 			mangled = F->getParent()->getName() + "." + F->getName();
 		} else {
 			mangled = F->getName();
@@ -1060,6 +1060,8 @@ void CGN::visit(TypeSpecExpr *expr) {
 	if (auto *EVD = dynamic_cast<EnumVariantDecl *>(ref->getRef())) {
 		m_Value = mir::ConstantInt::get(m_Segment, cgn_type(EVD->getType()), 
 			EVD->getValue());
+	} else {
+		expr->getExpr()->accept(this);
 	}
 }
 
