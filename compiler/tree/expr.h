@@ -357,6 +357,26 @@ public:
 	NamedDecl *getRef() const { return m_Ref; }
 };
 
+class AccessExpr final : public RefExpr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	Expr *m_Base;
+
+public:
+	AccessExpr(const Metadata &M, Type *T, String N, Expr *B, NamedDecl *R = nullptr)
+	  : RefExpr(M, T, N, R), m_Base(B) {}
+
+	~AccessExpr() override {
+		delete m_Base;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	Expr *getBase() const { return m_Base; }
+};
+
 class CallExpr final : public RefExpr {
 	friend class CGN;
 	friend class NameResolution;

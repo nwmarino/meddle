@@ -110,20 +110,21 @@ void Sema::visit(FunctionDecl *decl) {
 }
 
 void Sema::visit(VarDecl *decl) {
-    if (decl->getInit())
+    if (decl->getInit()) {
         decl->getInit()->accept(this);
 
-    if (typeCheck(
-        decl->getInit()->getType(), 
-        decl->getType(),
-        &decl->getInit()->getMetadata(),
-        "initializer"
-    )) {
-        decl->m_Init = new CastExpr(
-            decl->getInit()->getMetadata(), 
-            decl->getType(), 
-            decl->getInit()
-        );
+        if (typeCheck(
+            decl->getInit()->getType(), 
+            decl->getType(),
+            &decl->getInit()->getMetadata(),
+            "initializer"
+        )) {
+            decl->m_Init = new CastExpr(
+                decl->getInit()->getMetadata(), 
+                decl->getType(), 
+                decl->getInit()
+            );
+        }
     }
 }
 

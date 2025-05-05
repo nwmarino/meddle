@@ -31,12 +31,13 @@ class CharLiteral;
 class StringLiteral;
 class NilLiteral;
 
+class AccessExpr;
 class ArrayExpr;
 class BinaryExpr;
+class CallExpr;
 class CastExpr;
 class ParenExpr;
 class RefExpr;
-class CallExpr;
 class SizeofExpr;
 class SubscriptExpr;
 class TypeSpecExpr;
@@ -72,6 +73,7 @@ public:
     virtual void visit(StringLiteral *expr) {}
     virtual void visit(NilLiteral *expr) {}
 
+    virtual void visit(AccessExpr *expr) {}
     virtual void visit(ArrayExpr *expr) {}
     virtual void visit(BinaryExpr *expr) {}
     virtual void visit(CallExpr *expr) {}

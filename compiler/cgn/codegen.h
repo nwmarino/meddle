@@ -126,6 +126,7 @@ public:
     void visit(StringLiteral *expr) override;
     void visit(NilLiteral *expr) override;
 
+    void visit(AccessExpr *expr) override;
     void visit(ArrayExpr *expr) override;
     void visit(BinaryExpr *expr) override;
     void visit(CallExpr *expr) override;

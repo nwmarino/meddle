@@ -134,6 +134,37 @@ void NameResolution::visit(UntilStmt *stmt) {
     stmt->getBody()->accept(this);
 }
 
+void NameResolution::visit(AccessExpr *expr) {
+    expr->getBase()->accept(this);
+
+    StructType *st = nullptr;
+    if (expr->getBase()->getType()->isStruct()) {
+        st = static_cast<StructType *>(expr->getBase()->getType());
+    } else if (expr->getBase()->getType()->isPointer()) {
+        auto *pt = static_cast<PointerType *>(expr->getBase()->getType());
+        auto *pte = pt->getPointee();
+
+        if (!pte->isStruct()) {
+            fatal("access base is a pointer, but not a pointer to a struct", 
+                &expr->getMetadata());
+        }
+
+        st = static_cast<StructType *>(pte);
+    } else {
+        fatal("expected struct type on base for '.' access", &expr->getMetadata());
+    }
+
+    StructDecl *sd = static_cast<StructDecl *>(st->getDecl());
+    FieldDecl *fld = sd->getField(expr->getName());
+    if (!fld) {
+        fatal("field '" + expr->getName() + "' does not exist in struct '" + 
+            sd->getName() + "'", &expr->getMetadata());
+    }
+
+    expr->m_Ref = fld;
+    expr->m_Type = fld->getType();
+}
+
 void NameResolution::visit(ArrayExpr *expr) {
     for (auto &E : expr->getElements())
         E->accept(this);

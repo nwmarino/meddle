@@ -4908,6 +4908,88 @@ box.foo :: (box* %self) -> i64 {
     delete unit;
 }
 
+#define STRUCT_ACCESS_VAL_BASIC R"(box :: { x: i64, y: i32 } test :: () i32 { mut a: box; ret a.x; })"
+TEST_F(IntegratedCodegenTest, Struct_Access_Val_Basic) {
+    File file = File("", "", "", STRUCT_ACCESS_VAL_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i32 }
+
+test :: () -> i32 {
+    _a := slot box, align 8
+
+1:
+    $2 := ap i64*, box* _a, i64 0
+    $3 := load i64* $2, align 8
+    $4 := trunc i64 $3 -> i32
+    ret i32 $4
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define STRUCT_ACCESS_PTR_BASIC R"(box :: { x: i64, y: i32 } test :: () i32 { mut a: box* = nil; ret a.y; } )"
+TEST_F(IntegratedCodegenTest, Struct_Access_Ptr_Basic) {
+    File file = File("", "", "", STRUCT_ACCESS_PTR_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i32 }
+
+test :: () -> i32 {
+    _a := slot box*, align 8
+
+1:
+    $2 := reint void* nil -> box*
+    str box* $2 -> box** _a, align 8
+    $3 := load box** _a, align 8
+    $4 := ap i32*, box* $3, i64 1
+    $5 := load i32* $4, align 4
+    ret i32 $5
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

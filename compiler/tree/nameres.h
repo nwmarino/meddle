@@ -36,6 +36,7 @@ public:
     void visit(RetStmt *stmt) override; 
     void visit(UntilStmt *stmt) override;
 
+    void visit(AccessExpr *expr) override;
     void visit(ArrayExpr *expr) override;
     void visit(BinaryExpr *expr) override;
     void visit(CallExpr *expr) override;

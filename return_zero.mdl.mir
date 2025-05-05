@@ -1,6 +1,7 @@
 target :: x86_64 linux system_v
 
 box :: type { i64, i1 }
+
 box.foo :: (box* %self) -> void {
     _self := slot box*, align 8
 

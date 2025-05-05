@@ -706,6 +706,31 @@ void CGN::cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty) {
 	*/
 }
 
+void CGN::visit(AccessExpr *expr) {
+	ValueContext oldVC = m_VC;
+
+	if (expr->getBase()->getType()->isPointer())
+		m_VC = ValueContext::RValue;
+	else if (expr->getBase()->getType()->isStruct())
+		m_VC = ValueContext::LValue;
+	else
+		assert(false && "Access base is not a pointer or struct.");
+
+	expr->getBase()->accept(this);
+	assert(m_Value && "Access base does not produce a value.");
+	FieldDecl *fld = static_cast<FieldDecl *>(expr->getRef());
+
+	mir::Type *ty = cgn_type(expr->getType());
+
+	m_Value = m_Builder.build_ap(mir::PointerType::get(m_Segment, ty), m_Value, 
+		mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), fld->getIndex()), 
+		m_Opts.NamedMIR ? "access.ptr" : "");
+
+    if (oldVC == ValueContext::RValue)
+        m_Value = m_Builder.build_load(ty, m_Value, 
+			m_Opts.NamedMIR ? expr->getName() + ".val" : "");
+}
+
 void CGN::visit(ArrayExpr *expr) {
 	assert(m_Place && "RValue array type needs a destination place.");
 

@@ -333,16 +333,16 @@ Expr *Parser::parse_unary_postfix() {
         fatal("expected expression", &m_Current->md);
 
     while (1) {
+        Metadata md = m_Current->md;
+
         UnaryExpr::Kind op = get_un_operator();
         if (UnaryExpr::isPostfixOp(op)) {
             // Operator is a recognized postfix unary operator.
-            Metadata md = m_Current->md;
             next();
 
             E = new UnaryExpr(md, nullptr, op, E, true);
         } else if (match(TokenKind::SetBrack)) {
-            // Token is not an operator, but a subscript beginning '['.
-            Metadata md = m_Current->md;
+            // Token is not an operator, but a subscript beginning '['
             next(); // '['
 
             Expr *Idx = parse_expr();
@@ -354,6 +354,17 @@ Expr *Parser::parse_unary_postfix() {
             next(); // ']'
 
             E = new SubscriptExpr(md, nullptr, E, Idx);
+        } else if (match(TokenKind::Dot)) {
+            // Token is not an operator, but an access with '.'
+            next(); // '.'
+
+            if (!match(TokenKind::Identifier))
+                fatal("expected field name after '.' operator", &m_Current->md);
+
+            String field = m_Current->value;
+            next(); // identifier
+
+            E = new AccessExpr(md, nullptr, field, E);
         } else
             break;
     }

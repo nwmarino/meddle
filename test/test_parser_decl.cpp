@@ -531,6 +531,54 @@ TEST_F(ParseDeclTest, Struct_Method_Field_Ref) {
     delete unit;
 }
 
+#define STRUCT_FIELD_ACCESS_BASIC R"(test::() { mut x: Struct; x.a = 42; })"
+TEST_F(ParseDeclTest, Struct_Field_Access_Basic) {
+    File file = File("", "", "", STRUCT_FIELD_ACCESS_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getInit(), nullptr);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(ES, nullptr);
+    EXPECT_NE(ES->getExpr(), nullptr);
+
+    BinaryExpr *BE = dynamic_cast<BinaryExpr *>(ES->getExpr());
+    EXPECT_NE(BE, nullptr);
+    EXPECT_NE(BE->getLHS(), nullptr);
+    EXPECT_NE(BE->getRHS(), nullptr);
+
+    AccessExpr *AE = dynamic_cast<AccessExpr *>(BE->getLHS());
+    EXPECT_NE(AE, nullptr);
+    EXPECT_NE(AE->getBase(), nullptr);
+    EXPECT_EQ(AE->getName(), "a");
+
+    RefExpr *VRE = dynamic_cast<RefExpr *>(AE->getBase());
+    EXPECT_NE(VRE, nullptr);
+    EXPECT_EQ(VRE->getName(), "x");
+    EXPECT_EQ(VRE->getRef(), VD);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle
