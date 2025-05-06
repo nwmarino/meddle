@@ -980,7 +980,7 @@ void CGN::visit(CastExpr *expr) {
 	
 	else {
 		fatal("invalid cast from type '" + srcTy->getName() + "' to '" + 
-			destTy->getName(), &expr->getMetadata());
+			destTy->getName() + "'", &expr->getMetadata());
 	}
 }
 

@@ -1,8 +1,5 @@
-box :: { 
-    x: i64, 
-    y: bool, 
-    
-    foo :: (self: box*) { 
-        ret; 
-    } 
+box :: { x: i32[3], y: i32 } 
+
+test :: () { 
+    mut x: box = box { x: [1, 2, 3], y: 4 }; 
 }

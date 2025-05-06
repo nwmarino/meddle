@@ -2393,6 +2393,66 @@ TEST_F(ParseExprTest, Struct_Init_Basic) {
     delete unit;
 }
 
+#define STRUCT_NESTED_ARRAY_INIT R"(box :: { x: i32[3], y: i32 } test :: () { mut x: box = box { x: [1, 2, 3], y: 4 }; })"
+TEST_F(ParseExprTest, Struct_Nested_Array_Init) {
+    File file = File("", "", "", STRUCT_NESTED_ARRAY_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    InitExpr *IE = dynamic_cast<InitExpr *>(VD->getInit());
+    EXPECT_NE(IE, nullptr);
+    EXPECT_EQ(IE->getFields().size(), 2);
+
+    FieldInitExpr *F1 = dynamic_cast<FieldInitExpr *>(IE->getFields()[0]);
+    EXPECT_NE(F1, nullptr);
+    EXPECT_EQ(F1->getName(), "x");
+
+    ArrayExpr *AE = dynamic_cast<ArrayExpr *>(F1->getExpr());
+    EXPECT_NE(AE, nullptr);
+    EXPECT_EQ(AE->getElements().size(), 3);
+
+    IntegerLiteral *IL1 = dynamic_cast<IntegerLiteral *>(AE->getElements()[0]);
+    EXPECT_NE(IL1, nullptr);
+    EXPECT_EQ(IL1->getValue(), 1);
+
+    IntegerLiteral *IL2 = dynamic_cast<IntegerLiteral *>(AE->getElements()[1]);
+    EXPECT_NE(IL2, nullptr);
+    EXPECT_EQ(IL2->getValue(), 2);
+
+    IntegerLiteral *IL3 = dynamic_cast<IntegerLiteral *>(AE->getElements()[2]);
+    EXPECT_NE(IL3, nullptr);
+    EXPECT_EQ(IL3->getValue(), 3);
+
+    FieldInitExpr *F2 = dynamic_cast<FieldInitExpr *>(IE->getFields()[1]);
+    EXPECT_NE(F2, nullptr);
+    EXPECT_EQ(F2->getName(), "y");
+
+    IntegerLiteral *IL4 = dynamic_cast<IntegerLiteral *>(F2->getExpr());
+    EXPECT_NE(IL4, nullptr);
+    EXPECT_EQ(IL4->getValue(), 4);
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

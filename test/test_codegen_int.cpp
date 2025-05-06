@@ -5134,6 +5134,301 @@ box.foo :: (box* %self) -> i64 {
     delete unit;
 }
 
+#define METHOD_CALL_ARGS_BASIC R"(box :: { x: i64, foo :: (self: box*, y: i64) i64 { ret y; } } test :: () { mut x: box; x.foo(42); })"
+TEST_F(IntegratedCodegenTest, Method_Call_Args_Basic) {
+    File file = File("", "", "", METHOD_CALL_ARGS_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64 }
+
+test :: () -> void {
+    _x := slot box, align 8
+
+3:
+    $4 := call i64 box.foo(box* _x, i64 42)
+    ret
+}
+
+box.foo :: (box* %self, i64 %y) -> i64 {
+    _y := slot i64, align 8
+    _self := slot box*, align 8
+
+1:
+    str box* %self -> box** _self, align 8
+    str i64 %y -> i64* _y, align 8
+    $2 := load i64* _y, align 8
+    ret i64 $2
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define STRUCT_INIT_BASIC R"(box :: { x: i64, y: i32 } test :: () { mut x: box = box { x: 1, y: 2 }; })"
+TEST_F(IntegratedCodegenTest, Struct_Init_Basic) {
+    File file = File("", "", "", STRUCT_INIT_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i32 }
+
+test :: () -> void {
+    _x := slot box, align 8
+
+1:
+    $2 := ap i64*, box* _x, i64 0
+    str i64 1 -> i64* $2, align 8
+    $3 := ap i32*, box* _x, i64 1
+    $4 := trunc i64 2 -> i32
+    str i32 $4 -> i32* $3, align 4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define STRUCT_INIT_PARTIAL R"(box :: { x: i64, y: i8, z: f32 } test :: () { mut x: box = box { x: 1, z: 2.14 }; })"
+TEST_F(IntegratedCodegenTest, Struct_Init_Partial) {
+    File file = File("", "", "", STRUCT_INIT_PARTIAL);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i8, f32 }
+
+test :: () -> void {
+    _x := slot box, align 8
+
+1:
+    $2 := ap i64*, box* _x, i64 0
+    str i64 1 -> i64* $2, align 8
+    $3 := ap f32*, box* _x, i64 2
+    $4 := ftrunc f64 2.140000 -> f32
+    str f32 $4 -> f32* $3, align 4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define NESTED_STRUCT_INIT R"(sa :: { x: i64, y: i8 } sb :: { a: sa, b: f32 } test :: () { mut x: sb = sb { a: sa { x: 0, y: 1 }, b: 3.14 }; })"
+TEST_F(IntegratedCodegenTest, Nested_Struct_Init) {
+    File file = File("", "", "", NESTED_STRUCT_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+sb :: type { sa, f32 }
+sa :: type { i64, i8 }
+
+test :: () -> void {
+    _x := slot sb, align 8
+
+1:
+    $2 := ap sa*, sb* _x, i64 0
+    $3 := ap i64*, sa* $2, i64 0
+    str i64 0 -> i64* $3, align 8
+    $4 := ap i8*, sa* $2, i64 1
+    $5 := trunc i64 1 -> i8
+    str i8 $5 -> i8* $4, align 1
+    $6 := ap f32*, sb* _x, i64 1
+    $7 := ftrunc f64 3.140000 -> f32
+    str f32 $7 -> f32* $6, align 4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define ARRAY_NESTED_STRUCT_INIT R"(box :: { x: i64, y: bool } test :: () { mut x: box[2] = [ box { x: 1, y: true }, box { x: 0, y: false } ]; })"
+TEST_F(IntegratedCodegenTest, Array_Nested_Struct_Init) {
+    File file = File("", "", "", ARRAY_NESTED_STRUCT_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i64, i1 }
+
+test :: () -> void {
+    _x := slot box[2], align 8
+
+1:
+    $2 := ap box*, box[2]* _x, i64 0
+    $3 := ap i64*, box* $2, i64 0
+    str i64 1 -> i64* $3, align 8
+    $4 := ap i1*, box* $2, i64 1
+    str i1 1 -> i1* $4, align 1
+    $5 := ap box*, box[2]* _x, i64 1
+    $6 := ap i64*, box* $5, i64 0
+    str i64 0 -> i64* $6, align 8
+    $7 := ap i1*, box* $5, i64 1
+    str i1 0 -> i1* $7, align 1
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define STRUCT_NESTED_ARRAY_INIT R"(box :: { x: i32[3], y: i32 } test :: () { mut x: box = box { x: [1, 2, 3], y: 4 }; })"
+TEST_F(IntegratedCodegenTest, Struct_Nested_Array_Init) {
+    File file = File("", "", "", STRUCT_NESTED_ARRAY_INIT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    NameResolution NR = NameResolution(Options(), unit);
+    Sema sema = Sema(Options(), unit);
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box :: type { i32[3], i32 }
+
+test :: () -> void {
+    _x := slot box, align 4
+
+1:
+    $2 := ap i32[3]*, box* _x, i64 0
+    $3 := ap i32*, i32[3]* $2, i64 0
+    $4 := trunc i64 1 -> i32
+    str i32 $4 -> i32* $3, align 4
+    $5 := ap i32*, i32[3]* $2, i64 1
+    $6 := trunc i64 2 -> i32
+    str i32 $6 -> i32* $5, align 4
+    $7 := ap i32*, i32[3]* $2, i64 2
+    $8 := trunc i64 3 -> i32
+    str i32 $8 -> i32* $7, align 4
+    $9 := ap i32*, box* _x, i64 1
+    $10 := trunc i64 4 -> i32
+    str i32 $10 -> i32* $9, align 4
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+    delete unit;
+}
+
+#define CALL_AGGREGATE_STRUCT_RETURN_BASIC R"(box :: { x: i64, y: i32 } foo::() box { ret box { x: 1, y: 2 }; } test :: () { mut x: box = foo(); })"
+
+#define CALL_AGGREGATE_STRUCT_ARG_REF_BASIC R"(box :: { x: i64, y: i32 } foo :: (x: box) i64 { ret x.x; } test :: () { mut x: box = box { x: 1, y: 2 }; foo(x); })"
+
+#define CALL_AGGREGATE_STRUCT_ARG_INIT_BASIC R"(box :: { x: i64, y: i32 } foo :: (x: box) i32 { ret x.y; } test :: () { mut x: i32 = foo(box { x: 1, y: 2 }); })"
+
+#define CALL_AGGREGATE_STRUCT_RETURN_AGGREGATE_STRUCT_ARG_BASIC R"(box :: { x: i64, y: bool } foo :: (x: box) box { x.y = true; ret x; } test :: () { mut x: box = box { x: 1, y: false }; mut y: box = foo(x); })"
+
+#define METHOD_CALL_AGGREGATE_STRUCT_RETURN_BASIC R"(box :: { x: i64, y: f32 } foo :: () box { ret box { x: 1, y: 3.1 }; } test :: () { mut x: box = foo(); })"
+
+#define METHOD_CALL_AGGREGATE_STRUCT_ARG_REF_BASIC R"(box :: { x: i64, y: bool } foo :: (x: box) i64 { ret x.x; } test :: () { mut x: box = box { x: 1, y: false }; foo(x); })"
+
+#define METHOD_CALL_AGGREGATE_STRUCT_ARG_INIT_BASIC R"(box :: { x: i64, y: bool } foo :: (x: box) i64 { ret x.x; } test :: () { mut x: i64 = foo(box { x: 1, y: false }); })"
+
+#define METHOD_CALL_AGGREGATE_STRUCT_RETURN_AGGREGATE_STRUCT_ARG_BASIC R"(box :: { x: i64, y: f32 } foo :: (x: box) box { x.y = 3.12; ret x; } test :: () { mut x: box = box { x: 1, y: 2.1 }; mut y: box = foo(x); })"
+
+#define AGGREGATE_RETURN__RETURN_STRUCT_INIT R"(box :: { x: i64, y: i8 } test :: () box { ret box { x: 1, y: 2 }; })"
+
 } // namespace test
 
 } // namespace meddle

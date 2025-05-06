@@ -120,11 +120,22 @@ void Sema::visit(VarDecl *decl) {
             &decl->getInit()->getMetadata(),
             "initializer"
         )) {
-            decl->m_Init = new CastExpr(
-                decl->getInit()->getMetadata(), 
-                decl->getType(), 
-                decl->getInit()
-            );
+            if (auto *arr = dynamic_cast<ArrayExpr *>(decl->getInit())) {
+                Type *elemTy = static_cast<ArrayType *>(decl->getType())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                decl->getInit()->setType(decl->getType());
+            } else {
+                decl->m_Init = new CastExpr(
+                    decl->getInit()->getMetadata(), 
+                    decl->getType(), 
+                    decl->getInit()
+                );
+            }
         }
     }
 }
@@ -194,11 +205,22 @@ void Sema::visit(MatchStmt *stmt) {
             &C->getMetadata(),
             "pattern"
         )) {
-            C->m_Pattern = new CastExpr(
-                C->getPattern()->getMetadata(), 
-                stmt->getPattern()->getType(), 
-                C->getPattern()
-            );
+            if (auto *arr = dynamic_cast<ArrayExpr *>(C->getPattern())) {
+                Type *elemTy = static_cast<ArrayType *>(stmt->getPattern()->getType())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                C->getPattern()->setType(stmt->getPattern()->getType());
+            } else {
+                C->m_Pattern = new CastExpr(
+                    C->getPattern()->getMetadata(), 
+                    stmt->getPattern()->getType(), 
+                    C->getPattern()
+                );
+            }
         }
     }
 
@@ -220,11 +242,22 @@ void Sema::visit(RetStmt *stmt) {
             &stmt->getMetadata(),
             "return"
         )) {
-            stmt->m_Expr = new CastExpr(
-                stmt->m_Expr->getMetadata(), 
-                m_Function->getReturnType(), 
-                stmt->m_Expr
-            );  
+            if (auto *arr = dynamic_cast<ArrayExpr *>(stmt->getExpr())) {
+                Type *elemTy = static_cast<ArrayType *>(m_Function->getReturnType())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                stmt->getExpr()->setType(m_Function->getReturnType());
+            } else {
+                stmt->m_Expr = new CastExpr(
+                    stmt->m_Expr->getMetadata(), 
+                    m_Function->getReturnType(), 
+                    stmt->m_Expr
+                );
+            }
         }
     } else if (!m_Function->getReturnType()->isVoid()) {
         fatal("function does not return 'void'", &stmt->getMetadata());
@@ -252,11 +285,22 @@ void Sema::visit(ArrayExpr *expr) {
             &Elem->getMetadata(), 
             "array element"
         )) {
-            expr->m_Elements[i] = new CastExpr(
-                Elem->getMetadata(), 
-                expr->getType(), 
-                Elem
-            );
+            if (auto *arr = dynamic_cast<ArrayExpr *>(Elem)) {
+                Type *elemTy = static_cast<ArrayType *>(AT->getElement())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                Elem->setType(AT->getElement());
+            } else {
+                expr->m_Elements[i] = new CastExpr(
+                    Elem->getMetadata(), 
+                    expr->getType(), 
+                    Elem
+                );
+            }
         }
     }
 }
@@ -273,11 +317,22 @@ void Sema::visit(BinaryExpr *expr) {
         mode = TypeCheckMode::Loose;
 
     if (typeCheck(RTy, LTy, &expr->getMetadata(), "operator", mode)) {
-        expr->m_RHS = new CastExpr(
-            expr->getRHS()->getMetadata(), 
-            LTy, 
-            expr->getRHS()
-        );
+        if (auto *arr = dynamic_cast<ArrayExpr *>(LTy)) {
+            Type *elemTy = static_cast<ArrayType *>(LTy)->getElement();
+            
+            for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                Expr *elem = arr->m_Elements[i];
+                arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+            }
+
+            expr->getRHS()->setType(LTy);
+        } else {
+            expr->m_RHS = new CastExpr(
+                expr->getRHS()->getMetadata(), 
+                LTy, 
+                expr->getRHS()
+            );
+        }
     }
 
     if (expr->isComparison()) {
@@ -331,16 +386,30 @@ void Sema::visit(CallExpr *expr) {
         ParamDecl *param = callee->getParam(i);
 
         if (typeCheck(arg->getType(), param->getType(), &arg->getMetadata(), "argument")) {
-            expr->m_Args[i] = new CastExpr(
-                arg->getMetadata(), 
-                param->getType(), 
-                arg
-            );
+            if (auto *arr = dynamic_cast<ArrayExpr *>(arg)) {
+                Type *elemTy = static_cast<ArrayType *>(param->getType())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                arg->setType(param->getType());
+            } else {
+                expr->m_Args[i] = new CastExpr(
+                    arg->getMetadata(), 
+                    param->getType(), 
+                    arg
+                );
+            }
         }
     }
 }
 
 void Sema::visit(CastExpr *expr) {
+    if (expr->getExpr()->isAggregateInit())
+        fatal("cannot cast aggregate initializer", &expr->getMetadata());
+
     if (!expr->m_Expr->getType()->canCastTo(expr->getCast())) {
         fatal("cannot cast from '" + expr->m_Expr->getType()->getName() + 
               "' to '" + expr->getCast()->getName() + "'", &expr->getMetadata());
@@ -354,11 +423,25 @@ void Sema::visit(FieldInitExpr *expr) {
     FieldDecl *fld = static_cast<FieldDecl *>(expr->getRef());
 
     if (typeCheck(expr->getType(), fld->getType(), &expr->getMetadata(), "field initializer")) {
-        expr->m_Expr = new CastExpr(
-            expr->getExpr()->getMetadata(), 
-            fld->getType(), 
-            expr->getExpr()
-        );
+        if (auto *arr = dynamic_cast<ArrayExpr *>(expr->getExpr())) {
+            Type *elemTy = static_cast<ArrayType *>(fld->getType())->getElement();
+            
+            for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                Expr *elem = arr->m_Elements[i];
+                arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+            }
+
+            expr->m_Expr->setType(fld->getType());
+        } else {
+            expr->m_Expr = new CastExpr(
+                expr->getExpr()->getMetadata(), 
+                fld->getType(), 
+                expr->getExpr()
+            );
+            
+        }
+
+        expr->m_Type = expr->getExpr()->getType();
     }
 }
 
@@ -394,11 +477,22 @@ void Sema::visit(MethodCallExpr *expr) {
         ParamDecl *param = callee->getParam(i + 1);
 
         if (typeCheck(arg->getType(), param->getType(), &arg->getMetadata(), "argument")) {
-            expr->m_Args[i] = new CastExpr(
-                arg->getMetadata(), 
-                param->getType(), 
-                arg
-            );
+            if (auto *arr = dynamic_cast<ArrayExpr *>(arg)) {
+                Type *elemTy = static_cast<ArrayType *>(param->getType())->getElement();
+                
+                for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
+                    Expr *elem = arr->m_Elements[i];
+                    arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                }
+    
+                arg->setType(param->getType());
+            } else {
+                expr->m_Args[i] = new CastExpr(
+                    arg->getMetadata(), 
+                    param->getType(), 
+                    arg
+                );
+            }
         }
     }
 }

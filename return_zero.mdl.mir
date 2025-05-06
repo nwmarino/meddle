@@ -1,11 +1,23 @@
 target :: x86_64 linux system_v
 
-box :: type { i64, i1 }
+box :: type { i32[3], i32 }
 
-box.foo :: (box* %self) -> void {
-    _self := slot box*, align 8
+test :: () -> void {
+    _x := slot box, align 4
 
 1:
-    str box* %self -> box** _self, align 8
+    $2 := ap i32[3]*, box* _x, i64 0
+    $3 := ap i32*, i32[3]* $2, i64 0
+    $4 := trunc i64 1 -> i32
+    str i32 $4 -> i32* $3, align 4
+    $5 := ap i32*, i32[3]* $2, i64 1
+    $6 := trunc i64 2 -> i32
+    str i32 $6 -> i32* $5, align 4
+    $7 := ap i32*, i32[3]* $2, i64 2
+    $8 := trunc i64 3 -> i32
+    str i32 $8 -> i32* $7, align 4
+    $9 := ap i32*, box* _x, i64 1
+    $10 := trunc i64 4 -> i32
+    str i32 $10 -> i32* $9, align 4
     ret
 }

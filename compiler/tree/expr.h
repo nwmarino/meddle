@@ -148,12 +148,13 @@ class ArrayExpr final : public Expr {
 	std::vector<Expr *> m_Elements;
 
 public:
-	ArrayExpr(const Metadata &M, Type *T, std::vector<Expr *> E)
+	ArrayExpr(const Metadata &M, Type *T, std::vector<Expr *> E = {})
 	  : Expr(M, T), m_Elements(E) {}
 
 	~ArrayExpr() override {
 		for (auto &E : m_Elements)
 			delete E;
+		m_Elements.clear();
 	}
 
 	void accept(Visitor *V) override { V->visit(this); }
@@ -422,11 +423,8 @@ public:
 				   NamedDecl *C = nullptr, std::vector<Expr *> Args = {})
 	  : CallExpr(M, T, N, C, Args), m_Base(B) {}
 
-	~MethodCallExpr() {
+	~MethodCallExpr() override {
 		delete m_Base;
-
-		for (auto &A : m_Args)
-			delete A;
 	}
 
 	void accept(Visitor *V) override { V->visit(this); }
@@ -470,6 +468,7 @@ public:
 	~InitExpr() override {
 		for (auto &F : m_Fields)
 			delete F;
+		m_Fields.clear();
 	}
 
 	void accept(Visitor *V) override { V->visit(this); }

@@ -106,7 +106,7 @@ bool PrimitiveType::canImplCastTo(Type *T) const {
         return false;
 
     // Cannot implicitly cast: float -> integer.
-    if (this->isFloat() && (T->isSInt() || T->isUInt()))
+    if (isFloat() && T->isInt())
         return false;
 
     return isVoid() == T->isVoid();
@@ -123,7 +123,7 @@ bool PrimitiveType::compare(Type *T) const {
 bool ArrayType::canCastTo(Type *T) const {
     assert(T && "Type cannot be null.");
     if (auto *AT = dynamic_cast<ArrayType *>(T))
-        return m_Element->canCastTo(AT->m_Element) && m_Size == AT->m_Size;
+        return m_Element->canCastTo(AT->getElement()) && m_Size == AT->m_Size;
     else if (auto *PT = dynamic_cast<PointerType *>(T))
         return m_Element->canCastTo(PT->getPointee());
     else
@@ -133,7 +133,7 @@ bool ArrayType::canCastTo(Type *T) const {
 bool ArrayType::canImplCastTo(Type *T) const {
     assert(T && "Type cannot be null.");
     if (auto *AT = dynamic_cast<ArrayType *>(T))
-        return m_Element->canImplCastTo(AT->m_Element) && m_Size == AT->m_Size;
+        return m_Element->canImplCastTo(AT->getElement()) && m_Size == AT->m_Size;
     else if (auto *PT = dynamic_cast<PointerType *>(T))
         return m_Element->canImplCastTo(PT->getPointee());
     else
