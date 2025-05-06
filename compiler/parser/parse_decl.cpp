@@ -15,14 +15,20 @@ Decl *Parser::parse_decl() {
     if (match(TokenKind::Path))
         next(); // '::'
 
+    NamedDecl *D = nullptr;
     if (match(TokenKind::SetParen))
-        return parse_function(name);
+        D = parse_function(name);
     else if (match(TokenKind::SetBrace))
-        return parse_struct(name);
+        D = parse_struct(name);
     else if (match_keyword("fix") || match_keyword("mut"))
-        return parse_global_var(name);
+        D = parse_global_var(name);
     else
-        return parse_enum(name);
+        D = parse_enum(name);
+
+    if (D->hasPublicRune())
+        m_Unit->addExport(D);
+
+    return D;
 }
 
 FunctionDecl *Parser::parse_function(const Token &name) {

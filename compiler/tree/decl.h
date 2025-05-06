@@ -18,6 +18,7 @@ class StructDecl;
 enum class Rune : uint8_t {
     Associated,
     NoMangle,
+    Public,
 };
 
 struct Runes final {
@@ -55,6 +56,8 @@ public:
     const Runes &getRunes() const { return m_Runes; }
 
     const Metadata &getMetadata() const { return m_Metadata; }
+
+    bool hasPublicRune() const { return m_Runes.has(Rune::Public); }
 };
 
 class NamedDecl : public Decl {
@@ -171,6 +174,44 @@ public:
     FunctionDecl *getParent() const { return m_Parent; }
 
     void setParent(FunctionDecl *P) { m_Parent = P; }
+};
+
+class UseDecl final : public NamedDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    /// If this `use` imports only specific symbols, i.e.
+    ///
+    /// use { Foo, Bar } = ...
+    std::vector<String> m_Symbols;
+    String m_Path;
+    TranslationUnit *m_Unit;
+
+public:
+    UseDecl(const Runes &R, const Metadata &M, const String &P)
+      : NamedDecl(R, M, ""), m_Path(P), m_Unit(nullptr) {}
+
+    UseDecl(const Runes &R, const Metadata &M, const String &P, const String &N)
+      : NamedDecl(R, M, N), m_Path(P), m_Unit(nullptr) {}
+
+    UseDecl(const Runes &R, const Metadata &M, const String &P, 
+            std::vector<String> S)
+      : NamedDecl(R, M, ""), m_Path(P), m_Symbols(S), m_Unit(nullptr) {}
+
+    ~UseDecl() override = default;
+    
+    void accept(Visitor *V) override { V->visit(this); }
+
+    bool isNamed() const { return !m_Name.empty(); }
+
+    const String &getPath() const { return m_Path; }
+
+    const std::vector<String> &getSymbols() const { return m_Symbols; }
+
+    TranslationUnit *getUnit() const { return m_Unit; }
+
+    void setUnit(TranslationUnit *U) { m_Unit = U; }
 };
 
 class TypeDecl : public NamedDecl {

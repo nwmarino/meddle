@@ -3,9 +3,8 @@
 #include "lexer/lexer.h"
 #include "mir/segment.h"
 #include "parser/parser.h"
-#include "tree/nameres.h"
-#include "tree/sema.h"
 #include "tree/unit.h"
+#include "tree/unitman.h"
 
 #include <boost/filesystem.hpp>
 
@@ -60,7 +59,7 @@ int main(int argc, char **argv) {
         .Time = 1,
     };
     std::vector<File> files;
-    std::vector<TranslationUnit *> units;
+    UnitManager units;
     std::vector<mir::Segment *> segments;
     files.push_back(parseInputFile("samples/return_zero.mdl"));
 
@@ -71,12 +70,9 @@ int main(int argc, char **argv) {
         std::to_string(files.size()) + " file(s).");
 
     Parser parser = Parser(files[0], stream);
-    units.push_back(parser.get());
+    units.addUnit(parser.get());
 
-    for (auto &unit : units) {
-        NameResolution NR = NameResolution(opts, unit);
-        Sema sema = Sema(opts, unit);
-    }
+    units.drive(opts);
 
     Target target = Target(
         mir::Arch::X86_64, 
@@ -84,7 +80,7 @@ int main(int argc, char **argv) {
         mir::ABI::SystemV
     );
 
-    for (auto &unit : units) {
+    for (auto &unit : units.getUnits()) {
         mir::Segment *seg = new mir::Segment(target);
         assert(seg && "Unable to create segment.");
         CGN *cgn = new CGN(opts, unit, seg);
@@ -103,30 +99,6 @@ int main(int argc, char **argv) {
         log("  Frontend took: " + std::to_string(totalDuration.count()) + "s.");
     }
 
-    /*
-    String clang = "clang -c ";
-    for (auto &unit : units)
-        clang += unit->getFile().filename + ".c";
-
-    std::system(clang.c_str());
-
-    String ld = "clang -o " + opts.output + " ";
-    for (auto &unit : units)
-        ld += unit->getFile().filename + ".o";
-
-    std::system(ld.c_str());
-
-    for (auto &unit : units) {
-        String file = unit->getFile().filename;
-        String rm = "rm " + file + ".o ";
-        if (!opts.KeepCC) 
-            rm += file + ".c " + file + ".h";
-
-        std::system(rm.c_str());
-    }
-
-    */
-
     std::chrono::time_point<std::chrono::high_resolution_clock> backend;
     if (opts.Time) {
         backend = std::chrono::high_resolution_clock::now();
@@ -143,10 +115,6 @@ int main(int argc, char **argv) {
     for (auto &seg : segments)
         delete seg;
 
-    for (auto &unit : units)
-        delete unit;
-
     files.clear();
-    units.clear();
     return 0;
 }

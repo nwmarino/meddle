@@ -21,6 +21,7 @@ class Context final {
     std::unordered_map<String, Type *> m_Types;
     std::unordered_map<String, EnumType *> m_Enums;
     std::unordered_map<String, StructType *> m_Structs;
+    std::unordered_map<String, Type *> m_Externals;
     std::vector<FunctionType *> m_FunctionTypes;
     std::vector<TypeResult *> m_Results;
 
@@ -46,6 +47,8 @@ public:
     void addType(Type *T);
 
     void addType(FunctionType *T) { m_FunctionTypes.push_back(T); }
+
+    void addExternalType(Type *T);
 
     Type *getType(const String &N);
 

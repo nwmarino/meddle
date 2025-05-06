@@ -215,6 +215,8 @@ void Parser::parse_runes() {
             m_Runes.set(Rune::Associated);
         else if (name == "no_mangle")
             m_Runes.set(Rune::NoMangle);
+        else if (name == "public")
+            m_Runes.set(Rune::Public);
         else
             warn("unknown rune: " + name, &m_Current->md);
 

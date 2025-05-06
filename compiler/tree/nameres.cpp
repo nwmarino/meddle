@@ -17,18 +17,12 @@ static Type *unwrapType(Type *T) {
     return static_cast<TypeResult *>(T)->getUnderlying();
 }
 
-NameResolution::NameResolution(const Options &opts, TranslationUnit *U) 
-  : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()) {
-    m_Unit->getContext()->sanitate();
+NameResolution::NameResolution(const Options &opts, TranslationUnit *U, Phase P) 
+  : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()), m_Phase(P) {
     U->accept(this);
 }
 
 void NameResolution::visit(TranslationUnit *U) {
-    m_Phase = Phase::Shallow;
-    for (auto &D : U->getDecls())
-        D->accept(this);
-
-    m_Phase = Phase::Recurse;
     for (auto &D : U->getDecls())
         D->accept(this);
 }

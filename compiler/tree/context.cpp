@@ -15,18 +15,25 @@ Context::Context(TranslationUnit *U) : m_Unit(U) {
 Context::~Context() {
     for (auto &[N, T] : m_Types)
         delete T;
+    m_Types.clear();
 
     for (auto &[N, T] : m_Enums)
         delete T;
+    m_Enums.clear();
 
     for (auto &[N, T] : m_Structs)
         delete T;
+    m_Structs.clear();
 
     for (auto &FT : m_FunctionTypes)
         delete FT;
+    m_FunctionTypes.clear();
 
     for (auto &R : m_Results)
         delete R;
+    m_Results.clear();
+
+    m_Externals.clear();
 }
 
 void Context::addType(Type *T) {
@@ -49,6 +56,16 @@ void Context::addType(Type *T) {
     m_Types[T->getName()] = T;
 }
 
+void Context::addExternalType(Type *T) {
+    assert(T->isQualified() && "External type must be qualified.");
+    assert((T->isEnum() || T->isStruct()) && "External type must be defined.");
+
+    if (m_Externals.find(T->getName()) != m_Externals.end())
+        fatal("type already exists: " + T->getName(), nullptr);
+
+    m_Externals[T->getName()] = T;
+}
+
 Type *Context::getType(const String &N) {
     auto pool_it = m_Types.find(N);
     if (pool_it != m_Types.end())
@@ -62,11 +79,9 @@ Type *Context::getType(const String &N) {
     if (struct_it != m_Structs.end())
         return struct_it->second;
 
-    //NamedDecl *D = m_Unit->getScope()->lookup(N);
-    // if (D and D is a type def)
-    //   return D's type
-
-    // check external types
+    auto ext_it = m_Externals.find(N);
+    if (ext_it != m_Externals.end())
+        return ext_it->second;
 
     if (N.back() == '*') {
         Type *pointee = getType(N.substr(0, N.size() - 1));

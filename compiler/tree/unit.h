@@ -12,19 +12,29 @@ class TranslationUnit final {
     friend class CCGN;
     friend class NameResolution;
     friend class Sema;
+    friend class UnitManager;
     
     File m_File;
     Context m_Context;
     Scope *m_Scope;
-    std::vector<Decl *> m_Decls;
+    std::vector<Decl *> m_Decls = {};
+    std::vector<UseDecl *> m_Uses = {};
+    std::vector<NamedDecl *> m_Exports = {};
 
 public:
     TranslationUnit(const File &F) 
       : m_File(F), m_Context(this), m_Scope(new Scope) {}
 
     ~TranslationUnit() {
+        for (auto &U : m_Uses)
+            delete U;
+        m_Uses.clear();
+
         for (auto &D : m_Decls)
             delete D;
+        m_Decls.clear();
+
+        m_Exports.clear();
 
         delete m_Scope;
     }
@@ -37,9 +47,17 @@ public:
 
     Scope *getScope() const { return m_Scope; }
 
-    const std::vector<Decl *> getDecls() const { return m_Decls; }
+    const std::vector<Decl *> &getDecls() const { return m_Decls; }
+
+    const std::vector<UseDecl *> &getUses() const { return m_Uses; }
 
     void addDecl(Decl *D) { m_Decls.push_back(D); }
+
+    void addUse(UseDecl *U) { m_Uses.push_back(U); }
+
+    void addExport(NamedDecl *D) { m_Exports.push_back(D); }
+
+    const std::vector<NamedDecl *> &getExports() const { return m_Exports; }
 };
 
 } // namespace meddle

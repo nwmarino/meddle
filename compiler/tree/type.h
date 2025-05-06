@@ -36,6 +36,8 @@ public:
 
     bool isPointer() const { return m_Name.back() == '*'; }
 
+    virtual bool isEnum() const { return false; }
+
     virtual bool isStruct() const { return false; }
     
     virtual bool isSInt() const { return false; }
@@ -216,6 +218,8 @@ public:
     EnumDecl *getDecl() const { return m_Decl; }
 
     void setDecl(EnumDecl *E) { m_Decl = E; }
+
+    bool isEnum() const override { return true; }
 
     bool isUInt() const override { return m_Underlying->isUInt(); }
 

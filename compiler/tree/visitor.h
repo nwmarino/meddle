@@ -5,13 +5,14 @@ namespace meddle {
 
 class TranslationUnit;
 
-class FunctionDecl;
-class VarDecl;
-class ParamDecl;
 class EnumVariantDecl;
 class EnumDecl;
 class FieldDecl;
+class FunctionDecl;
+class ParamDecl;
 class StructDecl;
+class UseDecl;
+class VarDecl;
 
 class BreakStmt;
 class ContinueStmt;
@@ -53,6 +54,7 @@ public:
     virtual void visit(FunctionDecl *decl) {}
     virtual void visit(VarDecl *decl) {}
     virtual void visit(ParamDecl *decl) {}
+    virtual void visit(UseDecl *decl) {}
     virtual void visit(EnumVariantDecl *decl) {}
     virtual void visit(EnumDecl *decl) {}
     virtual void visit(FieldDecl *decl) {}
