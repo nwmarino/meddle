@@ -9,6 +9,9 @@ Decl *Parser::parse_decl() {
     if (!match(TokenKind::Identifier))
         fatal("expected declaration identifier", &m_Current->md);
 
+    if (match_keyword("use"))
+        return parse_use();
+
     Token name = *m_Current;
     next();
 
@@ -351,4 +354,62 @@ StructDecl *Parser::parse_struct(const Token &name) {
     ty->setDecl(Struct);
     m_Scope->addDecl(Struct);
     return Struct;
+}
+
+UseDecl *Parser::parse_use() {
+    Metadata md = m_Current->md;
+    String name = "";
+    String path;
+    std::vector<String> names = {};
+    next(); // 'use'
+
+    if (match(TokenKind::Identifier)) {
+        name = m_Current->value;
+        next(); // identifier
+
+        if (!match(TokenKind::Equals))
+            fatal("expected '=' after named 'use'", &m_Current->md);
+        next();
+    } else if (match(TokenKind::SetBrace)) {
+        next(); // '{'
+
+        while (!match(TokenKind::EndBrace)) {
+            if (!match(TokenKind::Identifier))
+                fatal("expected identifier in listed use declaration", &m_Current->md);
+
+            names.push_back(m_Current->value);
+            next(); // identifier
+
+            if (match(TokenKind::EndBrace))
+                break;
+
+            if (!match(TokenKind::Comma))
+                fatal("expected ',' or '}' in listed use declaration", &m_Current->md);
+            next(); // ','
+        }
+
+        next(); // '}'
+
+        if (!match(TokenKind::Equals))
+            fatal("expected '=' after listed 'use'", &m_Current->md);
+        next(); // '='
+    }
+
+    if (!match(LiteralKind::String))
+        fatal("expected string path after 'use'", &m_Current->md);
+
+    path = m_Current->value;
+    next();
+
+    if (!match(TokenKind::Semi))
+        fatal("expected ';' after use declaration", &m_Current->md);
+    next(); // ';'
+
+    if (!name.empty()) {
+        return new UseDecl(m_Runes, md, path, name);
+    } else if (!names.empty()) {
+        return new UseDecl(m_Runes, md, path, names);
+    } else {
+        return new UseDecl(m_Runes, md, path);
+    }
 }

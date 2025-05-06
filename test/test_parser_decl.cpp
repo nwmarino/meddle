@@ -579,6 +579,66 @@ TEST_F(ParseDeclTest, Struct_Field_Access_Basic) {
     delete unit;
 }
 
+#define USE_UNNAMED R"(use "test";)"
+TEST_F(ParseDeclTest, Use_Anonymous) {
+    File file = File("", "", "", USE_UNNAMED);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getUses().size(), 1);
+
+    UseDecl *UD = dynamic_cast<UseDecl *>(unit->getUses()[0]);
+    EXPECT_NE(UD, nullptr);
+    EXPECT_EQ(UD->getPath(), "test");
+    EXPECT_EQ(UD->getSymbols().size(), 0);
+
+    delete unit;
+}
+
+#define USE_NAMED R"(use Name = "test";)"
+TEST_F(ParseDeclTest, Use_Named) {
+    File file = File("", "", "", USE_NAMED);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getUses().size(), 1);
+
+    UseDecl *UD = dynamic_cast<UseDecl *>(unit->getUses()[0]);
+    EXPECT_NE(UD, nullptr);
+    EXPECT_EQ(UD->getPath(), "test");
+    EXPECT_EQ(UD->getName(), "Name");
+    EXPECT_EQ(UD->getSymbols().size(), 0);
+    EXPECT_EQ(UD->isNamed(), true);
+
+    delete unit;
+}
+
+#define USE_LIST R"(use { Foo, Bar } = "test";)"
+TEST_F(ParseDeclTest, Use_List) {
+    File file = File("", "", "", USE_LIST);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getUses().size(), 1);
+
+    UseDecl *UD = dynamic_cast<UseDecl *>(unit->getUses()[0]);
+    EXPECT_NE(UD, nullptr);
+    EXPECT_EQ(UD->getPath(), "test");
+    EXPECT_EQ(UD->getName(), "");
+    EXPECT_EQ(UD->getSymbols().size(), 2);
+    EXPECT_EQ(UD->isNamed(), false);
+    EXPECT_EQ(UD->getSymbols()[0], "Foo");
+    EXPECT_EQ(UD->getSymbols()[1], "Bar");
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

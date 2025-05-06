@@ -65,6 +65,7 @@ class Parser final {
     VarDecl *parse_var(bool mut);
     EnumDecl *parse_enum(const Token &name);
     StructDecl *parse_struct(const Token &name);
+    UseDecl *parse_use();
 
     Stmt *parse_stmt();
     BreakStmt *parse_break();

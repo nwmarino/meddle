@@ -248,6 +248,9 @@ Parser::Parser(const File &F, const TokenStream &S) : m_Stream(S) {
         if (!D)
             fatal("expected declaration", &m_Current->md);
 
-        m_Unit->addDecl(D);
+        if (auto *use = dynamic_cast<UseDecl *>(D))
+            m_Unit->addUse(use);
+        else
+            m_Unit->addDecl(D);
     }
 }
