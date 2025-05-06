@@ -278,6 +278,8 @@ void CGN::define_function(FunctionDecl *FD) {
 
 void CGN::visit(TranslationUnit *unit) {
 	m_Phase = Phase::Declare;
+	for (auto &I : unit->getImports())
+		I->accept(this);
 	for (auto &D : unit->getDecls())
 		D->accept(this);
 

@@ -21,6 +21,8 @@ struct File final {
     ) : filename(filename), dir(dir), path(path), contents(contents) {}
 };
 
+File parseInputFile(const String &path);
+
 struct Metadata final {
     File file;
     unsigned line;

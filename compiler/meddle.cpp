@@ -1,12 +1,11 @@
 #include "cgn/codegen.h"
 #include "core/logger.h"
+#include "core/metadata.h"
 #include "lexer/lexer.h"
 #include "mir/segment.h"
 #include "parser/parser.h"
 #include "tree/unit.h"
 #include "tree/unitman.h"
-
-#include <boost/filesystem.hpp>
 
 #include <chrono>
 #include <cstdlib>
@@ -15,37 +14,6 @@
 
 using namespace meddle;
 using mir::Target;
-
-File parseInputFile(const String &path) {
-    String absol;
-
-    try {
-        absol = boost::filesystem::canonical(path).string();
-    } catch (const boost::filesystem::filesystem_error &e) {
-        fatal("file does not exist: " + path, nullptr);
-    }
-
-    String buffer;
-    try {
-        unsigned size = boost::filesystem::file_size(path);
-        buffer.resize(size);
-
-        std::ifstream file(path, std::ios::binary);
-        if (!file)
-            fatal("failed to open file: " + path, nullptr);
-
-        file.read(&buffer[0], size);
-        
-        if (file.gcount() != static_cast<std::streamsize>(size))
-            fatal("failed to read entire file: " + path, nullptr);
-    } catch (const std::exception &e) {
-        fatal("failed to parse input file: " + String(e.what()), nullptr);
-    }
-
-    String filename = boost::filesystem::path(path).filename().string();
-    String directory = boost::filesystem::path(path).parent_path().string();
-    return File(filename, directory, absol, buffer);
-}
 
 int main(int argc, char **argv) {
     //if (argc < 2)
@@ -58,19 +26,22 @@ int main(int argc, char **argv) {
         .NamedMIR = 0,
         .Time = 1,
     };
+
     std::vector<File> files;
     UnitManager units;
     std::vector<mir::Segment *> segments;
-    files.push_back(parseInputFile("samples/return_zero.mdl"));
 
-    Lexer lexer = Lexer(files[0]);
-    TokenStream stream = lexer.unwrap(&opts);
+    files.push_back(parseInputFile("samples/foo.mdl"));
+    files.push_back(parseInputFile("samples/bar.mdl"));
+
+    for (auto &file : files) {
+        Lexer lexer = Lexer(file);
+        Parser parser = Parser(file, lexer.unwrap(&opts));
+        units.addUnit(parser.get());
+    }
 
     log("Lexed " + std::to_string(opts.lexedLines) + " lines across " + 
         std::to_string(files.size()) + " file(s).");
-
-    Parser parser = Parser(files[0], stream);
-    units.addUnit(parser.get());
 
     units.drive(opts);
 

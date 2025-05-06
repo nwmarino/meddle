@@ -19,6 +19,7 @@ class TranslationUnit final {
     Scope *m_Scope;
     std::vector<Decl *> m_Decls = {};
     std::vector<UseDecl *> m_Uses = {};
+    std::vector<NamedDecl *> m_Imports = {};
     std::vector<NamedDecl *> m_Exports = {};
 
 public:
@@ -55,7 +56,11 @@ public:
 
     void addUse(UseDecl *U) { m_Uses.push_back(U); }
 
+    void addImport(NamedDecl *D) { m_Imports.push_back(D); }
+
     void addExport(NamedDecl *D) { m_Exports.push_back(D); }
+
+    const std::vector<NamedDecl *> &getImports() const { return m_Imports; }
 
     const std::vector<NamedDecl *> &getExports() const { return m_Exports; }
 };
