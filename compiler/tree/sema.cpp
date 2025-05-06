@@ -348,9 +348,8 @@ void Sema::visit(BinaryExpr *expr) {
         fatal("cannot assign to non-lvalue", &expr->getMetadata());
 
     VarDecl *LVal = nullptr;
-    if (auto *E = dynamic_cast<RefExpr *>(expr->getLHS())) {
-        LVal = dynamic_cast<VarDecl *>(E->getRef());
-    } else if (auto *E = dynamic_cast<UnaryExpr *>(expr->getLHS())) {
+    
+    if (auto *E = dynamic_cast<UnaryExpr *>(expr->getLHS())) {
         if (E->getKind() == UnaryExpr::Kind::Dereference) {
             // Unary expressions are only lvalues for dereferences `*`.
             RefExpr *RE = dynamic_cast<RefExpr *>(E->getExpr());
@@ -361,6 +360,12 @@ void Sema::visit(BinaryExpr *expr) {
         RefExpr *RE = dynamic_cast<RefExpr *>(E->getBase());
         assert(RE && "Non-referencing subscript expression.");
         LVal = dynamic_cast<VarDecl *>(RE->getRef());
+    } else if (auto *E = dynamic_cast<AccessExpr *>(expr->getLHS())) {
+        RefExpr *RE = dynamic_cast<RefExpr *>(E->getBase());
+        assert(RE && "Non-referencing access expression.");
+        LVal = dynamic_cast<VarDecl *>(RE->getRef());
+    } else if (auto *E = dynamic_cast<RefExpr *>(expr->getLHS())) {
+        LVal = dynamic_cast<VarDecl *>(E->getRef());
     }
 
     assert(LVal && "LHS must be a reference.");

@@ -103,13 +103,13 @@ mir::Type *CGN::cgn_type(Type *T) {
 		std::vector<mir::Type *> params = {};
 		params.reserve(FT->getNumParams());
 
-		if (FT->getReturnType()->isArray())
+		if (type_class(FT->getReturnType()) == TypeClass::Aggregate)
 			retTy = m_Builder.get_void_ty();
 		else
 			retTy = cgn_type(FT->getReturnType());
 		
 		for (auto &P : FT->getParams()) {
-			if (P->isArray())
+			if (type_class(P) == TypeClass::Aggregate)
 				params.push_back(mir::PointerType::get(m_Segment, cgn_type(P)));
 			else
 				params.push_back(cgn_type(P));
@@ -138,7 +138,7 @@ CGN::TypeClass CGN::type_class(Type *T) const {
 		return TypeClass::Float;
 	else if (T->isPointer())
 		return TypeClass::Pointer;
-	else if (T->isArray())
+	else if (T->isArray() || T->isStruct())
 		return TypeClass::Aggregate;
 	else
 		return TypeClass::Unknown;
@@ -157,8 +157,7 @@ void CGN::declare_function(FunctionDecl *FD) {
 	args.reserve(FD->getNumParams());
 
 	Type *retTy = FD->getReturnType();
-	bool isAggregateRet = retTy->isArray(); // || retTy->isStruct();
-	if (isAggregateRet) {
+	if (type_class(retTy) == TypeClass::Aggregate) {
 		assert(FN->get_return_ty()->is_void_ty() 
 			&& "Function returns aggregate, but MIR function not void.");
 
@@ -186,8 +185,7 @@ void CGN::declare_function(FunctionDecl *FD) {
 		mir::Argument *arg = new mir::Argument(P->getName(), ty, FN, 
 			args.size(), slot);
 
-		bool isAggregateParam = paramTy->isArray(); // || paramTy->isStruct();
-		if (isAggregateParam) {
+		if (type_class(paramTy) == TypeClass::Aggregate) {
 			// Aggregate parameters are passed via pointer with the `AParam`
 			// attribute on the given parameter.
 			//
