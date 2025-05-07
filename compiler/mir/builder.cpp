@@ -43,10 +43,6 @@ Value *Builder::build_ap(Type *T, Value *S, Value *Idx, String N) {
 }
 
 StoreInst *Builder::build_store(Value *V, Value *D) {
-    return build_store_offset(V, D, nullptr);
-}
-
-StoreInst *Builder::build_store_offset(Value *V, Value *D, ConstantInt *O) {
     assert(m_Insert && "No insertion point set.");
     assert(D && "Store destination cannot be null.");
     assert(D->get_type()->is_pointer_ty() && "Store destination must be a place.");
@@ -54,17 +50,13 @@ StoreInst *Builder::build_store_offset(Value *V, Value *D, ConstantInt *O) {
     DataLayout DL = m_Segment->get_data_layout();
     unsigned align = DL.get_type_align(V->get_type());
 
-    StoreInst *store = new StoreInst(m_Insert, V, D, O, align);
+    StoreInst *store = new StoreInst(m_Insert, V, D, nullptr, align);
     V->add_use(store);
     D->add_use(store);
     return store;
 }
 
 Value *Builder::build_load(Type *T, Value *S, String N) {
-    return build_load_offset(T, S, nullptr, N.empty() ? m_Segment->get_ssa() : N);
-}
-
-Value *Builder::build_load_offset(Type *T, Value *S, ConstantInt *O, String N) {
     assert(m_Insert && "No insertion point set.");
     assert(S && "Load source cannot be null.");
 
@@ -72,7 +64,7 @@ Value *Builder::build_load_offset(Type *T, Value *S, ConstantInt *O, String N) {
     unsigned align = DL.get_type_align(T);
 
     LoadInst *load = new LoadInst(N.empty() ? m_Segment->get_ssa() : N, T, 
-        m_Insert, S, O, align);
+        m_Insert, S, nullptr, align);
     S->add_use(load);
     return load;
 }
@@ -90,6 +82,20 @@ CpyInst *Builder::build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL,
     D->add_use(cpy);
     S->add_use(cpy);
     return cpy;
+}
+
+SyscallInst *Builder::build_syscall(Value *Num, std::vector<Value *> &Args, 
+                                    String N) {
+    assert(m_Insert && "No insertion point set.");
+    assert(Num && "Syscall number cannot be null.");
+    assert(Num->get_type()->is_integer_ty() && "Syscall number must be an integer.");
+    
+    SyscallInst *syscall = new SyscallInst(N.empty() ? m_Segment->get_ssa() : N, 
+        get_i64_ty(), m_Insert, Num, Args);
+    Num->add_use(syscall);
+    for (Value *arg : Args)
+        arg->add_use(syscall);
+    return syscall;
 }
 
 BrifInst *Builder::build_brif(Value *C, BasicBlock *T, BasicBlock *F) {

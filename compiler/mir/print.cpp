@@ -74,6 +74,19 @@ static void print_cpy(std::ostream &OS, CpyInst *I) {
     OS << ", align " << I->get_dest_align();
 }
 
+static void print_syscall(std::ostream &OS, SyscallInst *I) {
+    OS << "$" << get_printed_name(I) << " := syscall ";
+    I->get_num()->print(OS);
+    if (!I->get_args().empty())
+        OS << ", ";
+    
+    for (auto &Arg : I->get_args()) {
+        Arg->print(OS);
+        if (Arg != I->get_args().back())
+            OS << ", ";
+    }
+}
+
 static void print_brif(std::ostream &OS, BrifInst *I) {
     OS << "brif ";
     I->get_cond()->print(OS);
@@ -332,6 +345,8 @@ static void print_block(std::ostream &OS, BasicBlock *BB) {
             print_store(OS, I);
         else if (auto *I = dynamic_cast<LoadInst *>(curr))
             print_load(OS, I);
+        else if (auto *I = dynamic_cast<SyscallInst *>(curr))
+            print_syscall(OS, I);
         else if (auto *I = dynamic_cast<CpyInst *>(curr))
             print_cpy(OS, I);
         else if (auto *I = dynamic_cast<BrifInst *>(curr))
@@ -538,6 +553,10 @@ void APInst::print(std::ostream &OS) const {
 }
 
 void LoadInst::print(std::ostream &OS) const {
+    OS << get_type()->get_name() << " $" << get_printed_name(this);
+}
+
+void SyscallInst::print(std::ostream &OS) const {
     OS << get_type()->get_name() << " $" << get_printed_name(this);
 }
 

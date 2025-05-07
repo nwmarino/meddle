@@ -577,5 +577,5 @@ RuneSyscallExpr *Parser::parse_rune_syscall() {
     }
 
     next(); // ')'
-    return new RuneSyscallExpr(md, nullptr, num, Args);
+    return new RuneSyscallExpr(md, m_Context->getI64Type(), num, Args);
 }

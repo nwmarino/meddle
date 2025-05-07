@@ -5631,6 +5631,40 @@ box.foo :: (box* %self) -> i64 {
     delete seg;
 }
 
+#define RUNE_SYSCALL_EXPR_BASIC R"(test :: () { $syscall<5>(1, 2); })"
+TEST_F(IntegratedCodegenTest, Rune_Syscall_Expr_Basic) {
+    File file = File("test.mdl", "/", "/test.mdl", RUNE_SYSCALL_EXPR_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    UnitManager units;
+    units.addVirtUnit(unit);
+    units.drive(Options());
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+test :: () -> void {
+1:
+    $2 := syscall i64 5, i64 1, i64 2
+    ret
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+}
+
 } // namespace test
 
 } // namespace meddle

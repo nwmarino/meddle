@@ -49,13 +49,11 @@ public:
 
     StoreInst *build_store(Value *V, Value *D);
 
-    StoreInst *build_store_offset(Value *V, Value *D, ConstantInt *O);
-
     Value *build_load(Type *T, Value *S, String N = "");
-    
-    Value *build_load_offset(Type *T, Value *S, ConstantInt *O, String N = "");
 
     CpyInst *build_cpy(Value *D, unsigned DAL, Value *S, unsigned SAL, Value *Sz);
+
+    SyscallInst *build_syscall(Value *Num, std::vector<Value *> &Args, String N = "");
 
     BrifInst *build_brif(Value *C, BasicBlock *T, BasicBlock *F);
 

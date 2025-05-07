@@ -33,7 +33,7 @@ public:
 
     virtual bool is_ret() const { return false; }
 
-    virtual bool produces_value() const { return false; }
+    virtual bool produces_value() const { return is_named(); }
 
     BasicBlock *get_parent() const { return m_Parent; }
 
@@ -60,8 +60,6 @@ class PHINode final : public Inst {
     ) : Inst(N, T, P), m_Incoming() {}
 
 public:
-    bool produces_value() const override { return true; }
-
     void add_incoming(Value *V, BasicBlock *BB) {
         assert(V->get_type() == this->m_Type && "PHI node type mismatch.");
         m_Incoming.emplace_back(V, BB);
@@ -88,8 +86,6 @@ class APInst final : public Inst {
     ) : Inst(N, T, P), m_Source(S), m_Idx(Idx) {}
 
 public:
-    bool produces_value() const override { return true; }
-
     Value *get_source() const { return m_Source; }
 
     Value *get_index() const { return m_Idx; }
@@ -142,8 +138,6 @@ class LoadInst final : public Inst {
     ) : Inst(N, T, P), m_Source(S), m_Offset(O), m_Align(Align) {}
 
 public:
-    bool produces_value() const override { return true; }
-
     Value *get_source() const { return m_Source; }
 
     bool has_offset() const { return m_Offset != nullptr; }
@@ -184,6 +178,28 @@ public:
     unsigned get_dest_align() const { return m_DestAlign; }
 
     Value *get_size() const { return m_Size; }
+};
+
+class SyscallInst final : public Inst {
+    friend class Builder;
+
+    Value *m_Num;
+    std::vector<Value *> m_Args;
+
+    SyscallInst(
+        String N,
+        Type *T,
+        BasicBlock *P,
+        Value *Num,
+        std::vector<Value *> Args
+    ) : Inst(N, T, P), m_Num(Num), m_Args(std::move(Args)) {}
+
+public:
+    Value *get_num() const { return m_Num; }
+
+    const std::vector<Value *> &get_args() const { return m_Args; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class BrifInst final : public Inst {
@@ -251,8 +267,6 @@ class CallInst final : public Inst {
     ) : Inst(N, T, P), m_Callee(C), m_Args(std::move(A)) {}
 
 public:
-    bool produces_value() const override { return is_named(); }
-
     Value *get_callee() const { return m_Callee; }
 
     const std::vector<Value *> &get_args() const { return m_Args; }
