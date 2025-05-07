@@ -1,4 +1,0 @@
-$public 
-bar :: () i64 { 
-    ret 42; 
-}

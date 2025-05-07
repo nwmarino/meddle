@@ -45,6 +45,7 @@ class RefExpr;
 class SizeofExpr;
 class SubscriptExpr;
 class TypeSpecExpr;
+class UnitSpecExpr;
 class UnaryExpr;
 
 class Visitor {
@@ -91,6 +92,7 @@ public:
     virtual void visit(SizeofExpr *expr) {}
     virtual void visit(SubscriptExpr *expr) {}
     virtual void visit(TypeSpecExpr *expr) {}
+    virtual void visit(UnitSpecExpr *expr) {}
     virtual void visit(UnaryExpr *expr) {}
 };
 

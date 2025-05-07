@@ -1,5 +1,0 @@
-use "bar"; 
-
-foo :: () i64 { 
-    ret bar();
-}

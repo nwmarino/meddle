@@ -56,14 +56,14 @@ void Context::addType(Type *T) {
     m_Types[T->getName()] = T;
 }
 
-void Context::addExternalType(Type *T) {
+void Context::addExternalType(Type *T, const String &N) {
     assert(T->isQualified() && "External type must be qualified.");
     assert((T->isEnum() || T->isStruct()) && "External type must be defined.");
 
-    if (m_Externals.find(T->getName()) != m_Externals.end())
-        fatal("type already exists: " + T->getName(), nullptr);
+    if (m_Externals.find(N.empty() ? T->getName() : N) != m_Externals.end())
+        fatal("type already exists: " + (N.empty() ? T->getName() : N), nullptr);
 
-    m_Externals[T->getName()] = T;
+    m_Externals[N.empty() ? T->getName() : N] = T;
 }
 
 Type *Context::getType(const String &N) {

@@ -28,6 +28,8 @@ void NameResolution::visit(TranslationUnit *U) {
 }
 
 void NameResolution::visit(FunctionDecl *decl) {
+    decl->setPUnit(m_Unit);
+
     if (m_Phase == Phase::Shallow) {
         auto *FT = static_cast<FunctionType *>(decl->getType());
         for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i)
@@ -40,6 +42,8 @@ void NameResolution::visit(FunctionDecl *decl) {
 }
 
 void NameResolution::visit(VarDecl *decl) {
+    decl->setPUnit(m_Unit);
+
     if (m_Phase == Phase::Shallow && decl->isGlobal()) {
         if (decl->m_Type)
             decl->m_Type = unwrapType(decl->getType());
@@ -60,6 +64,8 @@ void NameResolution::visit(VarDecl *decl) {
 }
 
 void NameResolution::visit(FieldDecl *decl) {
+    decl->setPUnit(m_Unit);
+
     if (m_Phase == Phase::Shallow) {
         if (decl->m_Type)
             decl->m_Type = unwrapType(decl->getType());
@@ -75,6 +81,7 @@ void NameResolution::visit(FieldDecl *decl) {
 }
 
 void NameResolution::visit(StructDecl *decl) {
+    decl->setPUnit(m_Unit);
     m_Scope = decl->getScope();
 
     for (auto &F : decl->getFields())
@@ -319,6 +326,8 @@ void NameResolution::visit(TypeSpecExpr *expr) {
     }
 
     if (auto *D = dynamic_cast<EnumDecl *>(TD)) {
+        expr->m_Ref = D;
+
         auto *R = dynamic_cast<RefExpr *>(expr->getExpr());
         if (!R) {
             fatal("expected reference expression after '::' operator", 
@@ -333,6 +342,8 @@ void NameResolution::visit(TypeSpecExpr *expr) {
 
         expr->getExpr()->accept(this);
     } else if (auto *S = dynamic_cast<StructDecl *>(TD)) {
+        expr->m_Ref = S; 
+        
         if (!dynamic_cast<CallExpr *>(expr->getExpr()))
             fatal("expected call expression after '::' operator on structure", 
                 &expr->getMetadata());
@@ -346,9 +357,26 @@ void NameResolution::visit(TypeSpecExpr *expr) {
         fatal("invalid type specifier: " + expr->getName(), 
             &expr->getMetadata());
     }
-
     
     expr->m_Type = expr->getExpr()->getType();
+}
+
+void NameResolution::visit(UnitSpecExpr *expr) {
+    expr->setUnit(expr->getUse()->getUnit());
+    assert(expr->getUnit() && "Use unresolved.");
+
+    Scope *old_scope = m_Scope;
+    m_Scope = expr->getUnit()->getScope();
+
+    expr->getExpr()->accept(this);
+
+    if (!expr->getExpr()->getRef()->hasPublicRune()) {
+        fatal("specified declaration exists, but not marked public: " + 
+            expr->getExpr()->getName(), &expr->getMetadata());
+    }
+
+    expr->m_Type = expr->getExpr()->getType();
+    m_Scope = old_scope;
 }
 
 void NameResolution::visit(UnaryExpr *expr) {

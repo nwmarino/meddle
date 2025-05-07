@@ -1,0 +1,5 @@
+use CLI = "one.mdl";
+
+test :: () CLI::Colors { 
+    ret CLI::Colors::Red; 
+}

@@ -96,7 +96,8 @@ class Parser final {
     RefExpr *parse_ref();
     CallExpr *parse_call();
     SizeofExpr *parse_sizeof();
-    TypeSpecExpr *parse_spec();
+    Expr *parse_spec();
+    Expr *parse_use_spec(UseDecl *use);
     InitExpr *parse_init();
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();

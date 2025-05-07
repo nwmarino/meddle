@@ -9,6 +9,7 @@
 namespace meddle {
 
 class NamedDecl;
+class UseDecl;
 class TypeDecl;
 class RefExpr;
 
@@ -530,11 +531,15 @@ public:
 };
 
 class TypeSpecExpr final : public RefExpr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
 	RefExpr *m_Expr;
 
 public:
-	TypeSpecExpr(const Metadata &M, String N, RefExpr *E)
-	  : RefExpr(M, nullptr, N), m_Expr(E) {}
+	TypeSpecExpr(const Metadata &M, String N, RefExpr *E, NamedDecl *R = nullptr)
+	  : RefExpr(M, nullptr, N, R), m_Expr(E) {}
 
 	~TypeSpecExpr() override {
 		delete m_Expr;
@@ -545,6 +550,43 @@ public:
 	RefExpr *getExpr() const { return m_Expr; }
 
 	TypeDecl *getTypeDecl() const;
+};
+
+/// Represents specifiers used to access scopes of imported units.
+///
+/// Specifically, this access named uses, i.e. `use Name = ...`
+class UnitSpecExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	/// The referenced use declaration.
+	UseDecl *m_Use;
+
+	/// The nested expression, i.e. `foo()` in `Bar::foo()`.
+	RefExpr *m_Expr;
+
+	/// The resolved unit, propogated from the referenced `use`.
+	TranslationUnit *m_Unit;
+
+public:
+	UnitSpecExpr(const Metadata &M, UseDecl *U, RefExpr *E);
+
+	~UnitSpecExpr() override {
+		delete m_Expr;
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	UseDecl *getUse() const { return m_Use; }
+
+	RefExpr *getExpr() const { return m_Expr; }
+
+	TranslationUnit *getUnit() const { return m_Unit; }
+
+	void setUnit(TranslationUnit *U) { m_Unit = U; }
+
+	String getName() const;
 };
 
 class UnaryExpr final : public Expr {

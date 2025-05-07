@@ -31,8 +31,8 @@ int main(int argc, char **argv) {
     UnitManager units;
     std::vector<mir::Segment *> segments;
 
-    files.push_back(parseInputFile("samples/foo.mdl"));
-    files.push_back(parseInputFile("samples/bar.mdl"));
+    files.push_back(parseInputFile("samples/one.mdl"));
+    files.push_back(parseInputFile("samples/two.mdl"));
 
     for (auto &file : files) {
         Lexer lexer = Lexer(file);

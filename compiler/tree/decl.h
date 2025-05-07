@@ -24,27 +24,23 @@ enum class Rune : uint8_t {
 struct Runes final {
     uint32_t bits = 0;
 
-    void set(Rune rune) {
-        bits |= (1 << static_cast<uint32_t>(rune));
-    }
+    void set(Rune rune) 
+    { bits |= (1 << static_cast<uint32_t>(rune)); }
 
-    void clear(Rune rune) {
-        bits &= ~(1 << static_cast<uint32_t>(rune));
-    }
+    void clear(Rune rune) 
+    { bits &= ~(1 << static_cast<uint32_t>(rune)); }
 
-    bool has(Rune rune) const {
-        return bits & (1 << static_cast<uint32_t>(rune));
-    }
+    bool has(Rune rune) const 
+    { return bits & (1 << static_cast<uint32_t>(rune)); }
 
-    void clear() {
-        bits = 0;
-    }
+    void clear() { bits = 0; }
 };
 
 class Decl {
 protected:
     Runes m_Runes;
     Metadata m_Metadata;
+    TranslationUnit *m_PUnit = nullptr;
 
 public:
     Decl(const Runes &R, const Metadata &M) : m_Runes(R), m_Metadata(M) {}
@@ -56,6 +52,10 @@ public:
     const Runes &getRunes() const { return m_Runes; }
 
     const Metadata &getMetadata() const { return m_Metadata; }
+
+    TranslationUnit *getPUnit() const { return m_PUnit; }
+
+    void setPUnit(TranslationUnit *U) { m_PUnit = U; }
 
     bool hasPublicRune() const { return m_Runes.has(Rune::Public); }
 };

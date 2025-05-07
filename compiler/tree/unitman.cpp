@@ -6,11 +6,6 @@ void UnitManager::resolveImports(UseDecl *use, TranslationUnit *parent) {
     assert(use && "Use cannot be null.");
     assert(use->getUnit() && "Use must have its target resolved.");
 
-    // If the use is named, i.e. `use Name = "..."`, then importing happens
-    // by way of the `::` operator.
-    if (use->isNamed())
-        return;
-
     std::vector<NamedDecl *> Imports;
     if (use->getSymbols().empty()) {
         // If the use is not named, i.e. `use "..."`, then all named symbols
@@ -52,10 +47,13 @@ void UnitManager::resolveImports(UseDecl *use, TranslationUnit *parent) {
     Context *ctx = parent->getContext();
     for (auto &Import : Imports) {
         parent->addImport(Import);
-        scope->addDecl(Import);
+
+        if (!use->isNamed())
+            scope->addDecl(Import);
 
         if (TypeDecl *TD = dynamic_cast<TypeDecl *>(Import))
-            ctx->addType(TD->getDefinedType());
+            ctx->addExternalType(TD->getDefinedType(), 
+                (use->isNamed() ? use->getName() + "::" + TD->getName() : ""));
     }
 }
 

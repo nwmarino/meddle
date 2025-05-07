@@ -14,6 +14,7 @@ class TranslationUnit final {
     friend class Sema;
     friend class UnitManager;
     
+    String m_ID;
     File m_File;
     Context m_Context;
     Scope *m_Scope;
@@ -23,8 +24,8 @@ class TranslationUnit final {
     std::vector<NamedDecl *> m_Exports = {};
 
 public:
-    TranslationUnit(const File &F) 
-      : m_File(F), m_Context(this), m_Scope(new Scope) {}
+    TranslationUnit(const String &ID, const File &F) 
+      : m_ID(ID), m_File(F), m_Context(this), m_Scope(new Scope) {}
 
     ~TranslationUnit() {
         for (auto &U : m_Uses)
@@ -42,6 +43,8 @@ public:
 
     void accept(Visitor *V) { V->visit(this); }
 
+    const String &getID() const { return m_ID; }
+
     const File &getFile() const { return m_File; }
 
     Context *getContext() { return &m_Context; }
@@ -52,9 +55,15 @@ public:
 
     const std::vector<UseDecl *> &getUses() const { return m_Uses; }
 
-    void addDecl(Decl *D) { m_Decls.push_back(D); }
+    void addDecl(Decl *D) { 
+        D->setPUnit(this); 
+        m_Decls.push_back(D); 
+    }
 
-    void addUse(UseDecl *U) { m_Uses.push_back(U); }
+    void addUse(UseDecl *U) { 
+        U->setPUnit(this);
+        m_Uses.push_back(U); 
+    }
 
     void addImport(NamedDecl *D) { m_Imports.push_back(D); }
 

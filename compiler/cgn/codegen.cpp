@@ -7,6 +7,7 @@
 #include "../mir/basicblock.h"
 #include "../mir/builder.h"
 #include "../mir/function.h"
+
 #include <cassert>
 
 using namespace meddle;
@@ -21,16 +22,18 @@ String CGN::mangle_name(NamedDecl *D) {
 	if (it != m_Mangled.end())
 		return it->second;
 
-	String mangled;
+	String mangled = "";
+	if (D->hasPublicRune())
+		mangled = D->getPUnit()->getID() + ".";
 
 	if (auto *F = dynamic_cast<FunctionDecl *>(D)) {
 		if (F->hasParent()) {
-			mangled = F->getParent()->getName() + "." + F->getName();
+			mangled += F->getParent()->getName() + "." + F->getName();
 		} else {
-			mangled = F->getName();
+			mangled += F->getName();
 		}
 	} else {
-		mangled = D->getName();
+		mangled += D->getName();
 	}
 
 	m_Mangled[D] = mangled;
@@ -151,6 +154,9 @@ void CGN::declare_function(FunctionDecl *FD) {
 		(cgn_type(FD->getType()));
 
 	mir::Function::Linkage L = mir::Function::Linkage::Internal;
+	if (FD->hasPublicRune())
+		L = mir::Function::Linkage::External;
+
 	mir::Function *FN = new mir::Function(mangle_name(FD), FT, L, m_Segment, {});
 
 	std::vector<mir::Argument *> args;
@@ -210,7 +216,6 @@ void CGN::define_function(FunctionDecl *FD) {
 	assert(FN && "Unable to find function in segment.");
 
 	// Skip codegen for empty functions.
-	// TODO: Also stop here for imported functions.
 	if (FD->empty())
 		return;
 
@@ -1146,6 +1151,10 @@ void CGN::visit(TypeSpecExpr *expr) {
 	} else {
 		expr->getExpr()->accept(this);
 	}
+}
+
+void CGN::visit(UnitSpecExpr *expr) {
+	expr->getExpr()->accept(this);
 }
 
 void CGN::visit(UnaryExpr *expr) {

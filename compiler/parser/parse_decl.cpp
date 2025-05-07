@@ -405,11 +405,17 @@ UseDecl *Parser::parse_use() {
         fatal("expected ';' after use declaration", &m_Current->md);
     next(); // ';'
 
+    UseDecl *use = nullptr;
     if (!name.empty()) {
-        return new UseDecl(m_Runes, md, path, name);
+        use = new UseDecl(m_Runes, md, path, name);
     } else if (!names.empty()) {
-        return new UseDecl(m_Runes, md, path, names);
+        use = new UseDecl(m_Runes, md, path, names);
     } else {
-        return new UseDecl(m_Runes, md, path);
+        use = new UseDecl(m_Runes, md, path);
     }
+
+    if (use->isNamed())
+        m_Scope->addDecl(use);
+
+    return use;
 }

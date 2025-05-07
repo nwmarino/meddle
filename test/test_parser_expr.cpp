@@ -2453,6 +2453,43 @@ TEST_F(ParseExprTest, Struct_Nested_Array_Init) {
     delete unit;
 }
 
+#define UNIT_SPEC_BASIC R"(use Space = "space"; foo :: () i64 { ret Space::work(); })"
+TEST_F(ParseExprTest, Unit_Spec_Basic) {
+    File file = File("", "", "", UNIT_SPEC_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getUses().size(), 1);
+    UseDecl *USE = unit->getUses()[0];
+    EXPECT_EQ(USE->isNamed(), true);
+    EXPECT_EQ(USE->getName(), "Space");
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(RS, nullptr);
+    EXPECT_NE(RS->getExpr(), nullptr);
+
+    UnitSpecExpr *US = dynamic_cast<UnitSpecExpr *>(RS->getExpr());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getName(), "Space");
+    EXPECT_EQ(US->getUse(), USE);
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(US->getExpr());
+    EXPECT_NE(CE, nullptr);
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

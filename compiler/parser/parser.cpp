@@ -165,6 +165,17 @@ Type *Parser::parse_type(bool produce) {
     }
     */
 
+    if (match(TokenKind::Path)) {
+        name += "::";
+        next();
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected type identifier", &m_Current->md);
+        
+        name += m_Current->value;
+        next();
+    }
+
     while (1) {
         if (match(TokenKind::Star))
             name += '*';
@@ -238,7 +249,13 @@ void Parser::parse_runes() {
 }
 
 Parser::Parser(const File &F, const TokenStream &S) : m_Stream(S) {
-    m_Unit = new TranslationUnit(F);
+    // Get the filename with no extension.
+    String id = F.filename;
+    size_t pos = id.find_last_of('.');
+    if (pos != String::npos)
+        id = id.substr(0, pos);
+
+    m_Unit = new TranslationUnit(id, F);
     m_Context = m_Unit->getContext();
     m_Scope = m_Unit->getScope();
     m_Current = m_Stream.get();

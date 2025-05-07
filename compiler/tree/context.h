@@ -48,7 +48,7 @@ public:
 
     void addType(FunctionType *T) { m_FunctionTypes.push_back(T); }
 
-    void addExternalType(Type *T);
+    void addExternalType(Type *T, const String &N = "");
 
     Type *getType(const String &N);
 

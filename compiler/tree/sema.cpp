@@ -533,6 +533,10 @@ void Sema::visit(TypeSpecExpr *expr) {
     expr->getExpr()->accept(this);
 }
 
+void Sema::visit(UnitSpecExpr *expr) {
+    expr->getExpr()->accept(this);
+}
+
 void Sema::visit(UnaryExpr *expr) {
     expr->getExpr()->accept(this);
 

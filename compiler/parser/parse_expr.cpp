@@ -42,23 +42,39 @@ Expr *Parser::parse_ident() {
     else if (match_keyword("sizeof"))
         return parse_sizeof();
 
+    NamedDecl *D = m_Scope->lookup(m_Current->value);
+    if (auto *use = dynamic_cast<UseDecl *>(D)) {
+        // use::ident
+        // use::ident(...)
+        // use::ident { ... }
+        // ...
+        return parse_use_spec(use);
+    } else if (auto *var = dynamic_cast<VarDecl *>(D)) {
+        // ident
+        return parse_ref();
+    }
+
     unsigned identPos = save_pos();
     next(); // identifier
 
     switch (m_Current->kind) {
     case TokenKind::SetParen:
+        // ident(...)
         restore_pos(identPos);
         return parse_call();
 
     case TokenKind::SetBrace:
+        // ident { ... }
         restore_pos(identPos);
         return parse_init();
 
     case TokenKind::Path:
+        // type::ident
         restore_pos(identPos);
         return parse_spec();
 
     default:
+        // ident
         restore_pos(identPos);
         return parse_ref();
     }
@@ -286,13 +302,68 @@ SizeofExpr *Parser::parse_sizeof() {
     return new SizeofExpr(md, m_Context->getU64Type(), T);
 }
 
-TypeSpecExpr *Parser::parse_spec() {
+Expr *Parser::parse_use_spec(UseDecl *use) {
     Metadata md = m_Current->md;
     String name;
     Expr *E = nullptr;
 
     if (!match(TokenKind::Identifier))
-        fatal("expected callee identifier", &md);
+        fatal("expected identifier", &md);
+
+    name = m_Current->value;
+
+    // The following code must handle these cases:
+    //
+    // 1. use::ident
+    // 2. use::ident(...)
+    // 3. use::ident { ... }, where use::ident is a type
+    //
+    // Because case 3 is a type and could have extra sugar, i.e. array brackets
+    // [] or indirection *, we need to eat all possible type tokens to get to
+    // the defining tokens '(', '{', etc.
+
+    unsigned identPos = save_pos();
+    parse_type(false); // False because we don't want to produce a type result.
+
+    switch (m_Current->kind) {
+    case TokenKind::SetBrace:
+        // use::ident { ... }
+        restore_pos(identPos);
+        return parse_init();
+    default:
+        break;
+    }
+
+    restore_pos(identPos);
+    next(); // identifier
+
+    if (!match(TokenKind::Path))
+        fatal("expected '::'", &m_Current->md);
+    next(); // '::'
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected identifier after '::' operator", &m_Current->md);
+
+    m_AllowUnresolved = true;
+    E = parse_ident();
+    if (!E)
+        fatal("expected expression after '::' operator", &m_Current->md);
+
+    m_AllowUnresolved = false;
+    RefExpr *R = dynamic_cast<RefExpr *>(E);
+    if (!R)
+        fatal("expected reference expression after '::' operator", &m_Current->md);
+
+    return new UnitSpecExpr(md, use, R);
+}
+
+Expr *Parser::parse_spec() {
+    Metadata md = m_Current->md;
+    String name;
+    Expr *E = nullptr;
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected identifier", &md);
 
     name = m_Current->value;
     next(); // identifier
@@ -318,15 +389,12 @@ TypeSpecExpr *Parser::parse_spec() {
 }
 
 InitExpr *Parser::parse_init() {
-    if (match(TokenKind::SetBrace))
-        backtrack(1);
-
     Metadata md = m_Current->md;
     Type *T = parse_type(true);
     std::vector<FieldInitExpr *> Fields;
 
     if (!match(TokenKind::SetBrace))
-        fatal("expected '{' after type name", &m_Current->md);
+        fatal("expected '{' after type", &m_Current->md);
     next(); // '{'
 
     while (!match(TokenKind::EndBrace)) {
