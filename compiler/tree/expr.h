@@ -645,6 +645,32 @@ public:
 	bool isDereference() const { return m_Kind == Kind::Dereference; }
 };
 
+class RuneSyscallExpr final : public Expr {
+	friend class CGN;
+	friend class NameResolution;
+	friend class Sema;
+
+	unsigned m_Num;
+	std::vector<Expr *> m_Args;
+
+public:
+	RuneSyscallExpr(const Metadata &M, Type *T, unsigned N, 
+				 std::vector<Expr *> Args)
+	  : Expr(M, T), m_Num(N), m_Args(Args) {}
+
+	~RuneSyscallExpr() override {
+		for (auto &E : m_Args)
+			delete E;
+		m_Args.clear();
+	}
+
+	void accept(Visitor *V) override { V->visit(this); }
+
+	unsigned getSyscallNum() const { return m_Num; }
+
+	const std::vector<Expr *> &getArgs() const { return m_Args; }
+};
+
 } // namespace meddle
 
 #endif // MEDDLE_EXPR_H

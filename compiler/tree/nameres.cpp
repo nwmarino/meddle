@@ -343,7 +343,7 @@ void NameResolution::visit(TypeSpecExpr *expr) {
         expr->getExpr()->accept(this);
     } else if (auto *S = dynamic_cast<StructDecl *>(TD)) {
         expr->m_Ref = S; 
-        
+
         if (!dynamic_cast<CallExpr *>(expr->getExpr()))
             fatal("expected call expression after '::' operator on structure", 
                 &expr->getMetadata());
@@ -382,4 +382,9 @@ void NameResolution::visit(UnitSpecExpr *expr) {
 void NameResolution::visit(UnaryExpr *expr) {
     expr->getExpr()->accept(this);
     expr->m_Type = expr->getExpr()->getType();
+}
+
+void NameResolution::visit(RuneSyscallExpr *expr) {
+    for (auto &A : expr->getArgs())
+        A->accept(this);
 }

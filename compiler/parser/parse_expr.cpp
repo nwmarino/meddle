@@ -16,6 +16,8 @@ Expr *Parser::parse_expr() {
 Expr *Parser::parse_primary() {
     if (match(TokenKind::Identifier))
         return parse_ident();
+    else if (match(TokenKind::Sign))
+        return parse_rune_expr();
     else if (match(TokenKind::SetBrack))
         return parse_array();
     else if (match(TokenKind::SetParen))
@@ -519,4 +521,61 @@ Expr *Parser::parse_unary_postfix() {
     }
 
     return E;
+}
+
+Expr *Parser::parse_rune_expr() {
+    next(); // '$'
+
+    if (!match(TokenKind::Identifier))
+        fatal("expected identifier after rune symbol '$'", &m_Current->md);
+
+    String ident = m_Current->value;
+
+    if (ident == "syscall")
+        return parse_rune_syscall();
+    else
+        fatal("unknown rune: " + ident, &m_Current->md);
+}
+
+RuneSyscallExpr *Parser::parse_rune_syscall() {
+    Metadata md = m_Current->md;
+    unsigned num;
+    std::vector<Expr *> Args;
+    next(); // 'syscall'
+
+    if (!match(TokenKind::Left))
+        fatal("expected '<' after 'syscall' rune", &m_Current->md);
+    next(); // '<'
+
+    if (!match(LiteralKind::Integer))
+        fatal("expected syscall number", &m_Current->md);
+
+    num = std::stoul(m_Current->value);
+    next(); // syscall number
+
+    if (!match(TokenKind::Right))
+        fatal("expected '>' after syscall number", &m_Current->md);
+    next(); // '>'
+
+    if (!match(TokenKind::SetParen))
+        fatal("expected '(' after syscall number", &m_Current->md);
+    next(); // '('
+
+    while (!match(TokenKind::EndParen)) {
+        Expr *Arg = parse_expr();
+        if (!Arg)
+            fatal("expected syscall argument", &m_Current->md);
+
+        Args.push_back(Arg);
+
+        if (match(TokenKind::EndParen))
+            break;
+
+        if (!match(TokenKind::Comma))
+            fatal("expected ',' or ')' in syscall arguments", &m_Current->md);
+        next(); // ','
+    }
+
+    next(); // ')'
+    return new RuneSyscallExpr(md, nullptr, num, Args);
 }

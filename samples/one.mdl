@@ -3,3 +3,12 @@ Colors :: i64 {
     Red, 
     Blue 
 }
+
+$public
+foo :: () i64 {
+    ret bar();
+}
+
+bar :: () i64 {
+    ret 42;
+}

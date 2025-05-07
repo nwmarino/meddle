@@ -55,6 +55,8 @@ public:
     void visit(TypeSpecExpr *expr) override;
     void visit(UnitSpecExpr *expr) override;
     void visit(UnaryExpr *expr) override;
+
+    void visit(RuneSyscallExpr *expr) override;
 };
 
 } // namespace meddle

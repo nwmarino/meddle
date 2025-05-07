@@ -589,3 +589,16 @@ void Sema::visit(UnaryExpr *expr) {
         break;
     }
 }
+
+void Sema::visit(RuneSyscallExpr *expr) {
+    if (expr->getArgs().size() > 6)
+        fatal("'syscall' rune can only take 6 arguments", &expr->getMetadata());
+
+    for (auto &A : expr->getArgs()) {
+        A->accept(this);
+
+        if (A->getType()->isAggregate())
+            fatal("cannot pass aggregate typed value into 'syscall' rune",
+                  &A->getMetadata());
+    }
+}

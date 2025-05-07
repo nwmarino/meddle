@@ -36,6 +36,8 @@ public:
 
     bool isPointer() const { return m_Name.back() == '*'; }
 
+    bool isAggregate() const { return isArray() || isStruct(); }
+
     virtual bool isEnum() const { return false; }
 
     virtual bool isStruct() const { return false; }

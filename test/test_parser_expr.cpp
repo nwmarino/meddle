@@ -2490,6 +2490,34 @@ TEST_F(ParseExprTest, Unit_Spec_Basic) {
     delete unit;
 }
 
+#define RUNE_SYSCALL_EXPR_BASIC R"(test :: () { $syscall<5>(1, 2); })"
+TEST_F(ParseExprTest, Rune_Syscall_Expr_Basic) {
+    File file = File("", "", "", RUNE_SYSCALL_EXPR_BASIC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    ExprStmt *ES = dynamic_cast<ExprStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(ES, nullptr);
+
+    RuneSyscallExpr *SE = dynamic_cast<RuneSyscallExpr *>(ES->getExpr());
+    EXPECT_NE(SE, nullptr);
+    EXPECT_EQ(SE->getSyscallNum(), 5);
+    EXPECT_EQ(SE->getArgs().size(), 2);
+    
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

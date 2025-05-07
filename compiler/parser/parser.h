@@ -102,6 +102,9 @@ class Parser final {
     Expr *parse_unary_prefix();
     Expr *parse_unary_postfix();
 
+    Expr *parse_rune_expr();
+    RuneSyscallExpr *parse_rune_syscall();
+
 public:
     Parser(const File &F, const TokenStream &S);
 

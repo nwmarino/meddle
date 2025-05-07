@@ -48,6 +48,8 @@ class TypeSpecExpr;
 class UnitSpecExpr;
 class UnaryExpr;
 
+class RuneSyscallExpr;
+
 class Visitor {
 public:
     virtual void visit(TranslationUnit *unit) {};
@@ -94,6 +96,8 @@ public:
     virtual void visit(TypeSpecExpr *expr) {}
     virtual void visit(UnitSpecExpr *expr) {}
     virtual void visit(UnaryExpr *expr) {}
+
+    virtual void visit(RuneSyscallExpr *expr) {}
 };
 
 } // namespace meddle
