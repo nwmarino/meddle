@@ -101,14 +101,11 @@ FunctionDecl *Parser::parse_function(const Token &name) {
     for (auto &P : params)
         paramTys.push_back(P->getType());
 
-    FunctionType *ty = new FunctionType(paramTys, ret);
-    m_Context->addType(ty);
-
     FunctionDecl *fn = new FunctionDecl(
         m_Runes, 
         name.md, 
         name.value, 
-        ty, 
+        FunctionType::create(m_Context, paramTys, ret), 
         scope, 
         params, 
         body

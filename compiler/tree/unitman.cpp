@@ -52,7 +52,7 @@ void UnitManager::resolveImports(UseDecl *use, TranslationUnit *parent) {
             scope->addDecl(Import);
 
         if (TypeDecl *TD = dynamic_cast<TypeDecl *>(Import))
-            ctx->addExternalType(TD->getDefinedType(), 
+            ctx->importType(TD->getDefinedType(), 
                 (use->isNamed() ? use->getName() + "::" + TD->getName() : ""));
     }
 }
@@ -178,10 +178,7 @@ void UnitManager::drive(const Options &opts) {
         Unit->getContext()->sanitate();
 
     for (auto &[ Path, Unit ] : m_Units)
-        NameResolution NR = NameResolution(opts, Unit, NameResolution::Phase::Shallow);
-
-    for (auto &[ Path, Unit ] : m_Units)
-        NameResolution NR = NameResolution(opts, Unit, NameResolution::Phase::Recurse);
+        NameResolution NR = NameResolution(opts, Unit);
 
     for (auto &[ Path, Unit ] : m_Units)
         Sema sema = Sema(opts, Unit);

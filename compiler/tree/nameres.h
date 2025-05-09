@@ -10,19 +10,12 @@
 namespace meddle {
 
 class NameResolution final : public Visitor {
-public:
-    enum class Phase {
-        Shallow, Recurse
-    };
-
-private:
-    Phase m_Phase;
     Options m_Opts;
     TranslationUnit *m_Unit;
     Scope *m_Scope;
 
 public:
-    NameResolution(const Options &opts, TranslationUnit *U, Phase P);
+    NameResolution(const Options &opts, TranslationUnit *U);
 
     void visit(TranslationUnit *unit) override;
 
@@ -50,7 +43,6 @@ public:
     void visit(MethodCallExpr *expr) override;
     void visit(ParenExpr *expr) override;
     void visit(RefExpr *expr) override;
-    void visit(SizeofExpr *expr) override;
     void visit(SubscriptExpr *expr) override;
     void visit(TypeSpecExpr *expr) override;
     void visit(UnitSpecExpr *expr) override;

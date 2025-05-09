@@ -8,17 +8,8 @@
 
 using namespace meddle;
 
-static Type *unwrapType(Type *T) {
-    assert(T && "Cannot unwrap null types.");
-
-    if (T->isQualified())
-        return T;
-
-    return static_cast<TypeResult *>(T)->getUnderlying();
-}
-
-NameResolution::NameResolution(const Options &opts, TranslationUnit *U, Phase P) 
-  : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()), m_Phase(P) {
+NameResolution::NameResolution(const Options &opts, TranslationUnit *U) 
+  : m_Opts(opts), m_Unit(U), m_Scope(U->getScope()) {
     U->accept(this);
 }
 
@@ -30,53 +21,32 @@ void NameResolution::visit(TranslationUnit *U) {
 void NameResolution::visit(FunctionDecl *decl) {
     decl->setPUnit(m_Unit);
 
-    if (m_Phase == Phase::Shallow) {
-        auto *FT = static_cast<FunctionType *>(decl->getType());
-        for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i)
-            decl->getParam(i)->m_Type = FT->getParamType(i);
-    } else if (m_Phase == Phase::Recurse) {
-        m_Scope = decl->getScope();
-        decl->getBody()->accept(this);
-        m_Scope = m_Scope->getParent();
-    }
+    m_Scope = decl->getScope();
+    decl->getBody()->accept(this);
+    m_Scope = m_Scope->getParent();
 }
 
 void NameResolution::visit(VarDecl *decl) {
     decl->setPUnit(m_Unit);
 
-    if (m_Phase == Phase::Shallow && decl->isGlobal()) {
-        if (decl->m_Type)
-            decl->m_Type = unwrapType(decl->getType());
-    } else if (m_Phase == Phase::Recurse) {
-        if (!decl->isGlobal()) {
-            if (decl->m_Type)
-                decl->m_Type = unwrapType(decl->getType());
-        }
-
-        if (decl->getInit())
-            decl->getInit()->accept(this);
-        
-        if (!decl->m_Type) {
-            assert(decl->getInit() != nullptr && "Cannot infer type.");
-            decl->m_Type = decl->getInit()->getType();
-        }
+    if (decl->getInit())
+        decl->getInit()->accept(this);
+    
+    if (!decl->m_Type) {
+        assert(decl->getInit() != nullptr && "Cannot infer type.");
+        decl->m_Type = decl->getInit()->getType();
     }
 }
 
 void NameResolution::visit(FieldDecl *decl) {
     decl->setPUnit(m_Unit);
 
-    if (m_Phase == Phase::Shallow) {
-        if (decl->m_Type)
-            decl->m_Type = unwrapType(decl->getType());
-    } else if (m_Phase == Phase::Recurse) {
-        if (decl->getInit())
-            decl->getInit()->accept(this);
-        
-        if (!decl->m_Type) {
-            assert(decl->getInit() != nullptr && "Cannot infer type.");
-            decl->m_Type = decl->getInit()->getType();
-        }
+    if (decl->getInit())
+        decl->getInit()->accept(this);
+    
+    if (!decl->m_Type) {
+        assert(decl->getInit() != nullptr && "Cannot infer type.");
+        decl->m_Type = decl->getInit()->getType();
     }
 }
 
@@ -126,6 +96,7 @@ void NameResolution::visit(MatchStmt *stmt) {
     stmt->getPattern()->accept(this);
     for (auto &C : stmt->getCases())
         C->accept(this);
+
     if (stmt->getDefault())
         stmt->getDefault()->accept(this);
 }
@@ -144,41 +115,35 @@ void NameResolution::visit(AccessExpr *expr) {
     expr->getBase()->accept(this);
 
     StructType *st = nullptr;
-    if (expr->getBase()->getType()->isStruct()) {
-        st = static_cast<StructType *>(expr->getBase()->getType());
-    } else if (expr->getBase()->getType()->isPointer()) {
-        auto *pt = static_cast<PointerType *>(expr->getBase()->getType());
-        auto *pte = pt->getPointee();
-
-        if (!pte->isStruct()) {
+    if (expr->getBase()->getType()->isStruct())
+        st = expr->getBase()->getType()->asStruct();
+    else if (expr->getBase()->getType()->isPointer()) {
+        auto *pointee = expr->getBase()->getType()->asPointer()->getPointee();
+        if (!pointee->isStruct())
             fatal("access base is a pointer, but not a pointer to a struct", 
                 &expr->getMetadata());
-        }
 
-        st = static_cast<StructType *>(pte);
+        st = pointee->asStruct();
     } else {
         fatal("expected struct type on base for '.' access", &expr->getMetadata());
     }
 
-    StructDecl *sd = static_cast<StructDecl *>(st->getDecl());
-    FieldDecl *fld = sd->getField(expr->getName());
-    if (!fld) {
+    StructDecl *structure = static_cast<StructDecl *>(st->getDecl());
+    FieldDecl *field = structure->getField(expr->getName());
+    if (!field)
         fatal("field '" + expr->getName() + "' does not exist in struct '" + 
-            sd->getName() + "'", &expr->getMetadata());
-    }
+            structure->getName() + "'", &expr->getMetadata());
 
-    expr->m_Ref = fld;
-    expr->m_Type = fld->getType();
+    expr->m_Ref = field;
+    expr->m_Type = field->getType();
 }
 
 void NameResolution::visit(ArrayExpr *expr) {
     for (auto &E : expr->getElements())
         E->accept(this);
 
-    expr->m_Type = m_Unit->getContext()->getArrayType(
-        expr->getElements()[0]->getType(), 
-        expr->getElements().size()
-    );
+    expr->m_Type = ArrayType::get(m_Unit->getContext(), 
+        expr->getElements()[0]->getType(), expr->getElements().size());
 }
 
 void NameResolution::visit(BinaryExpr *expr) {
@@ -206,7 +171,6 @@ void NameResolution::visit(CallExpr *expr) {
 
 void NameResolution::visit(CastExpr *expr) {
     expr->getExpr()->accept(this);
-    expr->m_Type = unwrapType(expr->m_Type);
 }
 
 void NameResolution::visit(FieldInitExpr *expr) {
@@ -218,60 +182,50 @@ void NameResolution::visit(InitExpr *expr) {
     for (auto &F : expr->getFields())
         F->accept(this);
 
-    expr->m_Type = unwrapType(expr->getType());
-
-    if (!expr->getType()->isStruct()) {
+    if (!expr->getType()->isStruct())
         fatal("expected struct type for aggregate initializer", 
             &expr->getMetadata());
-    }
 
-    StructType *sTy = static_cast<StructType *>(expr->getType());
-    StructDecl *SD = static_cast<StructDecl *>(sTy->getDecl());
+    StructDecl *_struct = expr->getType()->asStruct()->getDecl();
+    for (auto &fldExpr : expr->getFields()) {
+        FieldDecl *fldDecl = _struct->getField(fldExpr->getName());
+        if (!fldDecl)
+            fatal("field '" + fldExpr->getName() + "' does not exist in struct '" + 
+                _struct->getName() + "'", &expr->getMetadata());
 
-    for (auto &F : expr->getFields()) {
-        FieldDecl *fld = SD->getField(F->getName());
-        if (!fld) {
-            fatal("field '" + F->getName() + "' does not exist in struct '" + 
-                SD->getName() + "'", &expr->getMetadata());
-        }
-
-        F->m_Ref = fld;
-        F->accept(this);
+        fldExpr->m_Ref = fldDecl;
+        fldExpr->accept(this);
     }
 }
 
 void NameResolution::visit(MethodCallExpr *expr) {
     expr->getBase()->accept(this);
 
-    StructType *st = nullptr;
+    StructType *ty = nullptr;
     if (expr->getBase()->getType()->isStruct()) {
-        st = static_cast<StructType *>(expr->getBase()->getType());
+        ty = expr->getBase()->getType()->asStruct();
     } else if (expr->getBase()->getType()->isPointer()) {
-        auto *pt = static_cast<PointerType *>(expr->getBase()->getType());
-        auto *pte = pt->getPointee();
-
-        if (!pte->isStruct()) {
+        auto *pointee = expr->getBase()->getType()->asPointer()->getPointee();
+        if (!pointee->isStruct())
             fatal("method call base is a pointer, but not a pointer to a struct", 
                 &expr->getMetadata());
-        }
 
-        st = static_cast<StructType *>(pte);
+        ty = pointee->asStruct();
     } else {
         fatal("expected struct type on base for method call", &expr->getMetadata());
     }
 
-    StructDecl *sd = static_cast<StructDecl *>(st->getDecl());
-    FunctionDecl *mthd = sd->getFunction(expr->getName());
-    if (!mthd) {
+    StructDecl *_struct = ty->getDecl();
+    FunctionDecl *method = _struct->getFunction(expr->getName());
+    if (!method)
         fatal("method '" + expr->getName() + "' does not exist in struct '" + 
-            sd->getName() + "'", &expr->getMetadata());
-    }
+            _struct->getName() + "'", &expr->getMetadata());
 
-    expr->m_Ref = mthd;
-    expr->m_Type = mthd->getReturnType();
+    expr->m_Ref = method;
+    expr->m_Type = method->getReturnType();
 
-    for (auto &A : expr->getArgs())
-        A->accept(this);
+    for (auto &arg : expr->getArgs())
+        arg->accept(this);
 }
 
 void NameResolution::visit(ParenExpr *expr) {
@@ -280,31 +234,25 @@ void NameResolution::visit(ParenExpr *expr) {
 }
 
 void NameResolution::visit(RefExpr *expr) {
-    NamedDecl *ND = expr->getRef();
-    if (!ND) {
-        ND = m_Scope->lookup(expr->getName());
-        if (!ND) {
+    NamedDecl *named = expr->getRef();
+    if (!named) {
+        named = m_Scope->lookup(expr->getName());
+        if (!named)
             fatal("unresolved reference: " + expr->getName(), 
                 &expr->getMetadata());
-        }
     }
-
-    expr->m_Ref = ND;
     
-    if (auto *VD = dynamic_cast<VarDecl *>(ND)) {
-        expr->m_Type = VD->getType();
-    } else if (auto *EVD = dynamic_cast<EnumVariantDecl *>(ND)) {
-        expr->m_Type = EVD->getType();
-    } else if (auto *FD = dynamic_cast<FieldDecl *>(ND)) {
-        expr->m_Type = FD->getType();
-    } else {
+    if (auto *var = dynamic_cast<VarDecl *>(named))
+        expr->m_Type = var->getType();
+    else if (auto *enumvar = dynamic_cast<EnumVariantDecl *>(named))
+        expr->m_Type = enumvar->getType();
+    else if (auto *field = dynamic_cast<FieldDecl *>(named))
+        expr->m_Type = field->getType();
+    else
         fatal("reference exists, but is not a variable: " + expr->getName(), 
             &expr->getMetadata());
-    }
-}
 
-void NameResolution::visit(SizeofExpr *expr) {
-    expr->m_Target = unwrapType(expr->getTarget());
+    expr->m_Ref = named;
 }
 
 void NameResolution::visit(SubscriptExpr *expr) {
@@ -313,44 +261,39 @@ void NameResolution::visit(SubscriptExpr *expr) {
 }
 
 void NameResolution::visit(TypeSpecExpr *expr) {
-    NamedDecl *ND = m_Scope->lookup(expr->getName());
-    if (!ND) {
+    NamedDecl *named = m_Scope->lookup(expr->getName());
+    if (!named)
         fatal("unresolved type reference: " + expr->getName(), 
             &expr->getMetadata());
-    }
 
-    TypeDecl *TD = dynamic_cast<TypeDecl *>(ND);
-    if (!TD) {
+    TypeDecl *tyDecl = dynamic_cast<TypeDecl *>(named);
+    if (!tyDecl)
         fatal("reference exists, but is not a type: " + expr->getName(), 
             &expr->getMetadata());
-    }
 
-    if (auto *D = dynamic_cast<EnumDecl *>(TD)) {
-        expr->m_Ref = D;
+    if (auto *_enum = dynamic_cast<EnumDecl *>(tyDecl)) {
+        expr->m_Ref = _enum;
 
-        auto *R = dynamic_cast<RefExpr *>(expr->getExpr());
-        if (!R) {
+        auto *ref = dynamic_cast<RefExpr *>(expr->getExpr());
+        if (!ref)
             fatal("expected reference expression after '::' operator", 
                 &expr->getMetadata());
-        }
 
-        R->m_Ref = D->getVariant(R->getName());
-        if (!R->m_Ref) {
-            fatal("unresolved enum variant: " + R->getName(), 
+        ref->m_Ref = _enum->getVariant(ref->getName());
+        if (!ref->m_Ref)
+            fatal("unresolved enum variant: " + ref->getName(), 
                 &expr->getMetadata());
-        }
 
         expr->getExpr()->accept(this);
-    } else if (auto *S = dynamic_cast<StructDecl *>(TD)) {
-        expr->m_Ref = S; 
+    } else if (auto *_struct = dynamic_cast<StructDecl *>(tyDecl)) {
+        expr->m_Ref = _struct; 
 
         if (!dynamic_cast<CallExpr *>(expr->getExpr()))
             fatal("expected call expression after '::' operator on structure", 
                 &expr->getMetadata());
 
         Scope *old_scope = m_Scope;
-        m_Scope = S->getScope();
-        
+        m_Scope = _struct->getScope();
         expr->getExpr()->accept(this);
         m_Scope = old_scope;
     } else {
@@ -370,10 +313,9 @@ void NameResolution::visit(UnitSpecExpr *expr) {
 
     expr->getExpr()->accept(this);
 
-    if (!expr->getExpr()->getRef()->hasPublicRune()) {
+    if (!expr->getExpr()->getRef()->hasPublicRune())
         fatal("specified declaration exists, but not marked public: " + 
             expr->getExpr()->getName(), &expr->getMetadata());
-    }
 
     expr->m_Type = expr->getExpr()->getType();
     m_Scope = old_scope;
@@ -385,6 +327,6 @@ void NameResolution::visit(UnaryExpr *expr) {
 }
 
 void NameResolution::visit(RuneSyscallExpr *expr) {
-    for (auto &A : expr->getArgs())
-        A->accept(this);
+    for (auto &arg : expr->getArgs())
+        arg->accept(this);
 }

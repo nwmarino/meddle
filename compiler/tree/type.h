@@ -12,35 +12,68 @@ using String = std::string;
 namespace meddle {
 
 class Context;
-
+class Scope;
 class EnumDecl;
 class StructDecl;
+class TemplateParamDecl;
+class TemplateStructDecl;
+class StructTemplateSpecializationDecl;
+
+class DeferredType;
+class PrimitiveType;
+class ArrayType;
+class PointerType;
+class FunctionType;
+class EnumType;
+class StructType;
+class TemplateParamType;
+class TemplateStructType;
 
 class Type {
+    friend class Context;
+
 protected:
     String m_Name;
 
-public:
     Type(const String &N) : m_Name(N) {}
+
+public:
+    static Type *get(Context *C, const String &name, const Scope *scope, 
+                     const Metadata &md);
+
     virtual ~Type() = default;
 
     String getName() const { return m_Name; }
 
-    bool isVoid() const { return m_Name == "void"; }
+    virtual bool isArray() const { return false; }
 
-    bool isBool() const { return m_Name == "bool"; }
+    virtual ArrayType *asArray()
+    { assert(false && "Cannot cast type to an array."); }
 
-    bool isChar() const { return m_Name == "char"; }
-    
-    bool isArray() const { return m_Name.back() == ']'; }
+    virtual bool isPointer() const { return false; }
 
-    bool isPointer() const { return m_Name.back() == '*'; }
+    virtual PointerType *asPointer()
+    { assert(false && "Cannot cast type to a pointer."); }
 
-    bool isAggregate() const { return isArray() || isStruct(); }
+    virtual bool isFunction() const { return false; }
+
+    virtual FunctionType *asFunction()
+    { assert(false && "Cannot cast type to a function."); }
 
     virtual bool isEnum() const { return false; }
 
+    virtual EnumType *asEnum() 
+    { assert(false && "Cannot cast type to an enum."); }
+
     virtual bool isStruct() const { return false; }
+
+    virtual StructType *asStruct() 
+    { assert(false && "Cannot cast type to a struct."); }
+
+    virtual bool isDeferred() const { return false; }
+
+    virtual DeferredType *asDeferred() 
+    { assert(false && "Cannot cast type to a deferred type."); }
     
     virtual bool isSInt() const { return false; }
 
@@ -49,8 +82,6 @@ public:
     virtual bool isUInt() const { return false; }
 
     virtual bool isUInt(unsigned N) const { return false; }
-
-    bool isInt() const { return isSInt() || isUInt(); }
 
     virtual bool isFloat() const { return false; }
 
@@ -62,35 +93,86 @@ public:
 
     virtual bool compare(Type *T) const { return false; }
 
+    virtual bool isParamDependent() const { return false; }
+
     virtual bool isQualified() const { return true; }
+
+    bool isVoid() const { return m_Name == "void"; }
+
+    bool isBool() const { return m_Name == "bool"; }
+
+    bool isChar() const { return m_Name == "char"; }
+
+    bool isInt() const { return isSInt() || isUInt(); }
+
+    bool isAggregate() const { return isArray() || isStruct(); }
 };
 
-class TypeResult final : public Type {
+class DeferredType final : public Type {
+    friend class Context;
+    friend class Type;
+
     Type *m_Underlying;
+    const Scope *m_Scope;
     Metadata m_Metadata;
 
+    DeferredType(const String &N, const Scope *S, const Metadata &M) 
+      : Type(N), m_Scope(S), m_Metadata(M) {}
+
 public:
-    TypeResult(const String &N, const Metadata &M) : Type(N), m_Metadata(M) {}
+    bool isArray() const override 
+    { return m_Underlying && m_Underlying->isArray(); }
+
+    ArrayType *asArray() override;
+
+    bool isPointer() const override
+    { return m_Underlying && m_Underlying->isPointer(); }
+
+    PointerType *asPointer() override;
+
+    bool isEnum() const override
+    { return m_Underlying && m_Underlying->isEnum(); }
+
+    EnumType *asEnum() override;
+
+    bool isStruct() const override
+    { return m_Underlying && m_Underlying->isStruct(); }
+
+    StructType *asStruct() override;
+
+    bool isDeferred() const override { return true; }
+
+    DeferredType *asDeferred() override { return this; }
 
     Type *getUnderlying() const { return m_Underlying; }
 
-    void setUnderlying(Type *T) { m_Underlying = T;}
+    void setUnderlying(Type *T) { m_Underlying = T; }
+
+    const Scope *getScope() const { return m_Scope; }
 
     const Metadata &getMetadata() const { return m_Metadata; }
 
-    bool isQualified() const override { return false; }
+    bool isQualified() const override { return m_Underlying != nullptr; }
 
-    bool canCastTo(Type *T) const override
-    { assert(false && "Cannot cast this non-concrete type."); }
+    bool canCastTo(Type *T) const override {
+        assert(m_Underlying && "Cannot cast unqualified deferred type.");
+        return m_Underlying->canCastTo(T);
+    }
 
-    bool canImplCastTo(Type *T) const override 
-    { assert(false && "Cannot cast this non-concrete type."); }
+    bool canImplCastTo(Type *T) const override {
+        assert(m_Underlying && "Cannot cast unqualified deferred type.");
+        return m_Underlying->canImplCastTo(T);
+    }
 
-    bool compare(Type *T) const override 
-    { assert(false && "Cannot compare this non-concrete type."); }
+    bool compare(Type *T) const override {
+        assert(m_Underlying && "Cannot compare unqualified deferred type.");
+        return m_Underlying->compare(T);
+    }
 };
 
 class PrimitiveType final : public Type {
+    friend class Context;
+
 public:
     enum class Kind {
         Void,
@@ -112,9 +194,11 @@ private:
     Kind m_Kind;
     bool m_Signed;
 
-public:
     PrimitiveType(Kind K);
     
+public:
+    static PrimitiveType *get(Context *C, const Kind &K);
+
     Kind getKind() const { return m_Kind; }
 
     bool isSigned() const { return m_Signed; }
@@ -140,13 +224,21 @@ public:
 };
 
 class ArrayType final : public Type {
+    friend class Context;
+
     Type *m_Element;
     unsigned m_Size;
 
-public: 
     ArrayType(Type *E, unsigned S)
       : Type(E->getName() + "[" + std::to_string(S) + "]"), m_Element(E), 
         m_Size(S) {}
+
+public:
+    static ArrayType *get(Context *C, Type *Elem, unsigned Sz);
+
+    bool isArray() const override { return true; }
+
+    ArrayType *asArray() override { return this; }
 
     Type *getElement() const { return m_Element; }
 
@@ -157,13 +249,24 @@ public:
     bool canImplCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
+
+    bool isParamDependent() const override 
+    { return m_Element->isParamDependent(); }
 };
 
 class PointerType final : public Type {
+    friend class Context;
+
     Type *m_Pointee;
 
-public:
     PointerType(Type *P) : Type(P->getName() + "*"), m_Pointee(P) {}
+
+public:
+    static PointerType *get(Context *C, Type *Pt);
+
+    bool isPointer() const override { return true; }
+
+    PointerType *asPointer() override { return this; }
 
     Type *getPointee() const { return m_Pointee; }
 
@@ -172,15 +275,26 @@ public:
     bool canImplCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
+
+    bool isParamDependent() const override 
+    { return m_Pointee->isParamDependent(); }
 };
 
 class FunctionType final : public Type {
+    friend class Context;
+    
     std::vector<Type *> m_Params;
     Type *m_Ret;
 
-public:
     FunctionType(std::vector<Type *> P, Type *R);
 
+public:
+    static FunctionType *create(Context *C, std::vector<Type *> Params, Type *Ret);
+
+    bool isFunction() const override { return true; }
+
+    FunctionType *asFunction() override { return this; }
+    
     Type *getParamType(unsigned i) const {
         assert(i <= m_Params.size());
         return m_Params[i];
@@ -212,16 +326,12 @@ class EnumType final : public Type {
       : Type(N), m_Underlying(U), m_Decl(E) {}
 
 public:
-    static EnumType *get(Context *C, String N);
-    static EnumType *create(Context *C, String N, Type *U, EnumDecl *D = nullptr);
-
-    Type *getUnderlying() const { return m_Underlying; }
-
-    EnumDecl *getDecl() const { return m_Decl; }
-
-    void setDecl(EnumDecl *E) { m_Decl = E; }
+    static EnumType *create(Context *C, const String &name, Type *underlying, 
+                            EnumDecl *decl = nullptr);
 
     bool isEnum() const override { return true; }
+
+    EnumType *asEnum() override { return this; }
 
     bool isUInt() const override { return m_Underlying->isUInt(); }
 
@@ -236,11 +346,18 @@ public:
     bool canImplCastTo(Type *T) const override;
 
     bool compare(Type *T) const override;
+
+    Type *getUnderlying() const { return m_Underlying; }
+
+    EnumDecl *getDecl() const { return m_Decl; }
+
+    void setDecl(EnumDecl *E) { m_Decl = E; }
 };
 
-class StructType final : public Type {
+class StructType : public Type {
     friend class Context;
 
+protected:
     std::vector<Type *> m_Fields;
     StructDecl *m_Decl;
 
@@ -248,8 +365,23 @@ class StructType final : public Type {
         : Type(N), m_Fields(F), m_Decl(D) {}
 
 public:
-    static StructType *get(Context *C, String N);
-    static StructType *create(Context *C, String N, std::vector<Type *> F, StructDecl *D = nullptr);
+    static StructType *create(Context *C, const String &name, 
+                              std::vector<Type *> fields, 
+                              StructDecl *decl = nullptr);
+
+    bool isStruct() const override { return true; }
+
+    StructType *asStruct() override { return this; }
+
+    bool compare(Type *T) const override;
+
+    bool isParamDependent() const override {
+        for (auto &F : m_Fields)
+            if (F->isParamDependent())
+                return true;
+
+        return false;
+    }
 
     const std::vector<Type *> &getFields() const { return m_Fields; }
 
@@ -263,29 +395,79 @@ public:
     StructDecl *getDecl() const { return m_Decl; }
 
     void setDecl(StructDecl *S) { m_Decl = S; }
+};
 
-    bool isStruct() const override { return true; }
+class TemplateParamType final : public Type {
+    friend class Context;
 
-    bool canCastTo(Type *T) const override;
+    TemplateParamDecl *m_Decl;
 
-    bool canImplCastTo(Type *T) const override;
+public:
+    TemplateParamType(const String &N, TemplateParamDecl *D)
+      : Type(N), m_Decl(D) {}
 
     bool compare(Type *T) const override;
+
+    bool isParamDependent() const override { return true; }
+
+    TemplateParamDecl *getDecl() const { return m_Decl; }
+
+    void setDecl(TemplateParamDecl *T) { m_Decl = T; }
+
+    unsigned getIndex() const;
 };
 
-/*
-class TemplateParamType final : public Type {
+/// Represents instantiated structure types not dependent on a parameterized
+/// type, i.e. `Box<i32, i64>`.
+class TemplateStructType final : public StructType {
+    friend class Context;
 
-};
-
-class TemplateStructType final : public Type {
     std::vector<Type *> m_Args;
+
+    TemplateStructType(const String &N, std::vector<Type *> F, 
+                       std::vector<Type *> A, 
+                       StructTemplateSpecializationDecl *D = nullptr);
+
+public:
+    static TemplateStructType *get(Context *C, TemplateStructDecl *tmpl,
+                                   std::vector<Type *> args);
+    static TemplateStructType *create(Context *C, std::vector<Type *> fields, 
+                                      StructTemplateSpecializationDecl *decl,
+                                      std::vector<Type *> args);
+
+    bool compare(Type *T) const override;
+
+    TemplateStructDecl *getTemplateDecl() const;
+
+    StructTemplateSpecializationDecl *getSpecializedDecl() const;
+
+    const std::vector<Type *> &getArgs() const { return m_Args; }
 };
 
+/// Represesnts pseudo-instantiated structure types that are still dependent
+/// on a parameterized type, i.e. `Box<T>` in a context where `T` is a
+/// parameter type.
 class DependentTemplateStructType final : public Type {
+    friend class Context;
+
+    TemplateStructDecl *m_Tmpl;
     std::vector<Type *> m_Args;
+
+    DependentTemplateStructType(const String &N, TemplateStructDecl *T, 
+                                std::vector<Type *> A);
+
+public:
+    static DependentTemplateStructType *get(Context *C, TemplateStructDecl *tmpl, 
+                                            const std::vector<Type *> &args);
+
+    bool compare(Type *T) const override;
+
+    bool isParamDependent() const override { return true; }
+
+    TemplateStructDecl *getTemplateDecl() const { return m_Tmpl; }
+
+    const std::vector<Type *> &getArgs() const { return m_Args; }
 };
-*/
 
 } // namespace meddle
 

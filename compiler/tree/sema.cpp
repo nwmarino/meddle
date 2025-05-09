@@ -85,23 +85,19 @@ void Sema::visit(FunctionDecl *decl) {
         if (decl->getNumParams() < 1) 
             fatal("method must have at least one parameter", &decl->getMetadata());
 
-        ParamDecl *F = decl->getParam(0);
-        if (F->getName() != "self") {
+        ParamDecl *first = decl->getParam(0);
+        if (first->getName() != "self")
             fatal("first parameter of method must be named 'self'", 
-                  &F->getMetadata());
-        }
+                &first->getMetadata());
 
-        if (!F->getType()->isPointer()) {
+        if (!first->getType()->isPointer())
             fatal("first parameter of method must be a pointer type", 
-                &F->getMetadata());
-        }
+                &first->getMetadata());
       
-        PointerType *PT = dynamic_cast<PointerType *>(F->getType());
-        assert(PT);
-        if (!PT->getPointee()->compare(decl->getParent()->getDefinedType())) {
+        Type *pointee = first->getType()->asPointer()->getPointee();
+        if (!pointee->compare(decl->getParent()->getDefinedType()))
             fatal("first parameter of method must be a pointer to the parent struct type", 
-                &F->getMetadata());
-        }
+                &first->getMetadata());
     }
 
     if (decl->getBody())
@@ -274,26 +270,43 @@ void Sema::visit(UntilStmt *stmt) {
 }
 
 void Sema::visit(ArrayExpr *expr) {
-    ArrayType *AT = static_cast<ArrayType *>(expr->getType());
+    ArrayType *arrTy = nullptr;
+    if (expr->getType()->isArray()) {
+        arrTy = expr->getType()->asArray();
+    } else if (expr->getType()->isDeferred()) {
+        Type *deferUnderlying = expr->getType()->asDeferred()->getUnderlying();
+        if (!deferUnderlying->isArray())
+            goto ARRAY_EXPR_ERROR;
+
+        arrTy = deferUnderlying->asArray();
+    } else {
+ARRAY_EXPR_ERROR:
+        fatal(
+            "array expression must be of array type, got '" + 
+            expr->getType()->getName() + "'", 
+            &expr->getMetadata()
+        );
+    }
+
     for (unsigned i = 0, n = expr->getElements().size(); i != n; ++i) {
         Expr *Elem = expr->getElements().at(i);
         Elem->accept(this);
 
         if (typeCheck(
             Elem->getType(), 
-            AT->getElement(), 
+            arrTy->getElement(), 
             &Elem->getMetadata(), 
             "array element"
         )) {
             if (auto *arr = dynamic_cast<ArrayExpr *>(Elem)) {
-                Type *elemTy = static_cast<ArrayType *>(AT->getElement())->getElement();
+                Type *elemTy = static_cast<ArrayType *>(arrTy->getElement())->getElement();
                 
                 for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
                     Expr *elem = arr->m_Elements[i];
                     arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
                 }
     
-                Elem->setType(AT->getElement());
+                Elem->setType(arrTy->getElement());
             } else {
                 expr->m_Elements[i] = new CastExpr(
                     Elem->getMetadata(), 
@@ -429,11 +442,17 @@ void Sema::visit(FieldInitExpr *expr) {
 
     if (typeCheck(expr->getType(), fld->getType(), &expr->getMetadata(), "field initializer")) {
         if (auto *arr = dynamic_cast<ArrayExpr *>(expr->getExpr())) {
-            Type *elemTy = static_cast<ArrayType *>(fld->getType())->getElement();
+            Type *elementTy = nullptr;
+            if (fld->getType()->isArray())
+                elementTy = fld->getType()->asArray()->getElement();
+            else if (fld->getType()->isDeferred()) {
+                elementTy = fld->getType()->asDeferred()->getUnderlying()
+                    ->asArray()->getElement();
+            }
             
             for (unsigned i = 0, n = arr->getElements().size(); i != n; ++i) {
                 Expr *elem = arr->m_Elements[i];
-                arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elemTy, elem);
+                arr->m_Elements[i] = new CastExpr(elem->getMetadata(), elementTy, elem);
             }
 
             expr->m_Expr->setType(fld->getType());
@@ -557,9 +576,8 @@ void Sema::visit(UnaryExpr *expr) {
         if (!expr->getExpr()->isLValue())
             fatal("cannot apply '&' to non-lvalue", &expr->getMetadata());
 
-        expr->m_Type = m_Unit->getContext()->getPointerType(
+        expr->m_Type = PointerType::get(m_Unit->getContext(), 
             expr->getExpr()->getType());
-        
         break;
 
     case UnaryExpr::Kind::Dereference:

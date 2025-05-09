@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <unordered_map>
 
 namespace meddle {
 
@@ -14,6 +15,9 @@ class Scope;
 class Stmt;
 class ParamDecl;
 class StructDecl;
+class TemplateDecl;
+class FunctionTemplateSpecializationDecl;
+class StructTemplateSpecializationDecl;
 
 enum class Rune : uint8_t {
     Associated,
@@ -71,11 +75,12 @@ public:
     String getName() const { return m_Name; }
 };
 
-class FunctionDecl final : public NamedDecl {
+class FunctionDecl : public NamedDecl {
     friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
+protected:
     FunctionType *m_Type;
     Scope *m_Scope;
     std::vector<ParamDecl *> m_Params;
@@ -219,8 +224,8 @@ protected:
     Type *m_Type;
 
 public:
-    TypeDecl(const Runes &A, const Metadata &M, const String &N, Type *T)
-      : NamedDecl(A, M, N), m_Type(T) {}
+    TypeDecl(const Runes &R, const Metadata &M, const String &N, Type *T)
+      : NamedDecl(R, M, N), m_Type(T) {}
 
     virtual ~TypeDecl() = default;
 
@@ -323,18 +328,19 @@ public:
     void setParent(StructDecl *P) { m_Parent = P; }
 };
 
-class StructDecl final : public TypeDecl {
+class StructDecl : public TypeDecl {
     friend class CGN;
     friend class NameResolution;
     friend class Sema;
 
+protected:
     Scope *m_Scope;
     std::vector<FieldDecl *> m_Fields;
     std::vector<FunctionDecl *> m_Functions;
 
 public:
     StructDecl(const Runes &R, const Metadata &M, const String &N, 
-               StructType *T, Scope *S, std::vector<FieldDecl *> F, 
+               Type *T, Scope *S, std::vector<FieldDecl *> F, 
                std::vector<FunctionDecl *> Funcs);
 
     ~StructDecl() override;
@@ -377,6 +383,187 @@ public:
         assert(i < m_Functions.size());
         return m_Functions[i];
     }
+};
+
+class TemplateParamDecl final : public TypeDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    TemplateDecl *m_Parent;
+    unsigned m_Index;
+
+public:
+    TemplateParamDecl(const Runes &R, const Metadata &M, const String &N, 
+                      TemplateParamType *T, TemplateDecl *P, unsigned I)
+      : TypeDecl(R, M, N, T), m_Parent(P), m_Index(I) {}
+
+    ~TemplateParamDecl() override = default;
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    TemplateDecl *getParentTemplate() const { return m_Parent; }
+
+    void setParentTemplate(TemplateDecl *P) { m_Parent = P; }
+
+    unsigned getIndex() const { return m_Index; }
+};
+
+class TemplateDecl : public NamedDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+protected:
+    NamedDecl *m_Tmpl;
+    std::vector<TemplateParamDecl *> m_Params;
+
+    Type*
+    substType(Type *T, std::unordered_map<TemplateParamType *, Type *>) const;
+
+public:
+    TemplateDecl(const Runes &R, const Metadata &M, const String &N, 
+                 NamedDecl *T, std::vector<TemplateParamDecl *> P)
+      : NamedDecl(R, M, N), m_Tmpl(T), m_Params(P) {}
+
+    ~TemplateDecl() override {
+        for (auto &P : m_Params)
+            delete P;
+        m_Params.clear();
+        delete m_Tmpl;
+    }
+
+    NamedDecl *getTemplatedDecl() const { return m_Tmpl; }
+
+    TemplateParamDecl *getParam(unsigned i) const {
+        assert(i < m_Params.size() && "Index out of range.");
+        return m_Params.at(i);
+    }
+
+    const std::vector<TemplateParamDecl *> &getParams() const
+    { return m_Params; }
+
+    String getConcreteName(const std::vector<Type *> &args) const {
+        String result = m_Tmpl->getName() + "<";
+        for (unsigned i = 0; i < args.size(); ++i)
+            result += args.at(i)->getName() + 
+                (i != args.size() - 1 ? ", " : "");
+    
+        return result;
+    }
+};
+
+class TemplateStructDecl final : public TemplateDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    std::vector<StructTemplateSpecializationDecl *> m_Specs = {};
+
+public:
+    TemplateStructDecl(const Runes &R, const Metadata &M, const String &N,
+                       StructDecl *S, std::vector<TemplateParamDecl *> P)
+      : TemplateDecl(R, M, N, S, P) {}
+
+    ~TemplateStructDecl() override;
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    StructDecl *getTemplatedStruct() const 
+    { return static_cast<StructDecl *>(m_Tmpl); }
+
+    StructTemplateSpecializationDecl*
+    findSpecialization(const std::vector<Type *> &args) const;
+
+    StructTemplateSpecializationDecl*
+    fetchSpecialization(const std::vector<Type *> &args);
+
+    StructTemplateSpecializationDecl*
+    createSpecialization(const std::vector<Type *> &args);
+};
+
+class TemplateFunctionDecl final : public TemplateDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    std::vector<FunctionTemplateSpecializationDecl *> m_Specs;
+
+public:
+    TemplateFunctionDecl(const Runes &R, const Metadata &M, const String &N,
+                          FunctionDecl *F, std::vector<TemplateParamDecl *> P)
+      : TemplateDecl(R, M, N, F, P) {}
+
+    ~TemplateFunctionDecl() override;
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    FunctionDecl *getTemplatedFunction() const 
+    { return static_cast<FunctionDecl *>(m_Tmpl); }
+
+    FunctionTemplateSpecializationDecl*
+    findSpecialization(const std::vector<Type *> &args) const;
+
+    FunctionTemplateSpecializationDecl*
+    fetchSpecialization(const std::vector<Type *> &args);
+
+    FunctionTemplateSpecializationDecl*
+    createSpecialization(const std::vector<Type *> &args);
+};
+
+class FunctionTemplateSpecializationDecl final : public FunctionDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    TemplateFunctionDecl *m_Tmpl;
+    std::vector<Type *> m_Args;
+    std::unordered_map<TemplateParamType *, Type *> m_Mapping;
+
+public:
+    FunctionTemplateSpecializationDecl(TemplateFunctionDecl *TS, const String &N,
+                                       FunctionType *T, Scope *S, 
+                                       std::vector<ParamDecl *> P, 
+                                       Stmt *B, std::vector<Type *> A,
+                                       std::unordered_map<TemplateParamType *, Type *> M)
+      : FunctionDecl(TS->getRunes(), TS->getMetadata(), N, T, S, P, B), 
+        m_Tmpl(TS), m_Args(A), m_Mapping(M) {}
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    TemplateFunctionDecl *getTemplateDecl() const { return m_Tmpl; }
+
+    const std::vector<Type *> &getArgs() const { return m_Args; }
+
+    bool compareArgs(const std::vector<Type *> &args) const;
+};
+
+class StructTemplateSpecializationDecl final : public StructDecl {
+    friend class CGN;
+    friend class NameResolution;
+    friend class Sema;
+
+    TemplateStructDecl *m_Tmpl;
+    std::vector<Type *> m_Args;
+    std::unordered_map<TemplateParamType *, Type *> m_Mapping;
+
+public:
+    StructTemplateSpecializationDecl(TemplateStructDecl *TS, const String &N, 
+                                     TemplateStructType *T, Scope *S, 
+                                     std::vector<FieldDecl *> Fields, 
+                                     std::vector<FunctionDecl *> Funcs, 
+                                     std::vector<Type *> Args,
+                                     std::unordered_map<TemplateParamType *, Type *> M)
+      : StructDecl(TS->getRunes(), TS->getMetadata(), N, T, S, Fields, Funcs), 
+        m_Tmpl(TS), m_Args(Args), m_Mapping(M) {}
+
+    void accept(Visitor *V) override { V->visit(this); }
+
+    TemplateStructDecl *getTemplateDecl() const { return m_Tmpl; }
+
+    const std::vector<Type *> &getArgs() const { return m_Args; }
+
+    bool compareArgs(const std::vector<Type *> &args) const;
 };
 
 } // namespace meddle

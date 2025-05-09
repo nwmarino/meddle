@@ -14,6 +14,12 @@ class StructDecl;
 class UseDecl;
 class VarDecl;
 
+class TemplateParamDecl;
+class TemplateFunctionDecl;
+class TemplateStructDecl;
+class FunctionTemplateSpecializationDecl;
+class StructTemplateSpecializationDecl;
+
 class BreakStmt;
 class ContinueStmt;
 class CompoundStmt;
@@ -62,6 +68,12 @@ public:
     virtual void visit(EnumDecl *decl) {}
     virtual void visit(FieldDecl *decl) {}
     virtual void visit(StructDecl *decl) {}
+
+    virtual void visit(TemplateParamDecl *decl) {}
+    virtual void visit(TemplateFunctionDecl *decl) {}
+    virtual void visit(TemplateStructDecl *decl) {}
+    virtual void visit(FunctionTemplateSpecializationDecl *decl) {}
+    virtual void visit(StructTemplateSpecializationDecl *decl) {}
 
     virtual void visit(BreakStmt *stmt) {}
     virtual void visit(ContinueStmt *stmt) {}

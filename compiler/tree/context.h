@@ -14,51 +14,65 @@ class TranslationUnit;
 
 class Context final {
     friend class TranslationUnit;
+    friend class Type;
+    friend class PrimitiveType;
+    friend class ArrayType;
+    friend class PointerType;
+    friend class FunctionType;
     friend class EnumType;
     friend class StructType;
+    friend class TemplateStructType;
+    friend class DependentTemplateStructType;
 
     TranslationUnit *m_Unit;
-    std::unordered_map<String, Type *> m_Types;
+    std::unordered_map<String, PrimitiveType *> m_Primitives;
+    std::unordered_map<String, ArrayType *> m_Arrays;
+    std::unordered_map<String, PointerType *> m_Pointers;
     std::unordered_map<String, EnumType *> m_Enums;
     std::unordered_map<String, StructType *> m_Structs;
+    std::unordered_map<String, TemplateStructType *> m_StructSpecs;
+    std::unordered_map<String, DependentTemplateStructType *> m_Dependents;
+    std::unordered_map<String, DeferredType *> m_Deferred;
     std::unordered_map<String, Type *> m_Externals;
     std::vector<FunctionType *> m_FunctionTypes;
-    std::vector<TypeResult *> m_Results;
+
+    Type *resolveType(const String &name, const Scope *scope,
+                      const Metadata &md);
 
 public:
-    Context(TranslationUnit *U);
+    Context(TranslationUnit *U = nullptr);
 
     ~Context();
 
-    Type *getBoolType() const { return m_Types.at("bool"); }
-    Type *getVoidType() const { return m_Types.at("void"); }
-    Type *getCharType() const { return m_Types.at("char"); }
-    Type *getI8Type() const { return m_Types.at("i8"); }
-    Type *getI16Type() const { return m_Types.at("i16"); }
-    Type *getI32Type() const { return m_Types.at("i32"); }
-    Type *getI64Type() const { return m_Types.at("i64"); }
-    Type *getU8Type() const { return m_Types.at("u8"); }
-    Type *getU16Type() const { return m_Types.at("u16"); }
-    Type *getU32Type() const { return m_Types.at("u32"); }
-    Type *getU64Type() const { return m_Types.at("u64"); }
-    Type *getF32Type() const { return m_Types.at("f32"); }
-    Type *getF64Type() const { return m_Types.at("f64"); }
-    
-    void addType(Type *T);
+    Type *getBoolType() const { return m_Primitives.at("bool"); }
 
-    void addType(FunctionType *T) { m_FunctionTypes.push_back(T); }
+    Type *getVoidType() const { return m_Primitives.at("void"); }
 
-    void addExternalType(Type *T, const String &N = "");
+    Type *getCharType() const { return m_Primitives.at("char"); }
 
-    Type *getType(const String &N);
+    Type *getI8Type() const { return m_Primitives.at("i8"); }
 
-    ArrayType *getArrayType(Type *E, unsigned long S);
+    Type *getI16Type() const { return m_Primitives.at("i16"); }
 
-    PointerType *getPointerType(Type *P);
+    Type *getI32Type() const { return m_Primitives.at("i32"); }
 
-    Type *produceType(const String &N, const Metadata &M);
+    Type *getI64Type() const { return m_Primitives.at("i64"); }
 
-    void reconstructFunctionType(FunctionType *FT);
+    Type *getU8Type() const { return m_Primitives.at("u8"); }
+
+    Type *getU16Type() const { return m_Primitives.at("u16"); }
+
+    Type *getU32Type() const { return m_Primitives.at("u32"); }
+
+    Type *getU64Type() const { return m_Primitives.at("u64"); }
+
+    Type *getF32Type() const { return m_Primitives.at("f32"); }
+
+    Type *getF64Type() const { return m_Primitives.at("f64"); }
+
+    Type *getType(const String &N, const Scope *S);
+
+    void importType(Type *T, const String &N = "");
 
     void sanitate();
 };

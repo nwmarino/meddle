@@ -138,33 +138,6 @@ Type *Parser::parse_type(bool produce) {
     String name = m_Current->value;
     next();
 
-    /*
-    if (match(TokenKind::Left)) {
-        name += "<";
-        next();
-
-        while (!match(TokenKind::RIGHT)) {
-            Type *argTy = parseType();
-            if (!argTy) {
-                trace("expected type argument", &getLoc());
-                return nullptr;
-            }
-
-            name += argTy->getName();
-
-            if (match(TokenKind::RIGHT))
-                break;
-
-            expect(TokenKind::COMMA);
-            next();
-            name += ", ";
-        }
-
-        next(); // Consume '>'
-        name += ">";
-    }
-    */
-
     if (match(TokenKind::Path)) {
         name += "::";
         next();
@@ -174,6 +147,27 @@ Type *Parser::parse_type(bool produce) {
         
         name += m_Current->value;
         next();
+    }
+
+    if (match(TokenKind::Left)) {
+        name += "<";
+        next();
+
+        while (!match(TokenKind::Right)) {
+            Type *argTy = parse_type(produce);
+            name += argTy->getName();
+
+            if (match(TokenKind::Right))
+                break;
+
+            if (!match(TokenKind::Comma))
+                fatal("expected ',' or '>' in type argument list", &m_Current->md);
+            next();
+            name += ", ";
+        }
+
+        next(); // Consume '>'
+        name += ">";
     }
 
     while (1) {
@@ -200,7 +194,7 @@ Type *Parser::parse_type(bool produce) {
     }
 
     if (produce)
-        return m_Context->produceType(name, m_Current->md);
+        return Type::get(m_Context, name, m_Scope, m_Current->md);
 
     return nullptr;
 }

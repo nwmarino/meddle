@@ -98,6 +98,8 @@ mir::Type *CGN::cgn_type(Type *T) {
 		case PrimitiveType::Kind::Float64:
 			return m_Builder.get_f64_ty();
 		}
+	} else if (auto *defer = dynamic_cast<DeferredType *>(T)) {
+		return cgn_type(defer->getUnderlying());
 	} else if (auto *AT = dynamic_cast<ArrayType *>(T)) {
 		return mir::ArrayType::get(m_Segment, cgn_type(AT->getElement()), 
 			AT->getSize());
@@ -682,7 +684,7 @@ void CGN::visit(NilLiteral *expr) {
 void CGN::cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty) {
     if (ty->isArray()) {
 		ArrayExpr *array = static_cast<ArrayExpr *>(expr);
-		Type *elemTy = static_cast<ArrayType *>(ty)->getElement();
+		Type *elemTy = ty->asArray()->getElement();
 
 		for (unsigned i = 0, n = array->getElements().size(); i != n; ++i) {
 			mir::Value *elem = m_Builder.build_ap(
@@ -886,6 +888,13 @@ void CGN::visit(CastExpr *expr) {
 
     Type *srcTy = expr->getExpr()->getType();
     Type *destTy = expr->getType();
+
+	if (srcTy->isDeferred())
+		srcTy = srcTy->asDeferred()->getUnderlying();
+
+	if (destTy->isDeferred())
+		destTy = destTy->asDeferred()->getUnderlying();
+
 	TypeClass srcCls = type_class(srcTy);
 	TypeClass destCls = type_class(destTy);
 	mir::Type *srcTyIR = cgn_type(srcTy);
@@ -988,7 +997,6 @@ void CGN::visit(CastExpr *expr) {
 			destTy->getName() + "'", &expr->getMetadata());
 	}
 }
-
 
 void CGN::visit(MethodCallExpr *expr) {
 	mir::Function *callee = m_Segment->get_function(mangle_name(expr->getCallee()));

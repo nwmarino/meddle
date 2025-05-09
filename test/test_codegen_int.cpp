@@ -4,7 +4,6 @@
 #include "../compiler/mir/function.h"
 #include "../compiler/mir/segment.h"
 #include "../compiler/parser/parser.h"
-#include "../compiler/tree/sema.h"
 #include "../compiler/tree/unitman.h"
 
 #include <fstream>

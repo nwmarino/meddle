@@ -1,14 +1,11 @@
-$public 
-Colors :: i64 { 
-    Red, 
-    Blue 
-}
+box :: { 
+    x: i32[3], 
+    y: i32 
+} 
 
-$public
-foo :: () i64 {
-    ret bar();
-}
-
-bar :: () i64 {
-    ret 42;
+test :: () { 
+    mut x: box = box { 
+        x: [1, 2, 3], 
+        y: 4 
+    }; 
 }

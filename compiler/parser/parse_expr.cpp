@@ -125,7 +125,7 @@ CharLiteral *Parser::parse_char() {
 StringLiteral *Parser::parse_str() {
     StringLiteral *S = new StringLiteral(
         m_Current->md,
-        m_Context->getArrayType(m_Context->getCharType(), m_Current->value.size() + 1),
+        ArrayType::get(m_Context, m_Context->getCharType(), m_Current->value.size() + 1),
         m_Current->value
     );
     next();
@@ -135,7 +135,7 @@ StringLiteral *Parser::parse_str() {
 NilLiteral *Parser::parse_nil() {
     NilLiteral *N = new NilLiteral(
         m_Current->md,
-        m_Context->getPointerType(m_Context->getVoidType())
+        PointerType::get(m_Context, m_Context->getVoidType())
     );
     next();
     return N;

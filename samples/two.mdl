@@ -1,5 +1,0 @@
-use CLI = "one.mdl";
-
-test :: () i64 { 
-    ret CLI::foo();
-}

@@ -1,181 +1,163 @@
 #include "context.h"
+#include "decl.h"
+#include "scope.h"
 #include "type.h"
 #include "../core/logger.h"
 
 using namespace meddle;
 
 Context::Context(TranslationUnit *U) : m_Unit(U) {
-    m_Types.reserve(10);
+    m_Primitives.reserve(12);
     for (unsigned K = 0; K <= 12; ++K) {
         auto *T = new PrimitiveType(static_cast<PrimitiveType::Kind>(K));
-        m_Types[T->getName()] = T;
+        m_Primitives[T->getName()] = T;
     }
 }
 
 Context::~Context() {
-    for (auto &[N, T] : m_Types)
+    for (auto &[N, T] : m_Primitives)
         delete T;
-    m_Types.clear();
 
     for (auto &[N, T] : m_Enums)
         delete T;
-    m_Enums.clear();
-
+    
     for (auto &[N, T] : m_Structs)
         delete T;
-    m_Structs.clear();
-
+    
+    for (auto &[N, T] : m_StructSpecs)
+        delete T;
+    
+    for (auto &[N, T] : m_Dependents)
+        delete T;
+    
+    for (auto &[N, D] : m_Deferred)
+        delete D;
+    
     for (auto &FT : m_FunctionTypes)
         delete FT;
+
+    m_Primitives.clear();
+    m_Enums.clear();
+    m_Structs.clear();
+    m_StructSpecs.clear();
+    m_Dependents.clear();
+    m_Deferred.clear();
     m_FunctionTypes.clear();
-
-    for (auto &R : m_Results)
-        delete R;
-    m_Results.clear();
-
     m_Externals.clear();
 }
 
-void Context::addType(Type *T) {
-    if (Type *existing = m_Types[T->getName()]) {
-        // If a type exists with the same name already and is not a type
-        // reference, then the type is a duplicate.
-        TypeResult *TR = dynamic_cast<TypeResult *>(existing);
-        if (!TR) {
-            fatal(
-                "type already exists: " + existing->getName(), 
-                &TR->getMetadata()
-            );
-        }
+Type *Context::resolveType(const String &name, const Scope *scope, 
+                           const Metadata &md) {
+    if (NamedDecl *N = scope->lookup(name)) {
+        if (TypeDecl *TD = dynamic_cast<TypeDecl *>(N))
+            return TD->getDefinedType();
 
-        // The referenced type has been declared, make the type result concrete.
-        TR->setUnderlying(T);
-        m_Results.push_back(TR);
+        return nullptr;
     }
 
-    m_Types[T->getName()] = T;
-}
+    if (name.back() == '*') {
+        String pointeeName = name.substr(0, name.size() - 1);
+        Type *pointeeType = resolveType(pointeeName, scope, md);
+        if (!pointeeType)
+            return nullptr;
 
-void Context::addExternalType(Type *T, const String &N) {
-    assert(T->isQualified() && "External type must be qualified.");
-    assert((T->isEnum() || T->isStruct()) && "External type must be defined.");
+        return PointerType::get(this, pointeeType);
+    }
 
-    if (m_Externals.find(N.empty() ? T->getName() : N) != m_Externals.end())
-        fatal("type already exists: " + (N.empty() ? T->getName() : N), nullptr);
+    auto LBrack = name.find_last_of('[');
+    auto RBrack = name.find_last_of(']');
+    if (LBrack != std::string::npos && RBrack != std::string::npos) {
+        String elementName = name.substr(0, LBrack);
+        Type *elementType = resolveType(elementName, scope, md);
+        if (!elementType)
+            return nullptr;
+        
+        unsigned size = std::stoul(name.substr(LBrack + 1, RBrack - LBrack - 1));
+        return ArrayType::get(this, elementType, size);
+    }
 
-    m_Externals[N.empty() ? T->getName() : N] = T;
-}
+    auto LAngle = name.find_last_of('<');
+    auto RAngle = name.find_last_of('>');
+    if (LAngle != std::string::npos && RAngle != std::string::npos) {
+        String tmplName = name.substr(0, LAngle);
+        TemplateStructDecl *tmpl = nullptr;
+        if (NamedDecl *N = scope->lookup(tmplName)) {
+            tmpl = dynamic_cast<TemplateStructDecl *>(N);
+            if (!tmpl)
+                fatal("specialization base type is not a template: " + tmplName, &md);
+        }
 
-Type *Context::getType(const String &N) {
-    auto pool_it = m_Types.find(N);
-    if (pool_it != m_Types.end())
-        return pool_it->second;
+        String args = name.substr(LAngle + 1, RAngle - LAngle - 1);
+        std::vector<Type *> typeArgs;
+        unsigned start = 0;
+        unsigned end = 0;
+        unsigned level = 0;
 
-    auto enum_it = m_Enums.find(N);
+        for (unsigned i = 0; i <= args.length(); ++i) {
+            char c = (i < args.length()) ? args[i] : ',';
+            if (c == '<')
+                level++;
+            else if (c == '>')
+                level--;
+
+            else if (c == ',' && level == 0) {
+                String argName = args.substr(start, i - start);
+                argName.erase(0, argName.find_first_not_of(" \t"));
+                argName.erase(argName.find_last_not_of(" \t") + 1);
+
+                Type *argType = resolveType(argName, scope, md);
+                if (!argType)
+                    return nullptr;
+
+                typeArgs.push_back(argType);
+                start = i + 1;
+            }
+        }
+
+        for (auto &arg : typeArgs)
+            if (arg->isParamDependent())
+                return DependentTemplateStructType::get(this, tmpl, typeArgs);
+
+        return tmpl->fetchSpecialization(typeArgs)->getDefinedType();
+    }
+    
+    auto prim_it = m_Primitives.find(name);
+    if (prim_it != m_Primitives.end())
+        return prim_it->second;
+
+    auto enum_it = m_Enums.find(name);
     if (enum_it != m_Enums.end())
         return enum_it->second;
 
-    auto struct_it = m_Structs.find(N);
+    auto struct_it = m_Structs.find(name);
     if (struct_it != m_Structs.end())
         return struct_it->second;
 
-    auto ext_it = m_Externals.find(N);
+    auto ext_it = m_Externals.find(name);
     if (ext_it != m_Externals.end())
         return ext_it->second;
-
-    if (N.back() == '*') {
-        Type *pointee = getType(N.substr(0, N.size() - 1));
-        if (!pointee)
-            return nullptr;
-
-        Type *T = new PointerType(pointee);
-        addType(T);
-        return T;
-    }
-
-    auto LBrack = N.find_last_of('[');
-    auto RBrack = N.find_last_of(']');
-    if (LBrack != std::string::npos && RBrack != std::string::npos) {
-        Type *element = getType(N.substr(0, LBrack));
-        if (!element)
-            return nullptr;
-
-        Type *T = new ArrayType(element, std::stoul(N.substr(LBrack + 1, RBrack - LBrack - 1)));
-        addType(T);
-        return T;
-    }
 
     return nullptr;
 }
 
-ArrayType *Context::getArrayType(Type *E, unsigned long S) {
-    String name = E->getName() + "[" + std::to_string(S) + "]";
-    if (Type *T = m_Types[name])
-        return static_cast<ArrayType *>(T);
+void Context::importType(Type *T, const String &N) {
+    assert(T && "Type cannot be null.");
 
-    ArrayType *AT = new ArrayType(E, S);
-    m_Types[name] = AT;
-    return AT;
-}
+    auto it = m_Externals.find(N.empty() ? T->getName() : N);
+    if (it != m_Externals.end())
+        fatal("multiple types with same name: " + N, nullptr);
 
-PointerType *Context::getPointerType(Type *P) {
-    String name = P->getName() + "*";
-    if (Type *T = m_Types[name])
-        return static_cast<PointerType *>(T);
-
-    PointerType *PT = new PointerType(P);
-    m_Types[name] = PT;
-    return PT;
-}
-
-Type *Context::produceType(const String &N, const Metadata &M) {
-    if (Type *T = getType(N))
-        return T;
-
-    TypeResult *TR = new TypeResult(N, M);
-    m_Types[N] = TR;
-    return TR;
-}
-
-void Context::reconstructFunctionType(FunctionType *FT) {
-    if (!FT->getReturnType()->isQualified())
-        FT->setReturnType(
-            static_cast<TypeResult *>(FT->getReturnType())->getUnderlying());
-
-    for (unsigned i = 0, n = FT->getNumParams(); i != n; ++i) {
-        Type *P = FT->getParamType(i);
-        if (P->isQualified())
-            continue;
-
-        TypeResult *TR = static_cast<TypeResult *>(P);
-        FT->setParamType(TR->getUnderlying(), i);
-    }
+    m_Externals[N.empty() ? T->getName() : N] = T;
 }
 
 void Context::sanitate() {
-    // Move all type results from the main type pool to the designated results.
-    for (auto it = m_Types.begin(); it != m_Types.end(); ) {
-        if (TypeResult *TR = dynamic_cast<TypeResult *>(it->second)) {
-            m_Results.push_back(TR);
-            it = m_Types.erase(it);
-        } else
-            ++it;
-    }
-
     // For each type result, try to resolve its concrete type from the pool.
-    for (auto *R : m_Results) {
-        Type *newTy = getType(R->getName());
-        if (!newTy) {
+    for (auto &[name, defer] : m_Deferred) {
+        Type *concrete = resolveType(name, defer->getScope(), defer->getMetadata());
+        if (!concrete)
             // If the type is not found, it is unresolved at this point.
-            fatal(
-                "unresolved type: " + R->getName(), &R->getMetadata()
-            );
-        }
+            fatal("unresolved type: " + name, &defer->getMetadata());
 
-        R->setUnderlying(newTy);
+        defer->setUnderlying(concrete);
     }
-
-    // For each recognized function type, unwrap any nested type results.
-    for (auto &FT : m_FunctionTypes)
-        reconstructFunctionType(FT);
 }

@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
     std::vector<mir::Segment *> segments;
 
     files.push_back(parseInputFile("samples/one.mdl"));
-    files.push_back(parseInputFile("samples/two.mdl"));
+    //files.push_back(parseInputFile("samples/two.mdl"));
 
     for (auto &file : files) {
         Lexer lexer = Lexer(file);
