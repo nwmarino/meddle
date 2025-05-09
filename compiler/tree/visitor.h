@@ -15,8 +15,6 @@ class UseDecl;
 class VarDecl;
 
 class TemplateParamDecl;
-class TemplateFunctionDecl;
-class TemplateStructDecl;
 class FunctionTemplateSpecializationDecl;
 class StructTemplateSpecializationDecl;
 
@@ -70,8 +68,6 @@ public:
     virtual void visit(StructDecl *decl) {}
 
     virtual void visit(TemplateParamDecl *decl) {}
-    virtual void visit(TemplateFunctionDecl *decl) {}
-    virtual void visit(TemplateStructDecl *decl) {}
     virtual void visit(FunctionTemplateSpecializationDecl *decl) {}
     virtual void visit(StructTemplateSpecializationDecl *decl) {}
 

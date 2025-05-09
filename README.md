@@ -5,7 +5,10 @@
 Sun. May 11
 
 Templates
+Cross-Module Global Variable References
+- Chronological comparison of declaration versus. reference for locals.
 New/Delete
+Test
 
 Wed. May 21
 

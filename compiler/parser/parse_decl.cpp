@@ -91,7 +91,7 @@ FunctionDecl *Parser::parse_function(const Token &name, std::vector<TemplatePara
         next(); // identifier
 
         expect_and_eat(TokenKind::Colon, "expected ':' after parameter name");
-        paramTy = parse_type(true);
+        paramTy = parse_type();
         if (paramTy->isVoid())
             fatal("parameter type cannot be 'void'", &m_Current->md);
 
@@ -114,10 +114,10 @@ FunctionDecl *Parser::parse_function(const Token &name, std::vector<TemplatePara
 
     Type *retTy = nullptr;
     if (match(TokenKind::Identifier)) {
-        retTy = parse_type(true);
+        retTy = parse_type();
     } else if (match(TokenKind::Arrow)) {
         next(); // '->'
-        retTy = parse_type(true);
+        retTy = parse_type();
     } else {
         retTy = m_Context->getVoidType();
     }
@@ -157,7 +157,7 @@ VarDecl *Parser::parse_global_var(const Token &name) {
     bool mut = m_Current->value == "mut";
     next(); // 'fix' or 'mut'
 
-    T = parse_type(true);
+    T = parse_type();
 
     if (!match(TokenKind::Equals))
         fatal("global variable must have an initializer", &m_Current->md);
@@ -202,7 +202,7 @@ VarDecl *Parser::parse_var(bool mut) {
 
     if (match(TokenKind::Colon)) {
         next(); // ':'
-        T = parse_type(true);
+        T = parse_type();
     }
 
     if (match(TokenKind::Equals)) {
@@ -238,7 +238,7 @@ VarDecl *Parser::parse_var(bool mut) {
 
 EnumDecl *Parser::parse_enum(const Token &name) {
     std::vector<EnumVariantDecl *> Variants;
-    EnumType *ty = EnumType::create(m_Context, name.value, parse_type(true));
+    EnumType *ty = EnumType::create(m_Context, name.value, parse_type());
 
     if (!match(TokenKind::SetBrace))
         fatal("expected '{' after enum type", &m_Current->md);
@@ -359,7 +359,7 @@ StructDecl *Parser::parse_struct(const Token &name, std::vector<TemplateParamDec
         if (match(TokenKind::Colon)) {
             next(); // ':'
 
-            Type *field_ty = parse_type(true);
+            Type *field_ty = parse_type();
             Expr *field_init = nullptr;
 
             if (match(TokenKind::Equals)) {

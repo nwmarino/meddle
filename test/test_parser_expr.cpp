@@ -2231,7 +2231,7 @@ TEST_F(ParseExprTest, Call_Basic) {
 
     CallExpr *CE = dynamic_cast<CallExpr *>(ES->getExpr());
     EXPECT_NE(CE, nullptr);
-    EXPECT_EQ(CE->getArgs().size(), 2);
+    EXPECT_EQ(CE->getArgs().size(), 2); 
 
     IntegerLiteral *IL1 = dynamic_cast<IntegerLiteral *>(CE->getArgs()[0]);
     EXPECT_NE(IL1, nullptr);
@@ -2242,7 +2242,7 @@ TEST_F(ParseExprTest, Call_Basic) {
     delete unit;
 }
 
-#define SPEC_ENUM_BASIC R"(Colors :: i64 { Red } test :: () { mut x: Colors = Colors::Red; })"
+#define SPEC_ENUM_BASIC R"(enum :: i64 { COLORS_RED } test :: () { mut x: Colors = COLORS_RED; })"
 TEST_F(ParseExprTest, Spec_Enum_Basic) {
     File file = File("", "", "", SPEC_ENUM_BASIC);
     Lexer lexer = Lexer(file);
@@ -2514,6 +2514,260 @@ TEST_F(ParseExprTest, Rune_Syscall_Expr_Basic) {
     EXPECT_NE(SE, nullptr);
     EXPECT_EQ(SE->getSyscallNum(), 5);
     EXPECT_EQ(SE->getArgs().size(), 2);
+    
+    delete unit;
+}
+
+#define TEMPLATE_FUNCTION_SPEC R"(foo<T> :: (x: T) -> T { ret x; } bar :: () i64 { ret foo<i64>(5); })"
+TEST_F(ParseExprTest, Template_Function_Spec) {
+    File file = File("", "", "", TEMPLATE_FUNCTION_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *TFN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(TFN, nullptr);
+    EXPECT_NE(TFN->getBody(), nullptr);
+    EXPECT_EQ(TFN->getNumTemplateParams(), 1);
+
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+    EXPECT_EQ(FN->getNumTemplateParams(), 0);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(RS, nullptr);
+    EXPECT_NE(RS->getExpr(), nullptr);
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(RS->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getNumTypeArgs(), 1);
+
+    Type *TA = CE->getTypeArg(0);
+    EXPECT_EQ(TA->getName(), "i64");
+    
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT_SPEC R"(box<T> :: { x: T } test :: () { mut x: box<i32> = box<i32> { x: 1 }; })"
+TEST_F(ParseExprTest, Template_Struct_Spec) {
+    File file = File("", "", "", TEMPLATE_STRUCT_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+    EXPECT_EQ(VD->getType()->getName(), "box<i32>");
+    
+    InitExpr *IE = dynamic_cast<InitExpr *>(VD->getInit());
+    EXPECT_NE(IE, nullptr);
+    EXPECT_EQ(IE->getFields().size(), 1);
+
+    FieldInitExpr *F1 = dynamic_cast<FieldInitExpr *>(IE->getFields()[0]);
+    EXPECT_NE(F1, nullptr);
+    EXPECT_EQ(F1->getName(), "x");
+    
+    delete unit;
+}
+
+#define TEMPLATE_METHOD_SPEC R"(box<T> :: { x: T, foo<U> :: (y: U) -> U { ret x + y; } } bar :: () i64 { mut x: box<i64>* = nil; ret box.foo<bool>(true); })"
+TEST_F(ParseExprTest, Template_Method_Spec) {
+    File file = File("", "", "", TEMPLATE_METHOD_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 2);
+
+    RetStmt *RS = dynamic_cast<RetStmt *>(CS->getStmts()[1]);
+    EXPECT_NE(RS, nullptr);
+    EXPECT_NE(RS->getExpr(), nullptr);
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(RS->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getNumTypeArgs(), 1);
+
+    Type *TA = CE->getTypeArg(0);
+    EXPECT_EQ(TA->getName(), "bool");
+    
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT_FUNCTION_SPEC R"(box<T> :: { x: T, foo<U> :: (y: U) U { ret y; } } test :: () { mut x: i32 = box<i64>::foo<i32>(5); })"
+TEST_F(ParseExprTest, Template_Struct_Function_Spec) {
+    File file = File("", "", "", TEMPLATE_STRUCT_FUNCTION_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 2);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[1]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    TypeSpecExpr *TS = dynamic_cast<TypeSpecExpr *>(VD->getInit());
+    EXPECT_NE(TS, nullptr);
+    EXPECT_EQ(TS->getName(), "box<i64>");
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(TS->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getNumTypeArgs(), 1);
+    
+    delete unit;
+}
+
+#define USED_TEMPLATE_FUNCTION_SPEC R"(use Other = "other"; test :: () { mut x: i32 = Other::foo<i32>(1); })"
+TEST_F(ParseExprTest, Used_Template_Function_Spec) {
+    File file = File("", "", "", USED_TEMPLATE_FUNCTION_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    UnitSpecExpr *US = dynamic_cast<UnitSpecExpr *>(VD->getInit());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getName(), "Other");
+    EXPECT_EQ(US->getUse(), unit->getUses()[0]);
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(US->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getNumTypeArgs(), 1);
+    
+    delete unit;
+}
+
+#define USED_TEMPLATE_STRUCT_SPEC R"(use Other = "other"; test :: () { mut x: Other::box<i32> = Other::box<i32> { x: 1 }; })"
+TEST_F(ParseExprTest, Used_Template_Struct_Spec) {
+    File file = File("", "", "", USED_TEMPLATE_STRUCT_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    InitExpr *IE = dynamic_cast<InitExpr *>(VD->getInit());
+    EXPECT_NE(IE, nullptr);
+    EXPECT_EQ(IE->getFields().size(), 1);
+    EXPECT_EQ(IE->getType()->getName(), "Other::box<i32>");
+
+    delete unit;
+}
+
+#define USED_TEMPLATE_STRUCT_FUNCTION_SPEC R"(use Other = "other"; test :: () { mut x: i32 = Other::box<i32>::foo<i32>(12); })"
+TEST_F(ParseExprTest, Used_Template_Struct_Function_Spec) {
+    File file = File("", "", "", USED_TEMPLATE_STRUCT_FUNCTION_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+    FunctionDecl *FN = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FN, nullptr);
+    EXPECT_NE(FN->getBody(), nullptr);
+
+    CompoundStmt *CS = dynamic_cast<CompoundStmt *>(FN->getBody());
+    EXPECT_NE(CS, nullptr);
+    EXPECT_EQ(CS->getStmts().size(), 1);
+
+    DeclStmt *DS = dynamic_cast<DeclStmt *>(CS->getStmts()[0]);
+    EXPECT_NE(DS, nullptr);
+
+    VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
+    EXPECT_NE(VD, nullptr);
+    EXPECT_EQ(VD->getName(), "x");
+    EXPECT_NE(VD->getInit(), nullptr);
+
+    UnitSpecExpr *US = dynamic_cast<UnitSpecExpr *>(VD->getInit());
+    EXPECT_NE(US, nullptr);
+    EXPECT_EQ(US->getName(), "Other");
+    EXPECT_EQ(US->getUse(), unit->getUses()[0]);
+
+    TypeSpecExpr *TS = dynamic_cast<TypeSpecExpr *>(US->getExpr());
+    EXPECT_NE(TS, nullptr);
+    EXPECT_EQ(TS->getName(), "Other::box<i32>");
+    EXPECT_EQ(TS->getType()->getName(), "Other::box<i32>");
+
+    CallExpr *CE = dynamic_cast<CallExpr *>(TS->getExpr());
+    EXPECT_NE(CE, nullptr);
+    EXPECT_EQ(CE->getNumTypeArgs(), 1);
+    EXPECT_EQ(CE->getTypeArg(0)->getName(), "i32");
     
     delete unit;
 }

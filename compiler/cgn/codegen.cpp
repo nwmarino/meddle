@@ -100,24 +100,24 @@ mir::Type *CGN::cgn_type(Type *T) {
 		}
 	} else if (auto *defer = dynamic_cast<DeferredType *>(T)) {
 		return cgn_type(defer->getUnderlying());
-	} else if (auto *AT = dynamic_cast<ArrayType *>(T)) {
-		return mir::ArrayType::get(m_Segment, cgn_type(AT->getElement()), 
-			AT->getSize());
-	} else if (auto *FT = dynamic_cast<FunctionType *>(T)) {
+	} else if (auto *arr = dynamic_cast<ArrayType *>(T)) {
+		return mir::ArrayType::get(m_Segment, cgn_type(arr->getElement()), 
+			arr->getSize());
+	} else if (auto *fty = dynamic_cast<FunctionType *>(T)) {
 		mir::Type *retTy = nullptr;
-		std::vector<mir::Type *> params = {};
-		params.reserve(FT->getNumParams());
+		std::vector<mir::Type *> params;
+		params.reserve(fty->getNumParams());
 
-		if (type_class(FT->getReturnType()) == TypeClass::Aggregate)
+		if (type_class(fty->getReturnType()) == TypeClass::Aggregate)
 			retTy = m_Builder.get_void_ty();
 		else
-			retTy = cgn_type(FT->getReturnType());
+			retTy = cgn_type(fty->getReturnType());
 		
-		for (auto &P : FT->getParams()) {
-			if (type_class(P) == TypeClass::Aggregate)
-				params.push_back(mir::PointerType::get(m_Segment, cgn_type(P)));
+		for (auto &param : fty->getParams()) {
+			if (type_class(param) == TypeClass::Aggregate)
+				params.push_back(mir::PointerType::get(m_Segment, cgn_type(param)));
 			else
-				params.push_back(cgn_type(P));
+				params.push_back(cgn_type(param));
 		}
 
 		return mir::FunctionType::get(m_Segment, params, retTy);
@@ -129,6 +129,21 @@ mir::Type *CGN::cgn_type(Type *T) {
 		mir::StructType *mirTy = mir::StructType::get(m_Segment, ST->getName());
 		assert(mirTy && "Struct type not lowered.");
 		return mirTy;
+	} else if (auto *param = dynamic_cast<TemplateParamType *>(T)) {
+		assert(m_SubstEnv && "Substitution environment is null.");
+		Type *conc = m_SubstEnv->substType(m_Unit->getContext(), param);
+		assert(conc && "Substitution type is null.");
+		return cgn_type(conc);
+	} else if (auto *dep = dynamic_cast<DependentTemplateStructType *>(T)) {
+		std::vector<Type *> nonDependents;
+		nonDependents.reserve(dep->getArgs().size());
+
+		for (auto &arg : dep->getArgs())
+			nonDependents.push_back(m_SubstEnv->substType(
+				m_Unit->getContext(), arg));
+
+		auto *spec = dep->getTemplateDecl()->fetchSpecialization(nonDependents);
+		return cgn_type(spec->getDefinedType());
 	}
 
 	assert(false && "Unable to generate a type.");
@@ -213,7 +228,7 @@ void CGN::declare_function(FunctionDecl *FD) {
 	FN->set_args(args);
 }
 
-void CGN::define_function(FunctionDecl *FD) {
+void CGN::define_function(FunctionDecl *FD, FunctionDecl *tmpl) {
 	mir::Function *FN = m_Segment->get_function(mangle_name(FD));
 	assert(FN && "Unable to find function in segment.");
 
@@ -266,7 +281,10 @@ void CGN::define_function(FunctionDecl *FD) {
 	}
 
 	m_Function = FN;
-	FD->getBody()->accept(this);
+	if (tmpl)
+		tmpl->getBody()->accept(this);
+	else
+		FD->getBody()->accept(this);
 
 	// If the function's tail block does not terminate on its own, then insert
 	// a return if the function is void. Otherwise, emit an error.
@@ -300,6 +318,9 @@ void CGN::visit(FunctionDecl *decl) {
 		define_function(decl);
 	else if (m_Phase == Phase::Declare)
 		declare_function(decl);
+
+	for (auto &spec : decl->m_TemplateSpecs)
+		spec->accept(this);
 }
 
 void CGN::visit(VarDecl *decl) {
@@ -375,16 +396,48 @@ void CGN::visit(VarDecl *decl) {
 void CGN::visit(StructDecl *decl) {
 	if (m_Phase == Phase::Declare) {
 		std::vector<mir::Type *> memberTys;
+		memberTys.reserve(decl->getNumFields());
 
-		for (auto &F : decl->getFields())
-			memberTys.push_back(cgn_type(F->getType()));
+		for (auto &field : decl->m_Fields)
+			memberTys.push_back(cgn_type(field->getType()));
 
-		mir::StructType *ST = mir::StructType::create(
-			m_Segment, decl->getName(), memberTys);
+		mir::StructType::create(m_Segment, decl->getName(), memberTys);
 	}
 	
 	for (auto &F : decl->getFunctions())
 		F->accept(this);
+
+	for (auto &spec : decl->m_TemplateSpecs)
+		spec->accept(this);
+}
+
+void CGN::visit(FunctionTemplateSpecializationDecl *decl) {
+	if (m_Phase == Phase::Declare)
+		declare_function(decl);
+	else if (m_Phase == Phase::Define) {
+		push_subst_env(decl->m_Mapping);
+		define_function(decl, decl->getTemplateFunction());
+		pop_subst_env();
+	}
+}
+
+void CGN::visit(StructTemplateSpecializationDecl *decl) {
+	push_subst_env(decl->m_Mapping);
+
+	if (m_Phase == Phase::Declare) {
+		std::vector<mir::Type *> memberTys;
+		memberTys.reserve(decl->getNumFields());
+
+		for (auto &field : decl->m_Fields)
+			memberTys.push_back(cgn_type(field->getType()));
+
+		mir::StructType::create(m_Segment, decl->getName(), memberTys);
+	}
+
+	for (auto &fn : decl->m_Functions)
+		fn->accept(this);
+
+	pop_subst_env();
 }
 
 void CGN::visit(BreakStmt *stmt) {
@@ -448,8 +501,6 @@ void CGN::visit(IfStmt *stmt) {
 		delete mergeBB;
 	}
 }
-
-void CGN::visit(CaseStmt *stmt) {}
 
 void CGN::visit(MatchStmt *stmt) {
 	// Lower the match expression as an rvalue.

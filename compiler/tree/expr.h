@@ -394,11 +394,13 @@ class CallExpr : public RefExpr {
 
 protected:
 	std::vector<Expr *> m_Args;
+	std::vector<Type *> m_TypeArgs;
 
 public:
 	CallExpr(const Metadata &M, Type *T, const String &N, 
-			 NamedDecl *C = nullptr, std::vector<Expr *> Args = {})
-	  : RefExpr(M, T, N, C), m_Args(Args) {}
+			 NamedDecl *C = nullptr, std::vector<Expr *> Args = {}, 
+			 std::vector<Type *> TArgs = {})
+	  : RefExpr(M, T, N, C), m_Args(Args), m_TypeArgs(TArgs) {}
 
 	~CallExpr() override {
 		for (auto &A : m_Args)
@@ -407,7 +409,7 @@ public:
 
 	void accept(Visitor *V) override { V->visit(this); }
 
-	std::vector<Expr *> getArgs() const { return m_Args; }
+	const std::vector<Expr *> &getArgs() const { return m_Args; }
 
 	Expr *getArg(unsigned i) const {
 		assert(i < m_Args.size() && "Index out of range.");
@@ -415,6 +417,15 @@ public:
 	}
 
 	unsigned getNumArgs() const { return m_Args.size(); }
+
+	const std::vector<Type *> &getTypeArgs() const { return m_TypeArgs; }
+
+	Type *getTypeArg(unsigned i) const {
+		assert(i < m_TypeArgs.size() && "Index out of range.");
+		return m_TypeArgs.at(i);
+	}
+
+	unsigned getNumTypeArgs() const { return m_TypeArgs.size(); }
 
 	FunctionDecl *getCallee() const;
 };
@@ -428,8 +439,9 @@ class MethodCallExpr final : public CallExpr {
 
 public:
 	MethodCallExpr(const Metadata &M, Type *T, const String &N, Expr *B, 
-				   NamedDecl *C = nullptr, std::vector<Expr *> Args = {})
-	  : CallExpr(M, T, N, C, Args), m_Base(B) {}
+				   NamedDecl *C = nullptr, std::vector<Expr *> Args = {},
+				   std::vector<Type *> TArgs = {})
+	  : CallExpr(M, T, N, C, Args, TArgs), m_Base(B) {}
 
 	~MethodCallExpr() override {
 		delete m_Base;

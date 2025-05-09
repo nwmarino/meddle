@@ -130,7 +130,76 @@ UnaryExpr::Kind Parser::get_un_operator() const {
     }
 }
 
-Type *Parser::parse_type(bool produce) {
+String Parser::parse_type_name() {
+    if (!match(TokenKind::Identifier))
+        fatal("expected type identifier", &m_Current->md);
+    
+    Metadata md = m_Current->md;
+    String name = m_Current->value;
+    next();
+
+    if (match(TokenKind::Path)) {
+        NamedDecl *named = m_Scope->lookup(name);
+        if (!dynamic_cast<UseDecl *>(named))
+            fatal("expected use declaration before namespaced type", &md);
+
+        name += "::";
+        next();
+
+        if (!match(TokenKind::Identifier))
+            fatal("expected type identifier", &m_Current->md);
+        
+        name += m_Current->value;
+        next();
+    }
+
+    if (match(TokenKind::Left)) {
+        name += "<";
+        next();
+
+        while (!match(TokenKind::Right)) {
+            name += parse_type_name();
+
+            if (match(TokenKind::Right))
+                break;
+
+            if (!match(TokenKind::Comma))
+                fatal("expected ',' or '>' in type argument list", &m_Current->md);
+            next();
+            name += ", ";
+        }
+
+        next(); // Consume '>'
+        name += ">";
+    }
+
+    while (1) {
+        if (match(TokenKind::Star))
+            name += '*';
+        else if (match(TokenKind::SetBrack)) {
+            name += '[';
+            next();
+
+            if (!match(LiteralKind::Integer))
+                fatal("expected integer literal", &m_Current->md);
+
+            name += m_Current->value;
+            next();
+
+            if (!match(TokenKind::EndBrack))
+                fatal("expected ']' after array size", &m_Current->md);
+
+            name += ']';
+        } else
+            break;
+
+        next();
+    }
+
+    return name;
+}
+
+Type *Parser::parse_type() {
     if (!match(TokenKind::Identifier))
         fatal("expected type identifier", &m_Current->md);
     
@@ -154,7 +223,7 @@ Type *Parser::parse_type(bool produce) {
         next();
 
         while (!match(TokenKind::Right)) {
-            Type *argTy = parse_type(produce);
+            Type *argTy = parse_type();
             name += argTy->getName();
 
             if (match(TokenKind::Right))
@@ -193,10 +262,7 @@ Type *Parser::parse_type(bool produce) {
         next();
     }
 
-    if (produce)
-        return Type::get(m_Context, name, m_Scope, m_Current->md);
-
-    return nullptr;
+    return Type::get(m_Context, name, m_Scope, m_Current->md);
 }
 
 void Parser::parse_runes() {

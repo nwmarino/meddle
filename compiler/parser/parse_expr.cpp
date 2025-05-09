@@ -60,6 +60,48 @@ Expr *Parser::parse_ident() {
     next(); // identifier
 
     switch (m_Current->kind) {
+    case TokenKind::Left:
+        // In cases of template declaration references, i.e. the call
+        // `foo<i32>(...)`, the left angle `<` needs to be differentiated from
+        // a less-than operator.
+        restore_pos(identPos);
+
+        if (D && dynamic_cast<VarDecl *>(D)) {
+            // Since variables cannot be forward referenced, we can assume
+            // it's part of a comparison.
+            return parse_ref();
+        }
+
+        // The reference is either forward or a non-variable. Since the
+        // following tokens could be either a:
+        //
+        // 1. Template Type Specifier `::`
+        //   box<i32>::ident...
+        // 2. Template Type Initializer `{`
+        //   box<i32> { ... }
+        // 3. Template Function Call `(`
+        //   box<i32>(...)
+        //
+        // We can start by treating the chunk as a type, and see what follows.
+        parse_type_name();
+
+        switch (m_Current->kind) {
+        case TokenKind::Path:
+            restore_pos(identPos);
+            return parse_spec();
+
+        case TokenKind::SetBrace:
+            restore_pos(identPos);
+            return parse_init();
+
+        case TokenKind::SetParen:
+            restore_pos(identPos);
+            return parse_call();
+
+        default:
+            fatal("expected a template initializer or type specifier", &m_Current->md);
+        }
+
     case TokenKind::SetParen:
         // ident(...)
         restore_pos(identPos);
@@ -212,7 +254,7 @@ CastExpr *Parser::parse_cast() {
         fatal("expected '<' after 'cast' keyword", &m_Current->md);
     next(); // '<'
 
-    T = parse_type(true);
+    T = parse_type();
     
     if (!match(TokenKind::Right))
         fatal("expected '>' after 'cast' type", &m_Current->md);
@@ -256,6 +298,7 @@ RefExpr *Parser::parse_ref() {
 CallExpr *Parser::parse_call() {
     Metadata md = m_Current->md;
     std::vector<Expr *> Args;
+    std::vector<Type *> TArgs;
     String callee;
 
     if (!match(TokenKind::Identifier))
@@ -263,6 +306,30 @@ CallExpr *Parser::parse_call() {
 
     callee = m_Current->value;
     next(); // identifier
+
+    if (match(TokenKind::Left)) {
+        next(); // '<'
+
+        while (!match(TokenKind::Right)) {
+            Type *targ = parse_type();
+            if (!targ)
+                fatal("expected type argument", &m_Current->md);
+
+            TArgs.push_back(targ);
+
+            if (match(TokenKind::Right))
+                break;
+
+            if (!match(TokenKind::Comma))
+                fatal("expected ',' or '>' in function call type arguments", &m_Current->md);
+            next(); // ','
+        }
+
+        if (TArgs.empty())
+            fatal("function call type arguments cannot be empty", &m_Current->md);
+
+        next(); // '>'
+    }
 
     if (!match(TokenKind::SetParen))
         fatal("expected '(' after function name", &m_Current->md);
@@ -284,7 +351,7 @@ CallExpr *Parser::parse_call() {
     }
 
     next(); // ')'
-    return new CallExpr(md, nullptr, callee, nullptr, Args);
+    return new CallExpr(md, nullptr, callee, nullptr, Args, TArgs);
 }
 
 SizeofExpr *Parser::parse_sizeof() {
@@ -295,7 +362,7 @@ SizeofExpr *Parser::parse_sizeof() {
         fatal("expected '<' after 'sizeof' keyword", &m_Current->md);
     next(); // '<'
 
-    Type *T = parse_type(true);
+    Type *T = parse_type();
 
     if (!match(TokenKind::Right))
         fatal("expected '>' after 'sizeof' type", &m_Current->md);
@@ -325,7 +392,7 @@ Expr *Parser::parse_use_spec(UseDecl *use) {
     // the defining tokens '(', '{', etc.
 
     unsigned identPos = save_pos();
-    parse_type(false); // False because we don't want to produce a type result.
+    parse_type_name();
 
     switch (m_Current->kind) {
     case TokenKind::SetBrace:
@@ -367,8 +434,7 @@ Expr *Parser::parse_spec() {
     if (!match(TokenKind::Identifier))
         fatal("expected identifier", &md);
 
-    name = m_Current->value;
-    next(); // identifier
+    name = parse_type_name();
 
     if (!match(TokenKind::Path))
         fatal("expected '::'", &m_Current->md);
@@ -392,7 +458,7 @@ Expr *Parser::parse_spec() {
 
 InitExpr *Parser::parse_init() {
     Metadata md = m_Current->md;
-    Type *T = parse_type(true);
+    Type *T = parse_type();
     std::vector<FieldInitExpr *> Fields;
 
     if (!match(TokenKind::SetBrace))
@@ -490,6 +556,31 @@ Expr *Parser::parse_unary_postfix() {
             String member = m_Current->value;
             next(); // identifier
 
+            std::vector<Type *> TArgs;
+            if (match(TokenKind::Left)) {
+                next(); // '<'
+
+                while (!match(TokenKind::Right)) {
+                    Type *targ = parse_type();
+                    if (!targ)
+                        fatal("expected type argument", &m_Current->md);
+
+                    TArgs.push_back(targ);
+
+                    if (match(TokenKind::Right))
+                        break;
+
+                    if (!match(TokenKind::Comma))
+                        fatal("expected ',' or '>' in type argument list", &m_Current->md);
+                    next(); // ','
+                }
+
+                if (TArgs.empty())
+                    fatal("type argument list cannot be empty", &m_Current->md);
+
+                next(); // '>'
+            }
+
             if (match(TokenKind::SetParen)) {
                 // The member is followed by a '(', so this is a method call.
                 next(); // '('
@@ -512,7 +603,7 @@ Expr *Parser::parse_unary_postfix() {
 
                 next(); // ')'
 
-                E = new MethodCallExpr(md, nullptr, member, E, nullptr, Args);
+                E = new MethodCallExpr(md, nullptr, member, E, nullptr, Args, TArgs);
             } else {
                 E = new AccessExpr(md, nullptr, member, E);
             }

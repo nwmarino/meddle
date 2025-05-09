@@ -1,66 +1,11 @@
 #include "decl.h"
 #include "scope.h"
 #include "stmt.h"
+#include "substenv.h"
 #include "type.h"
 #include "unit.h"
 
-#include <unordered_map>
-
 using namespace meddle;
-
-static std::unordered_map<TemplateParamType *, Type *> 
-getMapping(const std::vector<TemplateParamDecl *> &params, 
-           const std::vector<Type *> &args) {
-    std::unordered_map<TemplateParamType *, Type *> mapping;
-    mapping.reserve(args.size());
-    for (unsigned i = 0; i != params.size(); ++i)
-        mapping[static_cast<TemplateParamType *>(
-            params.at(i)->getDefinedType())] = args.at(i);
-
-    return mapping;
-}
-
-static Type *substType(Context *ctx, Type *ty, 
-                       std::unordered_map<TemplateParamType *, Type *> map) {
-    if (ty->isDeferred()) {
-        return substType(ctx, ty->asDeferred()->getUnderlying(), map);
-    } else if (ty->isArray()) {
-        return ArrayType::get(ctx, substType(ctx, ty->asArray()->getElement(), map), 
-            ty->asArray()->getSize());
-    } else if (ty->isPointer()) {
-        return PointerType::get(ctx, substType(ctx, ty->asPointer()->getPointee(), map));
-    } else if (auto *TPT = dynamic_cast<TemplateParamType *>(ty)) {
-        auto it = map.find(TPT);
-        assert(it != map.end() && "Template parameter not in mapping.");
-        return it->second;
-    } else if (auto *TST = dynamic_cast<TemplateStructType *>(ty)) {
-        std::vector<Type *> substArgs;
-        substArgs.reserve(TST->getArgs().size());
-        bool changed = false;
-
-        for (auto &arg : TST->getArgs()) {
-            Type *newArg = substType(ctx, arg, map);
-            substArgs.push_back(newArg);
-            if (newArg != arg)
-                changed = true;
-        }
-
-        if (!changed)
-            return TST;
-
-        return TemplateStructType::get(ctx, TST->getTemplateDecl(), substArgs);
-    } else if (auto *DTST = dynamic_cast<DependentTemplateStructType *>(ty)) {
-        std::vector<Type *> nonDependents;
-        nonDependents.reserve(DTST->getArgs().size());
-        for (auto &arg : DTST->getArgs())
-            nonDependents.push_back(substType(ctx, arg, map));
-
-        return TemplateStructType::get(ctx, DTST->getTemplateDecl(), 
-            nonDependents);
-    }
-
-    return ty;
-}
 
 FunctionDecl::FunctionDecl(const Runes &runes, const Metadata &md, 
                            const String &name, FunctionType *ty, Scope *scope, 
@@ -141,16 +86,15 @@ FunctionTemplateSpecializationDecl*
 FunctionDecl::createSpecialization(const std::vector<Type *> &args) {
     // Create a mapping between the parameterized types and the concrete type
     // arguments for the new specialization. This is for substituting types.
-    auto mapping = getMapping(m_TemplateParams, args);
+    SubstEnv *env = new SubstEnv(getMapping(m_TemplateParams, args));
     
     // Specialize the function type with the concrete arguments.
-    Type *concreteRetTy = substType(m_PUnit->getContext(), 
-        m_Type->getReturnType(), mapping);
+    Type *concreteRetTy = env->substType(m_PUnit->getContext(), 
+        m_Type->getReturnType());
     std::vector<Type *> concreteParamTys;
     concreteParamTys.reserve(m_Type->getNumParams());
     for (auto &param : m_Type->getParams())
-        concreteParamTys.push_back(substType(m_PUnit->getContext(), param, 
-            mapping));
+        concreteParamTys.push_back(env->substType(m_PUnit->getContext(), param));
 
     FunctionType *concreteFT = FunctionType::create(m_PUnit->getContext(), 
         concreteParamTys, concreteRetTy);
@@ -178,9 +122,10 @@ FunctionDecl::createSpecialization(const std::vector<Type *> &args) {
         concreteParams,
         nullptr, // body
         args,
-        mapping
+        env->getMapping()
     );
 
+    delete env;
     m_TemplateSpecs.push_back(specialization);
     return specialization;
 }
@@ -280,15 +225,14 @@ StructTemplateSpecializationDecl*
 StructDecl::createSpecialization(const std::vector<Type *> &args) {
     // Create a mapping between the parameterized types and the concrete type
     // arguments for the new specialization. This is for substituting types.
-    auto mapping = getMapping(m_TemplateParams, args);
+    SubstEnv *env = new SubstEnv(getMapping(m_TemplateParams, args));
     
     // Specialize the struct type with the concrete arguments.
     StructType *tmplTy = m_Type->asStruct();
     std::vector<Type *> concreteFieldTys;
     concreteFieldTys.reserve(tmplTy->getNumFields());
     for (auto &field : tmplTy->getFields())
-        concreteFieldTys.push_back(substType(m_PUnit->getContext(), field, 
-            mapping));
+        concreteFieldTys.push_back(env->substType(m_PUnit->getContext(), field));
 
     // Create a new scope for the specialized structure.
     auto structScope = new Scope();
@@ -314,13 +258,13 @@ StructDecl::createSpecialization(const std::vector<Type *> &args) {
     for (auto &fn : m_Functions) {
         FunctionType *tmplFnTy = fn->getType();
 
-        Type *concreteRetTy = substType(m_PUnit->getContext(), 
-            tmplFnTy->getReturnType(), mapping);
+        Type *concreteRetTy = env->substType(m_PUnit->getContext(), 
+            tmplFnTy->getReturnType());
         std::vector<Type *> concreteParamTys;
         concreteParamTys.reserve(tmplFnTy->getNumParams());
         for (auto &param : tmplFnTy->getParams())
-            concreteParamTys.push_back(substType(m_PUnit->getContext(), 
-                param, mapping));
+            concreteParamTys.push_back(env->substType(m_PUnit->getContext(), 
+                param));
 
         FunctionType *concreteFT = FunctionType::create(m_PUnit->getContext(), 
             concreteParamTys, concreteRetTy);
@@ -366,10 +310,10 @@ StructDecl::createSpecialization(const std::vector<Type *> &args) {
         concreteFields,
         concreteFunctions,
         args,
-        mapping
+        env->getMapping()
     );
     concTy->setDecl(specialization);
-
+    delete env;
     m_TemplateSpecs.push_back(specialization);
     return specialization;
 }

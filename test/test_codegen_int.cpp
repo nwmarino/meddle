@@ -27,11 +27,11 @@ protected:
         
         // create a new file /test.mdl
         m_File = std::ofstream("/test.mdl", std::ios::out | std::ios::trunc);
-}
+    }
 
     void TearDown() override {
         m_File.close();
-}
+    }
 };
 
 #define INT_CGN_1 R"(test::() i64 { ret 0; })"

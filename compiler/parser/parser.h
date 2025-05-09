@@ -68,7 +68,8 @@ class Parser final {
     /// Returns the equivelant unary operator kind for the current token.
     UnaryExpr::Kind get_un_operator() const;
 
-    Type *parse_type(bool produce = true);
+    String parse_type_name();
+    Type *parse_type();
     void parse_runes();
 
     Decl *parse_decl();

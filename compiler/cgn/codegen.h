@@ -4,6 +4,7 @@
 #include "../tree/decl.h"
 #include "../tree/expr.h"
 #include "../tree/stmt.h"
+#include "../tree/substenv.h"
 #include "../tree/type.h"
 #include "../tree/visitor.h"
 #include "../core/options.h"
@@ -45,6 +46,17 @@ class CGN final : public Visitor {
     mir::BasicBlock *m_Merge = nullptr;
     mir::BasicBlock *m_Cond = nullptr;
     std::unordered_map<NamedDecl *, String> m_Mangled = {};
+    SubstEnv *m_SubstEnv = nullptr;
+
+    void push_subst_env(const std::unordered_map<TemplateParamType *, Type *> &map)
+    { m_SubstEnv = new SubstEnv(map, m_SubstEnv); }
+
+    void pop_subst_env() {
+        assert(m_SubstEnv && "Substitution environment is empty.");
+        SubstEnv *old = m_SubstEnv;
+        m_SubstEnv = m_SubstEnv->getParent();
+        delete old;
+    }
 
     String mangle_name(NamedDecl *D);
 
@@ -54,7 +66,7 @@ class CGN final : public Visitor {
     mir::Value *inject_cmp(mir::Value *V);
 
     void declare_function(FunctionDecl *FD);
-    void define_function(FunctionDecl *FD);
+    void define_function(FunctionDecl *FD, FunctionDecl *tmpl = nullptr);
 
     void cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty);
 
@@ -107,6 +119,8 @@ public:
     void visit(FunctionDecl *decl) override;
     void visit(VarDecl *decl) override;
     void visit(StructDecl *decl) override;
+    void visit(FunctionTemplateSpecializationDecl *decl) override;
+    void visit(StructTemplateSpecializationDecl *decl) override;
 
     void visit(BreakStmt *stmt) override;
     void visit(ContinueStmt *stmt) override;
@@ -114,7 +128,6 @@ public:
     void visit(DeclStmt *stmt) override;
     void visit(ExprStmt *stmt) override;
     void visit(IfStmt *stmt) override;
-    void visit(CaseStmt *stmt) override;
     void visit(MatchStmt *stmt) override;
     void visit(RetStmt *stmt) override;
     void visit(UntilStmt *stmt) override;
