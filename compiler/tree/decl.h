@@ -80,17 +80,21 @@ class FunctionDecl : public NamedDecl {
     friend class NameResolution;
     friend class Sema;
 
+    std::vector<TemplateParamDecl *> m_TemplateParams;
+    std::vector<FunctionTemplateSpecializationDecl *> m_TemplateSpecs;
+
 protected:
     FunctionType *m_Type;
     Scope *m_Scope;
     std::vector<ParamDecl *> m_Params;
     Stmt *m_Body;
     StructDecl *m_Parent;
-
+    
 public:
-    FunctionDecl(const Runes &R, const Metadata &M, const String &N, 
-                 FunctionType *T, Scope *S, std::vector<ParamDecl *> P, 
-                 Stmt *B, StructDecl *SP = nullptr);
+    FunctionDecl(const Runes &runes, const Metadata &md, const String &name, 
+                 FunctionType *ty, Scope *scope, std::vector<ParamDecl *> params, 
+                 Stmt *body, std::vector<TemplateParamDecl *> tmplParams = {},
+                 StructDecl *parent = nullptr);
 
     ~FunctionDecl() override;
 
@@ -98,22 +102,28 @@ public:
 
     FunctionType *getType() const { return m_Type; }
 
+    void setType(FunctionType *ty) { m_Type = ty; }
+
     Type *getReturnType() const { return m_Type->getReturnType(); }
 
     Scope *getScope() const { return m_Scope; }
 
     const std::vector<ParamDecl *> &getParams() const { return m_Params; }
 
-    unsigned getNumParams() const { return m_Params.size(); }
+    ParamDecl *getParam(const String &name) const;
 
     ParamDecl *getParam(unsigned i) const {
-        assert(i < m_Params.size());
-        return m_Params[i];
+        assert(i < m_Params.size() && "Index out of range.");
+        return m_Params.at(i);
     }
+
+    unsigned getNumParams() const { return m_Params.size(); }
 
     Type *getParamType(unsigned i) const;
 
     Stmt *getBody() const { return m_Body; }
+
+    void setBody(Stmt *body) { m_Body = body; }
 
     bool empty() const { return m_Body == nullptr; }
 
@@ -125,6 +135,34 @@ public:
 
     bool isMethod() const 
     { return hasParent() && !m_Runes.has(Rune::Associated); }
+
+    const std::vector<TemplateParamDecl *> &getTemplateParams() const
+    { return m_TemplateParams; }
+
+    TemplateParamDecl *getTemplateParam(const String &name) const;
+
+    TemplateParamDecl *getTemplateParam(unsigned i) {
+        assert(i < m_TemplateParams.size() && "Index out of bounds.");
+        return m_TemplateParams.at(i);
+    }
+
+    unsigned getNumTemplateParams() const { return m_TemplateParams.size(); }
+
+    bool isTemplate() const { return !m_TemplateParams.empty(); }
+
+    bool isSpecialized() const 
+    { return isTemplate() && !m_TemplateSpecs.empty(); }
+
+    String getConcreteName(const std::vector<Type *> &args) const;
+
+    FunctionTemplateSpecializationDecl*
+    findSpecialization(const std::vector<Type *> &args) const;
+
+    FunctionTemplateSpecializationDecl*
+    fetchSpecialization(const std::vector<Type *> &args);
+
+    FunctionTemplateSpecializationDecl*
+    createSpecialization(const std::vector<Type *> &args);
 };
 
 class VarDecl : public NamedDecl {
@@ -170,11 +208,13 @@ class ParamDecl final : public VarDecl {
 
 public:
     ParamDecl(const Runes &A, const Metadata &M, const String &N,
-              Type *T, unsigned I);
+              Type *T, unsigned I = 0);
 
     void accept(Visitor *V) override { V->visit(this); }
 
     unsigned getIndex() const { return m_Index; }
+
+    void setIndex(unsigned Idx) { m_Index = Idx; }
 
     FunctionDecl *getParent() const { return m_Parent; }
 
@@ -333,15 +373,19 @@ class StructDecl : public TypeDecl {
     friend class NameResolution;
     friend class Sema;
 
+    std::vector<TemplateParamDecl *> m_TemplateParams;
+    std::vector<StructTemplateSpecializationDecl *> m_TemplateSpecs;
+
 protected:
     Scope *m_Scope;
     std::vector<FieldDecl *> m_Fields;
     std::vector<FunctionDecl *> m_Functions;
 
 public:
-    StructDecl(const Runes &R, const Metadata &M, const String &N, 
-               Type *T, Scope *S, std::vector<FieldDecl *> F, 
-               std::vector<FunctionDecl *> Funcs);
+    StructDecl(const Runes &runes, const Metadata &md, const String &name, 
+               Type *ty, Scope *scope, std::vector<FieldDecl *> fields, 
+               std::vector<FunctionDecl *> funcs, 
+               std::vector<TemplateParamDecl *> tmplParams = {});
 
     ~StructDecl() override;
 
@@ -351,38 +395,54 @@ public:
 
     const std::vector<FieldDecl *> &getFields() const { return m_Fields; }
 
-    unsigned getNumFields() const { return m_Fields.size(); }
+    FieldDecl *getField(const String &N) const;
 
     FieldDecl *getField(unsigned i) const {
-        assert(i < m_Fields.size());
-        return m_Fields[i];
+        assert(i < m_Fields.size() && "Index out of bounds.");
+        return m_Fields.at(i);
     }
 
-    FieldDecl *getField(const String &N) const {
-        for (auto *F : m_Fields)
-            if (F->getName() == N)
-                return F;
-
-        return nullptr;
-    }
+    unsigned getNumFields() const { return m_Fields.size(); }
 
     const std::vector<FunctionDecl *> &getFunctions() const 
     { return m_Functions; }
 
-    FunctionDecl *getFunction(const String &N) const {
-        for (auto *F : m_Functions)
-            if (F->getName() == N)
-                return F;
+    FunctionDecl *getFunction(const String &name) const;
 
-        return nullptr;
+    FunctionDecl *getFunction(unsigned i) const {
+        assert(i < m_Functions.size() && "Index out of bounds.");
+        return m_Functions.at(i);
     }
 
     unsigned getNumFunctions() const { return m_Functions.size(); }
 
-    FunctionDecl *getFunction(unsigned i) const {
-        assert(i < m_Functions.size());
-        return m_Functions[i];
+    const std::vector<TemplateParamDecl *> &getTemplateParams() const 
+    { return m_TemplateParams; }
+
+    TemplateParamDecl *getTemplateParam(const String &name) const;
+
+    TemplateParamDecl *getTemplateParam(unsigned i) {
+        assert(i < m_TemplateParams.size() && "Index out of bounds.");
+        return m_TemplateParams.at(i);
     }
+
+    unsigned getNumTemplateParams() const { return m_TemplateParams.size(); }
+
+    bool isTemplate() const { return !m_TemplateParams.empty(); }
+
+    bool isSpecialized() const 
+    { return isTemplate() && !m_TemplateSpecs.empty(); }
+
+    String getConcreteName(const std::vector<Type *> &args) const;
+
+    StructTemplateSpecializationDecl*
+    findSpecialization(const std::vector<Type *> &args) const;
+
+    StructTemplateSpecializationDecl*
+    fetchSpecialization(const std::vector<Type *> &args);
+
+    StructTemplateSpecializationDecl*
+    createSpecialization(const std::vector<Type *> &args);
 };
 
 class TemplateParamDecl final : public TypeDecl {
@@ -390,125 +450,20 @@ class TemplateParamDecl final : public TypeDecl {
     friend class NameResolution;
     friend class Sema;
 
-    TemplateDecl *m_Parent;
     unsigned m_Index;
 
 public:
     TemplateParamDecl(const Runes &R, const Metadata &M, const String &N, 
-                      TemplateParamType *T, TemplateDecl *P, unsigned I)
-      : TypeDecl(R, M, N, T), m_Parent(P), m_Index(I) {}
+                      unsigned I)
+      : TypeDecl(R, M, N, new TemplateParamType(N, this)), m_Index(I) {}
 
-    ~TemplateParamDecl() override = default;
+    ~TemplateParamDecl() override {
+        delete m_Type;
+    }
 
     void accept(Visitor *V) override { V->visit(this); }
-
-    TemplateDecl *getParentTemplate() const { return m_Parent; }
-
-    void setParentTemplate(TemplateDecl *P) { m_Parent = P; }
 
     unsigned getIndex() const { return m_Index; }
-};
-
-class TemplateDecl : public NamedDecl {
-    friend class CGN;
-    friend class NameResolution;
-    friend class Sema;
-
-protected:
-    NamedDecl *m_Tmpl;
-    std::vector<TemplateParamDecl *> m_Params;
-
-    Type*
-    substType(Type *T, std::unordered_map<TemplateParamType *, Type *>) const;
-
-public:
-    TemplateDecl(const Runes &R, const Metadata &M, const String &N, 
-                 NamedDecl *T, std::vector<TemplateParamDecl *> P)
-      : NamedDecl(R, M, N), m_Tmpl(T), m_Params(P) {}
-
-    ~TemplateDecl() override {
-        for (auto &P : m_Params)
-            delete P;
-        m_Params.clear();
-        delete m_Tmpl;
-    }
-
-    NamedDecl *getTemplatedDecl() const { return m_Tmpl; }
-
-    TemplateParamDecl *getParam(unsigned i) const {
-        assert(i < m_Params.size() && "Index out of range.");
-        return m_Params.at(i);
-    }
-
-    const std::vector<TemplateParamDecl *> &getParams() const
-    { return m_Params; }
-
-    String getConcreteName(const std::vector<Type *> &args) const {
-        String result = m_Tmpl->getName() + "<";
-        for (unsigned i = 0; i < args.size(); ++i)
-            result += args.at(i)->getName() + 
-                (i != args.size() - 1 ? ", " : "");
-    
-        return result;
-    }
-};
-
-class TemplateStructDecl final : public TemplateDecl {
-    friend class CGN;
-    friend class NameResolution;
-    friend class Sema;
-
-    std::vector<StructTemplateSpecializationDecl *> m_Specs = {};
-
-public:
-    TemplateStructDecl(const Runes &R, const Metadata &M, const String &N,
-                       StructDecl *S, std::vector<TemplateParamDecl *> P)
-      : TemplateDecl(R, M, N, S, P) {}
-
-    ~TemplateStructDecl() override;
-
-    void accept(Visitor *V) override { V->visit(this); }
-
-    StructDecl *getTemplatedStruct() const 
-    { return static_cast<StructDecl *>(m_Tmpl); }
-
-    StructTemplateSpecializationDecl*
-    findSpecialization(const std::vector<Type *> &args) const;
-
-    StructTemplateSpecializationDecl*
-    fetchSpecialization(const std::vector<Type *> &args);
-
-    StructTemplateSpecializationDecl*
-    createSpecialization(const std::vector<Type *> &args);
-};
-
-class TemplateFunctionDecl final : public TemplateDecl {
-    friend class CGN;
-    friend class NameResolution;
-    friend class Sema;
-
-    std::vector<FunctionTemplateSpecializationDecl *> m_Specs;
-
-public:
-    TemplateFunctionDecl(const Runes &R, const Metadata &M, const String &N,
-                          FunctionDecl *F, std::vector<TemplateParamDecl *> P)
-      : TemplateDecl(R, M, N, F, P) {}
-
-    ~TemplateFunctionDecl() override;
-
-    void accept(Visitor *V) override { V->visit(this); }
-
-    FunctionDecl *getTemplatedFunction() const 
-    { return static_cast<FunctionDecl *>(m_Tmpl); }
-
-    FunctionTemplateSpecializationDecl*
-    findSpecialization(const std::vector<Type *> &args) const;
-
-    FunctionTemplateSpecializationDecl*
-    fetchSpecialization(const std::vector<Type *> &args);
-
-    FunctionTemplateSpecializationDecl*
-    createSpecialization(const std::vector<Type *> &args);
 };
 
 class FunctionTemplateSpecializationDecl final : public FunctionDecl {
@@ -516,22 +471,30 @@ class FunctionTemplateSpecializationDecl final : public FunctionDecl {
     friend class NameResolution;
     friend class Sema;
 
-    TemplateFunctionDecl *m_Tmpl;
+    FunctionDecl *m_Tmpl;
     std::vector<Type *> m_Args;
     std::unordered_map<TemplateParamType *, Type *> m_Mapping;
 
 public:
-    FunctionTemplateSpecializationDecl(TemplateFunctionDecl *TS, const String &N,
+    FunctionTemplateSpecializationDecl(FunctionDecl *Tmpl, const String &N,
                                        FunctionType *T, Scope *S, 
                                        std::vector<ParamDecl *> P, 
                                        Stmt *B, std::vector<Type *> A,
                                        std::unordered_map<TemplateParamType *, Type *> M)
-      : FunctionDecl(TS->getRunes(), TS->getMetadata(), N, T, S, P, B), 
-        m_Tmpl(TS), m_Args(A), m_Mapping(M) {}
+      : FunctionDecl(Tmpl->getRunes(), Tmpl->getMetadata(), N, T, S, P, B), 
+        m_Tmpl(Tmpl), m_Args(A), m_Mapping(M) {}
+
+    ~FunctionTemplateSpecializationDecl() override {
+        for (auto &arg : m_Args)
+            delete arg;
+
+        m_Args.clear();
+        m_Mapping.clear();
+    }
 
     void accept(Visitor *V) override { V->visit(this); }
 
-    TemplateFunctionDecl *getTemplateDecl() const { return m_Tmpl; }
+    FunctionDecl *getTemplateFunction() const { return m_Tmpl; }
 
     const std::vector<Type *> &getArgs() const { return m_Args; }
 
@@ -543,23 +506,23 @@ class StructTemplateSpecializationDecl final : public StructDecl {
     friend class NameResolution;
     friend class Sema;
 
-    TemplateStructDecl *m_Tmpl;
+    StructDecl *m_Tmpl;
     std::vector<Type *> m_Args;
     std::unordered_map<TemplateParamType *, Type *> m_Mapping;
 
 public:
-    StructTemplateSpecializationDecl(TemplateStructDecl *TS, const String &N, 
-                                     TemplateStructType *T, Scope *S, 
-                                     std::vector<FieldDecl *> Fields, 
-                                     std::vector<FunctionDecl *> Funcs, 
-                                     std::vector<Type *> Args,
-                                     std::unordered_map<TemplateParamType *, Type *> M)
-      : StructDecl(TS->getRunes(), TS->getMetadata(), N, T, S, Fields, Funcs), 
-        m_Tmpl(TS), m_Args(Args), m_Mapping(M) {}
+    StructTemplateSpecializationDecl(StructDecl *tmpl, const String &name, 
+                                     TemplateStructType *ty, Scope *scope, 
+                                     std::vector<FieldDecl *> fields, 
+                                     std::vector<FunctionDecl *> funcs, 
+                                     std::vector<Type *> args,
+                                     std::unordered_map<TemplateParamType *, Type *> map)
+      : StructDecl(tmpl->getRunes(), tmpl->getMetadata(), name, ty, scope, fields, funcs), 
+        m_Tmpl(tmpl), m_Args(args), m_Mapping(map) {}
 
     void accept(Visitor *V) override { V->visit(this); }
 
-    TemplateStructDecl *getTemplateDecl() const { return m_Tmpl; }
+    StructDecl *getTemplateStruct() const { return m_Tmpl; }
 
     const std::vector<Type *> &getArgs() const { return m_Args; }
 

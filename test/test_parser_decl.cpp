@@ -639,6 +639,165 @@ TEST_F(ParseDeclTest, Use_List) {
     delete unit;
 }
 
+#define TEMPLATE_FUNCTION R"(foo<T> :: (x: T) T { ret x; })"
+TEST_F(ParseDeclTest, Template_Function) {
+    File file = File("", "", "", TEMPLATE_FUNCTION);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    FunctionDecl *FD = dynamic_cast<FunctionDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(FD, nullptr);
+    EXPECT_EQ(FD->getName(), "foo");
+    EXPECT_EQ(FD->getReturnType()->getName(), "T");
+    EXPECT_EQ(FD->getNumParams(), 1);
+    EXPECT_EQ(FD->getNumTemplateParams(), 1);
+
+    TemplateParamDecl *TPD = FD->getTemplateParam(0);
+    EXPECT_EQ(TPD->getName(), "T");
+    EXPECT_EQ(TPD->getDefinedType()->getName(), "T");
+
+    ParamDecl *PD = FD->getParam(0);
+    EXPECT_EQ(PD->getName(), "x");
+    EXPECT_EQ(PD->getType()->getName(), "T");
+
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT R"(box<T> :: { x: T })"
+TEST_F(ParseDeclTest, Template_Struct) {
+    File file = File("", "", "", TEMPLATE_STRUCT);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    StructDecl *SD = dynamic_cast<StructDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(SD, nullptr);
+    EXPECT_EQ(SD->getName(), "box");
+    EXPECT_EQ(SD->getNumFields(), 1);
+    EXPECT_EQ(SD->getNumTemplateParams(), 1);
+
+    TemplateParamDecl *TPD = SD->getTemplateParam(0);
+    EXPECT_EQ(TPD->getName(), "T");
+    EXPECT_EQ(TPD->getDefinedType()->getName(), "T");
+
+    FieldDecl *FD = SD->getFields()[0];
+    EXPECT_EQ(FD->getName(), "x");
+    EXPECT_EQ(FD->getType()->getName(), "T");
+
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT_WITH_METHOD R"(box<T> :: { x: T, foo :: () T { ret x; } })"
+TEST_F(ParseDeclTest, Template_Struct_With_Method) {
+    File file = File("", "", "", TEMPLATE_STRUCT_WITH_METHOD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    StructDecl *SD = dynamic_cast<StructDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(SD, nullptr);
+    EXPECT_EQ(SD->getName(), "box");
+    EXPECT_EQ(SD->getNumFields(), 1);
+    EXPECT_EQ(SD->getNumFunctions(), 1);
+    EXPECT_EQ(SD->getNumTemplateParams(), 1);
+
+    TemplateParamDecl *TPD = SD->getTemplateParam(0);
+    EXPECT_EQ(TPD->getName(), "T");
+    EXPECT_EQ(TPD->getDefinedType()->getName(), "T");
+
+    FieldDecl *FLD = SD->getField(0);
+    EXPECT_EQ(FLD->getName(), "x");
+    EXPECT_EQ(FLD->getType()->getName(), "T");
+
+    FunctionDecl *FD = SD->getFunction(0);
+    EXPECT_EQ(FD->getName(), "foo");
+    EXPECT_EQ(FD->getReturnType()->getName(), "T");
+    EXPECT_EQ(FD->getNumParams(), 0);
+
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT_WITH_TEMPLATE_METHOD R"(box<T> :: { x: T, foo<U> :: () U { ret x; } })"
+TEST_F(ParseDeclTest, Template_Struct_With_Template_Method) {
+    File file = File("", "", "", TEMPLATE_STRUCT_WITH_TEMPLATE_METHOD);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    StructDecl *SD = dynamic_cast<StructDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(SD, nullptr);
+    EXPECT_EQ(SD->getName(), "box");
+    EXPECT_EQ(SD->getNumTemplateParams(), 1);
+    EXPECT_EQ(SD->getNumFields(), 1);
+    EXPECT_EQ(SD->getNumFunctions(), 1);
+
+    TemplateParamDecl *TPD = SD->getTemplateParam(0);
+    EXPECT_EQ(TPD->getName(), "T");
+    EXPECT_EQ(TPD->getDefinedType()->getName(), "T");
+
+    FieldDecl *FD = SD->getField(0);
+    EXPECT_EQ(FD->getName(), "x");
+    EXPECT_EQ(FD->getType()->getName(), "T");
+
+    FunctionDecl *FD2 = SD->getFunction(0);
+    EXPECT_EQ(FD2->getName(), "foo");
+    EXPECT_EQ(FD2->getReturnType()->getName(), "U");
+    EXPECT_EQ(FD2->getParams().size(), 0);
+
+    delete unit;
+}
+
+#define TEMPLATE_STRUCT_WITH_TEMPLATE_METHOD2 R"(box<T> :: { x: T, foo<U> :: () T { ret x; } })"
+TEST_F(ParseDeclTest, Template_Struct_With_Template_Method2) {
+    File file = File("", "", "", TEMPLATE_STRUCT_WITH_TEMPLATE_METHOD2);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    EXPECT_EQ(unit->getDecls().size(), 1);
+
+    StructDecl *SD = dynamic_cast<StructDecl *>(unit->getDecls()[0]);
+    EXPECT_NE(SD, nullptr);
+    EXPECT_EQ(SD->getName(), "box");
+    EXPECT_EQ(SD->getNumTemplateParams(), 1);
+    EXPECT_EQ(SD->getNumFields(), 1);
+    EXPECT_EQ(SD->getNumFunctions(), 1);
+
+    TemplateParamDecl *TPD = SD->getTemplateParam(0);
+    EXPECT_EQ(TPD->getName(), "T");
+    EXPECT_EQ(TPD->getDefinedType()->getName(), "T");
+
+    FieldDecl *FD = SD->getField(0);
+    EXPECT_EQ(FD->getName(), "x");
+    EXPECT_EQ(FD->getType()->getName(), "T");
+
+    FunctionDecl *FD2 = SD->getFunction(0);
+    EXPECT_EQ(FD2->getName(), "foo");
+    EXPECT_EQ(FD2->getReturnType()->getName(), "T");
+    EXPECT_EQ(FD2->getNumParams(), 0);
+    EXPECT_EQ(FD2->getNumTemplateParams(), 1);
+    
+    TemplateParamDecl *TPD2 = FD2->getTemplateParam(0);
+    EXPECT_EQ(TPD2->getName(), "U");
+    EXPECT_EQ(TPD2->getDefinedType()->getName(), "U");
+
+    delete unit;
+}
+
 } // namespace test
 
 } // namespace meddle

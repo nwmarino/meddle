@@ -5,6 +5,7 @@
 #include "../tree/stmt.h"
 #include "../tree/unit.h"
 #include "../core/logger.h"
+#include <vector>
 
 namespace meddle {
 
@@ -43,6 +44,17 @@ class Parser final {
             && m_Current->value == KW;
     }
 
+    void expect(TokenKind K, const String &msg) const {
+        if (m_Current->kind != K)
+            fatal(msg, &m_Current->md);
+    }
+
+    void expect_and_eat(TokenKind K, const String &msg) {
+        if (m_Current->kind != K)
+            fatal(msg, &m_Current->md);
+        next();
+    }
+
     Scope *enter_scope() { return m_Scope = new Scope(m_Scope); }
 
     void exit_scope() { m_Scope = m_Scope->getParent(); }
@@ -60,11 +72,11 @@ class Parser final {
     void parse_runes();
 
     Decl *parse_decl();
-    FunctionDecl *parse_function(const Token &name);
+    FunctionDecl *parse_function(const Token &name, std::vector<TemplateParamDecl *> tps);
     VarDecl *parse_global_var(const Token &name);
     VarDecl *parse_var(bool mut);
     EnumDecl *parse_enum(const Token &name);
-    StructDecl *parse_struct(const Token &name);
+    StructDecl *parse_struct(const Token &name, std::vector<TemplateParamDecl *> tps);
     UseDecl *parse_use();
 
     Stmt *parse_stmt();

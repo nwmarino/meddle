@@ -384,35 +384,35 @@ TemplateStructType::TemplateStructType(const String &N, std::vector<Type *> F,
                                        StructTemplateSpecializationDecl *D)
   : StructType(N, F, D), m_Args(A) { D->setDefinedType(this); }
 
-TemplateStructType *TemplateStructType::get(Context *C, TemplateStructDecl *tmpl,
+TemplateStructType *TemplateStructType::get(Context *ctx, StructDecl *tmpl,
                                             std::vector<Type *> args) {
-    assert(C && "Context cannot be null.");
+    assert(ctx && "Context cannot be null.");
     assert(tmpl && "Template struct declaration cannot be null.");
     assert(!args.empty() && "Template type arguments cannot be empty.");
 
-    for (auto &A : args)
-        assert(!A->isParamDependent() && "Template type arguments cannot be dependent.");
+    for (auto &arg : args)
+        assert(!arg->isParamDependent() && "Template type arguments cannot be dependent.");
 
-    auto spec_it = C->m_StructSpecs.find(tmpl->getName());
-    if (spec_it != C->m_StructSpecs.end())
+    auto spec_it = ctx->m_StructSpecs.find(tmpl->getName());
+    if (spec_it != ctx->m_StructSpecs.end())
         return dynamic_cast<TemplateStructType *>(spec_it->second);
 
     return static_cast<TemplateStructType *>(
         tmpl->fetchSpecialization(args)->getDefinedType());
 }
 
-TemplateStructType *TemplateStructType::create(Context *C, std::vector<Type *> fields, 
+TemplateStructType *TemplateStructType::create(Context *ctx, std::vector<Type *> fields, 
                                                StructTemplateSpecializationDecl *decl,
                                                std::vector<Type *> args) {
-    assert(C && "Context cannot be null.");
+    assert(ctx && "Context cannot be null.");
     assert(decl && "Template struct specialization declaration cannot be null.");
     assert(!args.empty() && "Template type arguments cannot be empty.");
 
-    if (get(C, decl->getTemplateDecl(), args))
+    if (get(ctx, decl->getTemplateStruct(), args))
         fatal("duplicate template specialization: " + decl->getName(), 
             &decl->getMetadata());
 
-    return C->m_StructSpecs[decl->getName()] = 
+    return ctx->m_StructSpecs[decl->getName()] = 
         new TemplateStructType(decl->getName(), fields, args, decl);
 }
 
@@ -427,9 +427,9 @@ bool TemplateStructType::compare(Type *T) const {
         return false;
 }
 
-TemplateStructDecl*
-TemplateStructType::getTemplateDecl() const {
-    return static_cast<StructTemplateSpecializationDecl *>(m_Decl)->getTemplateDecl();
+StructDecl *TemplateStructType::getTemplateDecl() const {
+    return static_cast<StructTemplateSpecializationDecl *>(
+        m_Decl)->getTemplateStruct();
 }
 
 StructTemplateSpecializationDecl*
@@ -437,20 +437,20 @@ TemplateStructType::getSpecializedDecl() const {
     return static_cast<StructTemplateSpecializationDecl *>(m_Decl);
 }
 
-DependentTemplateStructType::DependentTemplateStructType(const String &N, 
-                                                         TemplateStructDecl *T, 
-                                                         std::vector<Type *> A)
-  : Type(N), m_Tmpl(T), m_Args(A) {}
+DependentTemplateStructType::DependentTemplateStructType(const String &name, 
+                                                         StructDecl *tmpl, 
+                                                         std::vector<Type *> args)
+  : Type(name), m_Tmpl(tmpl), m_Args(args) {}
 
 DependentTemplateStructType*
-DependentTemplateStructType::get(Context *C, TemplateStructDecl *tmpl, 
+DependentTemplateStructType::get(Context *ctx, StructDecl *tmpl, 
                                  const std::vector<Type *> &args) {
-    assert(C && "Context cannot be null.");
+    assert(ctx && "Context cannot be null.");
     assert(tmpl && "Template struct declaration cannot be null.");
     assert(!args.empty() && "Template type arguments cannot be empty.");
 
-    auto dep_it = C->m_Dependents.find(tmpl->getConcreteName(args));
-    if (dep_it != C->m_Dependents.end())
+    auto dep_it = ctx->m_Dependents.find(tmpl->getConcreteName(args));
+    if (dep_it != ctx->m_Dependents.end())
         return dynamic_cast<DependentTemplateStructType *>(dep_it->second);
 
     return nullptr;

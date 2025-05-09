@@ -80,10 +80,10 @@ Type *Context::resolveType(const String &name, const Scope *scope,
     auto RAngle = name.find_last_of('>');
     if (LAngle != std::string::npos && RAngle != std::string::npos) {
         String tmplName = name.substr(0, LAngle);
-        TemplateStructDecl *tmpl = nullptr;
+        StructDecl *tmpl = nullptr;
         if (NamedDecl *N = scope->lookup(tmplName)) {
-            tmpl = dynamic_cast<TemplateStructDecl *>(N);
-            if (!tmpl)
+            tmpl = dynamic_cast<StructDecl *>(N);
+            if (!tmpl || !tmpl->isTemplate())
                 fatal("specialization base type is not a template: " + tmplName, &md);
         }
 

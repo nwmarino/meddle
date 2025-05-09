@@ -424,20 +424,20 @@ class TemplateStructType final : public StructType {
 
     std::vector<Type *> m_Args;
 
-    TemplateStructType(const String &N, std::vector<Type *> F, 
-                       std::vector<Type *> A, 
-                       StructTemplateSpecializationDecl *D = nullptr);
+    TemplateStructType(const String &name, std::vector<Type *> fields, 
+                       std::vector<Type *> args, 
+                       StructTemplateSpecializationDecl *decl = nullptr);
 
 public:
-    static TemplateStructType *get(Context *C, TemplateStructDecl *tmpl,
+    static TemplateStructType *get(Context *ctx, StructDecl *tmpl,
                                    std::vector<Type *> args);
-    static TemplateStructType *create(Context *C, std::vector<Type *> fields, 
+    static TemplateStructType *create(Context *ctx, std::vector<Type *> fields, 
                                       StructTemplateSpecializationDecl *decl,
                                       std::vector<Type *> args);
 
     bool compare(Type *T) const override;
 
-    TemplateStructDecl *getTemplateDecl() const;
+    StructDecl *getTemplateDecl() const;
 
     StructTemplateSpecializationDecl *getSpecializedDecl() const;
 
@@ -450,21 +450,21 @@ public:
 class DependentTemplateStructType final : public Type {
     friend class Context;
 
-    TemplateStructDecl *m_Tmpl;
+    StructDecl *m_Tmpl;
     std::vector<Type *> m_Args;
 
-    DependentTemplateStructType(const String &N, TemplateStructDecl *T, 
-                                std::vector<Type *> A);
+    DependentTemplateStructType(const String &name, StructDecl *tmpl, 
+                                std::vector<Type *> args);
 
 public:
-    static DependentTemplateStructType *get(Context *C, TemplateStructDecl *tmpl, 
+    static DependentTemplateStructType *get(Context *ctx, StructDecl *tmpl, 
                                             const std::vector<Type *> &args);
 
     bool compare(Type *T) const override;
 
     bool isParamDependent() const override { return true; }
 
-    TemplateStructDecl *getTemplateDecl() const { return m_Tmpl; }
+    StructDecl *getTemplateDecl() const { return m_Tmpl; }
 
     const std::vector<Type *> &getArgs() const { return m_Args; }
 };

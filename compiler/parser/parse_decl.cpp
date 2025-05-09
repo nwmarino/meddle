@@ -15,18 +15,56 @@ Decl *Parser::parse_decl() {
     Token name = *m_Current;
     next();
 
+    std::vector<TemplateParamDecl *> params;
+    if (match(TokenKind::Left)) {
+        next(); // '<'
+
+        while (!match(TokenKind::Right)) {
+            expect(TokenKind::Identifier, "expected parameter name");
+
+            Metadata paramMd = m_Current->md;
+            String paramName = m_Current->value;
+            next(); // identifier
+
+            params.push_back(new TemplateParamDecl(
+                Runes(),
+                paramMd,
+                paramName,
+                params.size()
+            ));
+
+            if (match(TokenKind::Right))
+                break;
+
+            expect_and_eat(TokenKind::Comma, 
+                "expected ',' in template parameter list");
+        }
+
+        if (params.empty())
+            fatal("template must have at least one parameter", &name.md);
+
+        next(); // '>'
+    }
+
     if (match(TokenKind::Path))
         next(); // '::'
 
     NamedDecl *D = nullptr;
-    if (match(TokenKind::SetParen))
-        D = parse_function(name);
-    else if (match(TokenKind::SetBrace))
-        D = parse_struct(name);
-    else if (match_keyword("fix") || match_keyword("mut"))
+    if (match(TokenKind::SetParen)) {
+        D = parse_function(name, params);
+    } else if (match(TokenKind::SetBrace)) {
+        D = parse_struct(name, params);
+    } else if (match_keyword("fix") || match_keyword("mut")) {
+        if (!params.empty())
+            fatal("global variable cannot be made a template", &name.md);
+
         D = parse_global_var(name);
-    else
+    } else {
+        if (!params.empty())
+            fatal("enum cannot be made a template", &name.md);
+
         D = parse_enum(name);
+    }
 
     if (D->hasPublicRune())
         m_Unit->addExport(D);
@@ -34,39 +72,34 @@ Decl *Parser::parse_decl() {
     return D;
 }
 
-FunctionDecl *Parser::parse_function(const Token &name) {
-    Type *ret = nullptr;
+FunctionDecl *Parser::parse_function(const Token &name, std::vector<TemplateParamDecl *> tps) {
     Stmt *body = nullptr;
     Scope *scope = enter_scope();
     std::vector<ParamDecl *> params;
-
     next(); // '('
 
+    for (auto &tp : tps)
+        m_Scope->addDecl(tp);
+
     while (!match(TokenKind::EndParen)) {
-        Metadata param_md = m_Current->md;
-        String param_name;
-        Type *param_ty = nullptr;
+        Metadata paramMd = m_Current->md;
+        String paramName;
+        Type *paramTy = nullptr;
 
-        if (!match(TokenKind::Identifier))
-            fatal("expected parameter name", &param_md);
-        
-        param_name = m_Current->value;
-        next();
+        expect(TokenKind::Identifier, "expected function parameter name");
+        paramName = m_Current->value;
+        next(); // identifier
 
-        if (!match(TokenKind::Colon))
-            fatal("expected ':' after parameter name", &m_Current->md);
-        next(); // ':'
-
-        param_ty = parse_type(true);
-        if (param_ty->isVoid())
+        expect_and_eat(TokenKind::Colon, "expected ':' after parameter name");
+        paramTy = parse_type(true);
+        if (paramTy->isVoid())
             fatal("parameter type cannot be 'void'", &m_Current->md);
 
         ParamDecl *param = new ParamDecl(
             Runes(),
-            param_md,
-            param_name,
-            param_ty,
-            params.size()
+            paramMd,
+            paramName,
+            paramTy
         );
         scope->addDecl(param);
         params.push_back(param);
@@ -74,43 +107,46 @@ FunctionDecl *Parser::parse_function(const Token &name) {
         if (match(TokenKind::EndParen))
             break;
 
-        if (!match(TokenKind::Comma))
-            fatal("expected ',' or ')' in function parameter list", 
-                  &m_Current->md);
-        next(); // ','
+        expect_and_eat(TokenKind::Comma, "expected ',' in function parameter list");
     }
 
     next(); // ')'
 
-    if (match(TokenKind::Identifier))
-        ret = parse_type(true);
-    else
-        ret = m_Context->getVoidType();
+    Type *retTy = nullptr;
+    if (match(TokenKind::Identifier)) {
+        retTy = parse_type(true);
+    } else if (match(TokenKind::Arrow)) {
+        next(); // '->'
+        retTy = parse_type(true);
+    } else {
+        retTy = m_Context->getVoidType();
+    }
+
+    std::vector<Type *> paramTys;
+    paramTys.reserve(params.size());
+    for (auto &param : params)
+        paramTys.push_back(param->getType());
 
     if (match(TokenKind::SetBrace)) {
         body = parse_stmt();
         if (!body)
             fatal("expected function body", &m_Current->md);
-    } else if (!match(TokenKind::Semi)) {
-        fatal("expected ';' after empty function", &m_Current->md);
-    } else
-        next(); // ';'
+    } else {
+        expect_and_eat(TokenKind::Semi, "expected ';' after function declaration");   
+    }
     
-    std::vector<Type *> paramTys = {};
-    paramTys.reserve(params.size());
-    for (auto &P : params)
-        paramTys.push_back(P->getType());
+    exit_scope();
 
     FunctionDecl *fn = new FunctionDecl(
         m_Runes, 
         name.md, 
         name.value, 
-        FunctionType::create(m_Context, paramTys, ret), 
+        FunctionType::create(m_Context, paramTys, retTy), 
         scope, 
-        params, 
-        body
+        params,
+        body,
+        tps
     );
-    exit_scope();
     m_Scope->addDecl(fn);
     return fn;
 }
@@ -266,7 +302,7 @@ EnumDecl *Parser::parse_enum(const Token &name) {
     return Enum;
 }
 
-StructDecl *Parser::parse_struct(const Token &name) {
+StructDecl *Parser::parse_struct(const Token &name, std::vector<TemplateParamDecl *> tps) {
     Runes runes = m_Runes;
     StructType *ty = nullptr;
     Scope *scope = enter_scope();
@@ -277,6 +313,9 @@ StructDecl *Parser::parse_struct(const Token &name) {
         fatal("expected '{' after struct binding", &m_Current->md);
     next(); // '{'
 
+    for (auto &tp : tps)
+        m_Scope->addDecl(tp);
+
     while (!match(TokenKind::EndBrace)) {
         parse_runes();
 
@@ -284,7 +323,38 @@ StructDecl *Parser::parse_struct(const Token &name) {
             fatal("expected named declaration", &m_Current->md);
 
         Token member_name = *m_Current;
+        std::vector<TemplateParamDecl *> templateParams;
         next();
+
+        if (match(TokenKind::Left)) {
+            next(); // '<'
+        
+            while (!match(TokenKind::Right)) {
+                expect(TokenKind::Identifier, "expected parameter name");
+
+                Metadata paramMd = m_Current->md;
+                String paramName = m_Current->value;
+                next(); // identifier
+    
+                templateParams.push_back(new TemplateParamDecl(
+                    Runes(),
+                    paramMd,
+                    paramName,
+                    templateParams.size()
+                ));
+    
+                if (match(TokenKind::Right))
+                    break;
+    
+                expect_and_eat(TokenKind::Comma, 
+                    "expected ',' in template parameter list");
+            }
+
+            if (templateParams.empty())
+                fatal("template must have at least one parameter", &name.md);
+
+            next(); // '>'
+        }
 
         if (match(TokenKind::Colon)) {
             next(); // ':'
@@ -298,10 +368,9 @@ StructDecl *Parser::parse_struct(const Token &name) {
                 if (!field_init)
                     fatal("expected expression after '='", &m_Current->md);
 
-                if (!field_init->isConstant()) {
+                if (!field_init->isConstant())
                     fatal("struct field must be initialized with a constant", 
                           &m_Current->md);
-                }
             }
 
             FieldDecl *F = new FieldDecl(m_Runes, member_name.md, 
@@ -309,18 +378,14 @@ StructDecl *Parser::parse_struct(const Token &name) {
             m_Scope->addDecl(F);
             Fields.push_back(F);
 
-            if (match(TokenKind::Comma))
-                next(); // ','
-            else if (match(TokenKind::EndBrace))
+            if (match(TokenKind::EndBrace))
                 break;
-            else {
-                fatal("expected ',' or '}' in struct member list", 
-                      &m_Current->md);
-            }
+
+            expect_and_eat(TokenKind::Comma, "expected ',' in struct member list");
         } else if (match(TokenKind::Path)) {
             next(); // '::'
             
-            FunctionDecl *F = parse_function(member_name);
+            FunctionDecl *F = parse_function(member_name, templateParams);
             if (!F)
                 fatal("expected function declaration", &m_Current->md);
 
@@ -339,18 +404,19 @@ StructDecl *Parser::parse_struct(const Token &name) {
 
     ty = StructType::create(m_Context, name.value, fieldTys);
 
-    StructDecl *Struct = new StructDecl(
+    StructDecl *_struct = new StructDecl(
         runes,
         name.md,
         name.value,
         ty,
         scope,
         Fields,
-        Functions
+        Functions,
+        tps
     );
-    ty->setDecl(Struct);
-    m_Scope->addDecl(Struct);
-    return Struct;
+    ty->setDecl(_struct);
+    m_Scope->addDecl(_struct);
+    return _struct;
 }
 
 UseDecl *Parser::parse_use() {
