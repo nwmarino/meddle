@@ -35,6 +35,9 @@ static void checkCompoundedDeclStmt(Stmt *S) {
 static bool typeCheck(Type *actual, Type *expected, const Metadata *md, 
                       String ctx = "", 
                       TypeCheckMode mode = TypeCheckMode::AllowImplicit) {
+    if (actual->isParamDependent() || expected->isParamDependent())
+        return false;
+
     if (actual->compare(expected))
         return false;
 

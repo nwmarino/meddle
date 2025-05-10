@@ -34,8 +34,7 @@ protected:
     }
 };
 
-/*
-#define TEMPLATE_FUNCTION_SPEC R"(foo<T> :: (x: T) -> T { ret x + 1; } bar :: () -> i64 { ret foo<i32>(5); }})"
+#define TEMPLATE_FUNCTION_SPEC R"(foo<T> :: (x: T) -> T { ret x + 1; } bar :: () -> i64 { ret foo<i32>(5); })"
 TEST_F(IntegratedTemplateTest, Templated_Function_Specialized) {
     File file = File("test.mdl", "/", "/test.mdl", TEMPLATE_FUNCTION_SPEC);
     Lexer lexer = Lexer(file);
@@ -58,17 +57,28 @@ TEST_F(IntegratedTemplateTest, Templated_Function_Specialized) {
 
     String expected = R"(target :: x86_64 linux system_v
 
-test :: () -> void {
+bar :: () -> i64 {
+4:
+    $5 := trunc i64 5 -> i32
+    $6 := call i32 foo<i32>(i32 $5)
+    $7 := sext i32 $6 -> i64
+    ret i64 $7
+}
+
+foo<i32> :: (i32 %x) -> i32 {
+    _x := slot i32, align 4
+
 1:
-    $2 := syscall i64 5, i64 1, i64 2
-    ret
+    str i32 %x -> i32* _x, align 4
+    $2 := load i32* _x, align 4
+    $3 := add i32 $2, i64 1
+    ret i32 $3
 }
 )";
     EXPECT_EQ(ss.str(), expected);
 
     delete seg;
 }
-*/
 
 } // namespace test
 

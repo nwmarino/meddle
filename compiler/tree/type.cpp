@@ -366,6 +366,8 @@ bool StructType::compare(Type *T) const {
 bool TemplateParamType::compare(Type *T) const {
     assert(T && "Type cannot be null.");
 
+    return true;
+
     if (this == T)
         return true;
     else if (auto *other = dynamic_cast<TemplateParamType *>(T))

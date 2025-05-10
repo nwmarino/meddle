@@ -485,9 +485,6 @@ public:
         m_Tmpl(Tmpl), m_Args(A), m_Mapping(M) {}
 
     ~FunctionTemplateSpecializationDecl() override {
-        for (auto &arg : m_Args)
-            delete arg;
-
         m_Args.clear();
         m_Mapping.clear();
     }

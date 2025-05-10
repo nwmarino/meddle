@@ -233,7 +233,7 @@ void CGN::define_function(FunctionDecl *FD, FunctionDecl *tmpl) {
 	assert(FN && "Unable to find function in segment.");
 
 	// Skip codegen for empty functions.
-	if (FD->empty())
+	if (FD->empty() && !tmpl)
 		return;
 
 	// Create a new entry block for the function.
@@ -314,13 +314,14 @@ void CGN::visit(TranslationUnit *unit) {
 }
 
 void CGN::visit(FunctionDecl *decl) {
-	if (m_Phase == Phase::Define)
+	if (decl->isTemplate()) {
+		for (auto &spec : decl->m_TemplateSpecs)
+			spec->accept(this);
+	} else if (m_Phase == Phase::Define) {
 		define_function(decl);
-	else if (m_Phase == Phase::Declare)
+	} else if (m_Phase == Phase::Declare) {
 		declare_function(decl);
-
-	for (auto &spec : decl->m_TemplateSpecs)
-		spec->accept(this);
+	}
 }
 
 void CGN::visit(VarDecl *decl) {

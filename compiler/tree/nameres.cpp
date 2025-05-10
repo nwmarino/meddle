@@ -162,8 +162,25 @@ void NameResolution::visit(CallExpr *expr) {
         fatal("reference exists, but is not a function: " + expr->getName(), 
             &expr->getMetadata());
     
-    expr->m_Ref = F;
-    expr->m_Type = F->getReturnType();
+    if (F->isTemplate()) {
+        if (expr->m_TypeArgs.empty()) {
+            fatal("callee " + F->getName() + 
+                " is a template, but no type arguments were provided in call", 
+                &expr->getMetadata());
+        }
+
+        if (expr->getNumTypeArgs() != F->getNumTemplateParams()) {
+            fatal("callee " + F->getName() + 
+                " is a template, but the number of type arguments does not match", 
+                &expr->getMetadata());
+        }
+
+        expr->m_Ref = F->fetchSpecialization(expr->m_TypeArgs);
+    } else {
+        expr->m_Ref = F;
+    }
+
+    expr->m_Type = static_cast<FunctionDecl *>(expr->getRef())->getReturnType();
 
     for (auto &A : expr->getArgs())
         A->accept(this);
