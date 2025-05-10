@@ -1,11 +1,7 @@
-box :: { 
-    x: i32[3], 
-    y: i32 
+Colors :: i64 { 
+    COLORS_RED 
 } 
-
+    
 test :: () { 
-    mut x: box = box { 
-        x: [1, 2, 3], 
-        y: 4 
-    }; 
+    mut x: Colors = COLORS_RED; 
 }

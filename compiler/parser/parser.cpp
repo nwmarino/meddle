@@ -208,14 +208,17 @@ Type *Parser::parse_type() {
     next();
 
     if (match(TokenKind::Path)) {
-        name += "::";
-        next();
+        NamedDecl *named = m_Scope->lookup(name);
+        if (dynamic_cast<UseDecl *>(named)) {
+            name += "::";
+            next();
 
-        if (!match(TokenKind::Identifier))
-            fatal("expected type identifier", &m_Current->md);
-        
-        name += m_Current->value;
-        next();
+            if (!match(TokenKind::Identifier))
+                fatal("expected type identifier", &m_Current->md);
+            
+            name += m_Current->value;
+            next();
+        }
     }
 
     if (match(TokenKind::Left)) {

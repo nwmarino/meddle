@@ -2242,7 +2242,7 @@ TEST_F(ParseExprTest, Call_Basic) {
     delete unit;
 }
 
-#define SPEC_ENUM_BASIC R"(enum :: i64 { COLORS_RED } test :: () { mut x: Colors = COLORS_RED; })"
+#define SPEC_ENUM_BASIC R"(Colors :: i64 { COLORS_RED } test :: () { mut x: Colors = COLORS_RED; })"
 TEST_F(ParseExprTest, Spec_Enum_Basic) {
     File file = File("", "", "", SPEC_ENUM_BASIC);
     Lexer lexer = Lexer(file);
@@ -2268,12 +2268,8 @@ TEST_F(ParseExprTest, Spec_Enum_Basic) {
     EXPECT_NE(VD->getInit(), nullptr);
     EXPECT_EQ(VD->getType()->getName(), "Colors");
 
-    TypeSpecExpr *SP = dynamic_cast<TypeSpecExpr *>(VD->getInit());
-    EXPECT_NE(SP, nullptr);
-    EXPECT_EQ(SP->getName(), "Colors");
-
-    RefExpr *RE = SP->getExpr();
-    EXPECT_EQ(RE->getName(), "Red");
+    RefExpr *RE = dynamic_cast<RefExpr *>(VD->getInit());
+    EXPECT_EQ(RE->getName(), "COLORS_RED");
     
     delete unit;
 }
@@ -2719,12 +2715,12 @@ TEST_F(ParseExprTest, Used_Template_Struct_Spec) {
     VarDecl *VD = dynamic_cast<VarDecl *>(DS->getDecl());
     EXPECT_NE(VD, nullptr);
     EXPECT_EQ(VD->getName(), "x");
+    EXPECT_EQ(VD->getType()->getName(), "Other::box<i32>");
     EXPECT_NE(VD->getInit(), nullptr);
 
     InitExpr *IE = dynamic_cast<InitExpr *>(VD->getInit());
     EXPECT_NE(IE, nullptr);
     EXPECT_EQ(IE->getFields().size(), 1);
-    EXPECT_EQ(IE->getType()->getName(), "Other::box<i32>");
 
     delete unit;
 }
@@ -2761,8 +2757,7 @@ TEST_F(ParseExprTest, Used_Template_Struct_Function_Spec) {
 
     TypeSpecExpr *TS = dynamic_cast<TypeSpecExpr *>(US->getExpr());
     EXPECT_NE(TS, nullptr);
-    EXPECT_EQ(TS->getName(), "Other::box<i32>");
-    EXPECT_EQ(TS->getType()->getName(), "Other::box<i32>");
+    EXPECT_EQ(TS->getName(), "box<i32>");
 
     CallExpr *CE = dynamic_cast<CallExpr *>(TS->getExpr());
     EXPECT_NE(CE, nullptr);

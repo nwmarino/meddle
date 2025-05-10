@@ -43,7 +43,7 @@ public:
 
     virtual ~Type() = default;
 
-    String getName() const { return m_Name; }
+    const String &getName() const { return m_Name; }
 
     virtual bool isArray() const { return false; }
 

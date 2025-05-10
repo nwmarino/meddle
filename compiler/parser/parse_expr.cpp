@@ -428,13 +428,14 @@ Expr *Parser::parse_use_spec(UseDecl *use) {
 
 Expr *Parser::parse_spec() {
     Metadata md = m_Current->md;
+    Type *T = nullptr;
     String name;
     Expr *E = nullptr;
 
     if (!match(TokenKind::Identifier))
         fatal("expected identifier", &md);
 
-    name = parse_type_name();
+    T = parse_type();
 
     if (!match(TokenKind::Path))
         fatal("expected '::'", &m_Current->md);
@@ -453,7 +454,7 @@ Expr *Parser::parse_spec() {
     if (!RE)
         fatal("expected reference expression after '::' operator", &m_Current->md);
 
-    return new TypeSpecExpr(md, name, RE);
+    return new TypeSpecExpr(md, T->getName(), RE);
 }
 
 InitExpr *Parser::parse_init() {

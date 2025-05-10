@@ -1151,6 +1151,9 @@ void CGN::visit(RefExpr *expr) {
 			m_Value = m_Builder.build_load(field_ty, field_ptr);
 
 		return;
+	} else if (auto *var = dynamic_cast<EnumVariantDecl *>(ref)) {
+		m_Value = mir::ConstantInt::get(m_Segment, cgn_type(var->getType()), var->getValue());
+		return;
 	}
 
 	mir::Slot *slot = m_Function->get_slot(expr->getName());

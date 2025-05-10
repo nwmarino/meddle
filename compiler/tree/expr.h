@@ -28,9 +28,12 @@ public:
 
     const Metadata &getMetadata() const { return m_Metadata; }
 
-    Type *getType() const { 
-		if (m_Type && m_Type->isDeferred()) {
-			assert(m_Type->isQualified() && "Deferred type must be qualified");
+    Type *getType() const {
+		if (!m_Type)	
+			return nullptr;
+
+		if (m_Type->isDeferred()) {
+			assert(m_Type->isQualified() && "Deferred type must be qualified.");
 			return m_Type->asDeferred()->getUnderlying();
 		} else {
 			return m_Type;

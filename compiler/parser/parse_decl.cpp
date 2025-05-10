@@ -267,14 +267,19 @@ EnumDecl *Parser::parse_enum(const Token &name) {
             next(); // integer literal
         }
 
+        Runes VariantRunes;
+        if (m_Runes.has(Rune::Public))
+            VariantRunes.set(Rune::Public);
+
         EnumVariantDecl *Variant = new EnumVariantDecl(
-            Runes(),
+            VariantRunes,
             var_md,
             var_name,
             ty,
             var_val
         );
 
+        m_Scope->addDecl(Variant);
         Variants.push_back(Variant);
 
         if (match(TokenKind::EndBrace))

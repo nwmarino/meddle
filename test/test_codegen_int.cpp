@@ -4623,7 +4623,7 @@ test :: () -> void {
     delete seg;
 }
 
-#define SPEC_ENUM_BASIC R"(Colors :: i64 { Red } test :: () { mut x: Colors = Colors::Red; })"
+#define SPEC_ENUM_BASIC R"(Colors :: i64 { COLOR_RED } test :: () { mut x: Colors = COLOR_RED; })"
 TEST_F(IntegratedCodegenTest, Spec_Enum_Basic) {
     File file = File("test.mdl", "/", "/test.mdl", SPEC_ENUM_BASIC);
     Lexer lexer = Lexer(file);

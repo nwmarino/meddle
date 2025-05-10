@@ -369,7 +369,7 @@ TEST_F(MultiUnitTest, Two_Files_Named_Use_Type_Bad) {
 }
 
 #define NAMED_USE_ENUM_1 R"($public Colors :: i64 { Red, Blue })"
-#define NAMED_USE_ENUM_2 R"(use CLI = "cli"; test :: () CLI::Colors { ret CLI::Colors::Red; })"
+#define NAMED_USE_ENUM_2 R"(use CLI = "cli"; test :: () CLI::Colors { ret CLI::Red; })"
 TEST_F(MultiUnitTest, Two_Files_Named_Use_Enum) {
     std::ofstream F1("cli.mdl");
     F1 << NAMED_USE_ENUM_1;

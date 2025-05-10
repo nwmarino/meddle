@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
         mir::Segment *seg = new mir::Segment(target);
         assert(seg && "Unable to create segment.");
         CGN *cgn = new CGN(opts, unit, seg);
+        assert(cgn);
         segments.push_back(seg);
 
         std::ofstream OS = std::ofstream(unit->getFile().filename + ".mir");
