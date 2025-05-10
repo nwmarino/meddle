@@ -6,6 +6,7 @@
 #include "nameres.h"
 #include "scope.h"
 #include "../core/metadata.h"
+#include <ostream>
 
 namespace meddle {
 
@@ -22,6 +23,8 @@ public:
     virtual void accept(Visitor *V) = 0;
 
     const Metadata &getMetadata() const { return m_Metadata; }
+
+    virtual void print(std::ostream &OS) const = 0;
 };
 
 class BreakStmt final : public Stmt {
@@ -34,6 +37,8 @@ public:
     ~BreakStmt() override = default;
 
     void accept(Visitor *V) override { V->visit(this); }
+
+    void print(std::ostream &OS) const override;
 };
 
 class ContinueStmt final : public Stmt {
@@ -46,6 +51,8 @@ public:
     ~ContinueStmt() override = default;
 
     void accept(Visitor *V) override { V->visit(this); }
+
+    void print(std::ostream &OS) const override;
 };
 
 class CompoundStmt final : public Stmt {
@@ -74,6 +81,8 @@ public:
     const std::vector<Stmt *> &getStmts() const { return m_Stmts; }
 
     Scope *getScope() const { return m_Scope; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class DeclStmt final : public Stmt {
@@ -93,6 +102,8 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Decl *getDecl() const { return m_Decl; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class ExprStmt final : public Stmt {
@@ -112,6 +123,8 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Expr *getExpr() const { return m_Expr; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class IfStmt final : public Stmt {
@@ -143,7 +156,9 @@ public:
 
     Stmt *getElse() const { return m_Else; }
 
-    bool hasElse() const { return m_Else != nullptr;}
+    bool hasElse() const { return m_Else != nullptr; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class CaseStmt final : public Stmt {
@@ -168,6 +183,8 @@ public:
     Expr *getPattern() const { return m_Pattern; }
 
     Stmt *getBody() const { return m_Body; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class MatchStmt final : public Stmt {
@@ -200,6 +217,8 @@ public:
     const std::vector<CaseStmt *> &getCases() const { return m_Cases; }
 
     Stmt *getDefault() const { return m_Default; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class RetStmt final : public Stmt {
@@ -220,6 +239,8 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     Expr *getExpr() const { return m_Expr; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class UntilStmt final : public Stmt {
@@ -244,6 +265,8 @@ public:
     Expr *getCond() const { return m_Cond; }
 
     Stmt *getBody() const { return m_Body; }
+
+    void print(std::ostream &OS) const override;
 };
 
 } // namespace meddle

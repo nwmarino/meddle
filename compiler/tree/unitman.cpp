@@ -1,4 +1,5 @@
 #include "unitman.h"
+#include <fstream>
 
 using namespace meddle;
 
@@ -182,4 +183,15 @@ void UnitManager::drive(const Options &opts) {
 
     for (auto &[ Path, Unit ] : m_Units)
         Sema sema = Sema(opts, Unit);
+}
+
+void UnitManager::printc(const Options &opts) {
+    for (auto &[ Path, Unit ] : m_Units) {
+        std::ofstream file = std::ofstream(Unit->getFile().filename + ".ast");
+        if (!file.is_open())
+            fatal("unable to open file: " + Unit->getFile().filename, nullptr);
+
+        Unit->print(file);
+        file.close();
+    }
 }

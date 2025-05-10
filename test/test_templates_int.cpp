@@ -80,6 +80,52 @@ foo<i32> :: (i32 %x) -> i32 {
     delete seg;
 }
 
+#define TEMPLATE_STRUCT_SPEC R"(box<T> { x: T*, y: T } foo :: () -> i64 { mut x: box<i32> = box<i32> { x: nil, y: 1 }; ret x.y; })"
+TEST_F(IntegratedTemplateTest, Templated_Struct_Specialized) {
+    File file = File("test.mdl", "/", "/test.mdl", TEMPLATE_STRUCT_SPEC);
+    Lexer lexer = Lexer(file);
+    TokenStream stream = lexer.unwrap();
+    Parser parser = Parser(file, stream);
+    TranslationUnit *unit = parser.get();
+
+    UnitManager units;
+    units.addVirtUnit(unit);
+    units.drive(Options());
+
+    Target target = Target(mir::Arch::X86_64, mir::OS::Linux, 
+                           mir::ABI::SystemV);
+
+    Segment *seg = new Segment(target);
+    CGN cgn = CGN(Options(), unit, seg);
+
+    std::stringstream ss;
+    seg->print(ss);
+
+    String expected = R"(target :: x86_64 linux system_v
+
+box<i32> :: type { i32*, i32 }
+
+foo :: () -> i64 {
+    _x := slot box<i32>, align 8
+
+1:
+    $2 := ap i32**, box<i32>* _x, i64 0
+    $3 := reint void* nil -> i32*
+    str i32* $3 -> i32** $2, align 8
+    $4 := ap i32*, box<i32>* _x, i64 1
+    $5 := trunc i64 1 -> i32
+    str i32 $5 -> i32* $4, align 4
+    $6 := ap i32*, box<i32>* _x, i64 1
+    $7 := load i32* $6, align 4
+    $8 := sext i32 $7 -> i64
+    ret i64 $8
+}
+)";
+    EXPECT_EQ(ss.str(), expected);
+
+    delete seg;
+}
+
 } // namespace test
 
 } // namespace meddle

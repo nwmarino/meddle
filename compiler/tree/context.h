@@ -38,7 +38,7 @@ class Context final {
     std::vector<FunctionType *> m_FunctionTypes;
 
     Type *resolveType(const String &name, const Scope *scope,
-                      const Metadata &md);
+                      const Metadata &md, bool specialize);
 
 public:
     Context(TranslationUnit *U = nullptr);

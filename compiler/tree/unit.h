@@ -72,6 +72,8 @@ public:
     const std::vector<NamedDecl *> &getImports() const { return m_Imports; }
 
     const std::vector<NamedDecl *> &getExports() const { return m_Exports; }
+
+    void print(std::ostream &OS) const;
 };
 
 } // namespace meddle

@@ -32,6 +32,9 @@ struct Metadata final {
     
     Metadata(const File &file, unsigned line, unsigned col) 
       : file(file), line(line), col(col) {}
+
+    bool operator<(const Metadata &other) const 
+    { return line < other.line && col < other.col; }
 };
 
 } // namespace meddle

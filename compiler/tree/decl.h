@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <ostream>
 #include <unordered_map>
 
 namespace meddle {
@@ -62,6 +63,8 @@ public:
     void setPUnit(TranslationUnit *U) { m_PUnit = U; }
 
     bool hasPublicRune() const { return m_Runes.has(Rune::Public); }
+
+    virtual void print(std::ostream &OS) const = 0;
 };
 
 class NamedDecl : public Decl {
@@ -163,6 +166,8 @@ public:
 
     FunctionTemplateSpecializationDecl*
     createSpecialization(const std::vector<Type *> &args);
+
+    void print(std::ostream &OS) const override;
 };
 
 class VarDecl : public NamedDecl {
@@ -196,6 +201,8 @@ public:
     bool isMutable() const { return m_Mut; }
 
     bool isGlobal() const { return m_Global; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class ParamDecl final : public VarDecl {
@@ -219,6 +226,8 @@ public:
     FunctionDecl *getParent() const { return m_Parent; }
 
     void setParent(FunctionDecl *P) { m_Parent = P; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class UseDecl final : public NamedDecl {
@@ -257,6 +266,8 @@ public:
     TranslationUnit *getUnit() const { return m_Unit; }
 
     void setUnit(TranslationUnit *U) { m_Unit = U; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class TypeDecl : public NamedDecl {
@@ -292,6 +303,8 @@ public:
     Type *getType() const { return m_Type; }
 
     long getValue() const { return m_Value; }
+    
+    void print(std::ostream &OS) const override;
 };
 
 class EnumDecl final : public TypeDecl {
@@ -331,6 +344,8 @@ public:
 
         return nullptr;
     }
+
+    void print(std::ostream &OS) const override;
 };
 
 class FieldDecl final : public NamedDecl {
@@ -366,6 +381,8 @@ public:
     StructDecl *getParent() const { return m_Parent; }
 
     void setParent(StructDecl *P) { m_Parent = P; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class StructDecl : public TypeDecl {
@@ -443,6 +460,8 @@ public:
 
     StructTemplateSpecializationDecl*
     createSpecialization(const std::vector<Type *> &args);
+
+    void print(std::ostream &OS) const override;
 };
 
 class TemplateParamDecl final : public TypeDecl {
@@ -464,6 +483,8 @@ public:
     void accept(Visitor *V) override { V->visit(this); }
 
     unsigned getIndex() const { return m_Index; }
+
+    void print(std::ostream &OS) const override;
 };
 
 class FunctionTemplateSpecializationDecl final : public FunctionDecl {
@@ -496,6 +517,8 @@ public:
     const std::vector<Type *> &getArgs() const { return m_Args; }
 
     bool compareArgs(const std::vector<Type *> &args) const;
+
+    void print(std::ostream &OS) const override;
 };
 
 class StructTemplateSpecializationDecl final : public StructDecl {
@@ -524,6 +547,8 @@ public:
     const std::vector<Type *> &getArgs() const { return m_Args; }
 
     bool compareArgs(const std::vector<Type *> &args) const;
+
+    void print(std::ostream &OS) const override;
 };
 
 } // namespace meddle

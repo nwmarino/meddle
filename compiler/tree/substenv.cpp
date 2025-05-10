@@ -6,12 +6,13 @@ using namespace meddle;
 
 Type *SubstEnv::substType(Context *ctx, Type *ty) {
     if (ty->isDeferred()) {
+        DeferredType *defer = ty->asDeferred();
         return substType(ctx, ty->asDeferred()->getUnderlying());
     } else if (ty->isArray()) {
-        return ArrayType::get(ctx, ty->asArray()->getElement(), 
+        return ArrayType::get(ctx, substType(ctx, ty->asArray()->getElement()), 
             ty->asArray()->getSize());
     } else if (ty->isPointer()) {
-        return PointerType::get(ctx, ty->asPointer()->getPointee());
+        return PointerType::get(ctx, substType(ctx, ty->asPointer()->getPointee()));
     } else if (auto *param = dynamic_cast<TemplateParamType *>(ty)) {
         return substParam(param);
     } else if (auto *spec = dynamic_cast<TemplateStructType *>(ty)) {

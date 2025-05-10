@@ -44,6 +44,7 @@ int main(int argc, char **argv) {
         std::to_string(files.size()) + " file(s).");
 
     units.drive(opts);
+    units.printc(opts);
 
     Target target = Target(
         mir::Arch::X86_64, 

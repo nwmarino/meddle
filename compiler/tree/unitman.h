@@ -45,9 +45,11 @@ public:
 
     std::vector<TranslationUnit *> getUnits() const;
 
-    void drive(const Options &opts) ;
+    void drive(const Options &opts);
+
+    void printc(const Options &opts);
 };
 
-};
+} // namespace meddle
 
 #endif // MEDDLE_UNITMAN_H

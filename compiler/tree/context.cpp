@@ -47,7 +47,7 @@ Context::~Context() {
 }
 
 Type *Context::resolveType(const String &name, const Scope *scope, 
-                           const Metadata &md) {
+                           const Metadata &md, bool specialize) {
     if (NamedDecl *N = scope->lookup(name)) {
         if (TypeDecl *TD = dynamic_cast<TypeDecl *>(N))
             return TD->getDefinedType();
@@ -57,7 +57,7 @@ Type *Context::resolveType(const String &name, const Scope *scope,
 
     if (name.back() == '*') {
         String pointeeName = name.substr(0, name.size() - 1);
-        Type *pointeeType = resolveType(pointeeName, scope, md);
+        Type *pointeeType = resolveType(pointeeName, scope, md, specialize);
         if (!pointeeType)
             return nullptr;
 
@@ -68,7 +68,7 @@ Type *Context::resolveType(const String &name, const Scope *scope,
     auto RBrack = name.find_last_of(']');
     if (LBrack != std::string::npos && RBrack != std::string::npos) {
         String elementName = name.substr(0, LBrack);
-        Type *elementType = resolveType(elementName, scope, md);
+        Type *elementType = resolveType(elementName, scope, md, specialize);
         if (!elementType)
             return nullptr;
         
@@ -105,7 +105,7 @@ Type *Context::resolveType(const String &name, const Scope *scope,
                 argName.erase(0, argName.find_first_not_of(" \t"));
                 argName.erase(argName.find_last_not_of(" \t") + 1);
 
-                Type *argType = resolveType(argName, scope, md);
+                Type *argType = resolveType(argName, scope, md, specialize);
                 if (!argType)
                     return nullptr;
 
@@ -113,6 +113,9 @@ Type *Context::resolveType(const String &name, const Scope *scope,
                 start = i + 1;
             }
         }
+
+        if (!specialize)
+            return nullptr;
 
         for (auto &arg : typeArgs)
             if (arg->isParamDependent())
@@ -157,7 +160,13 @@ void Context::importType(Type *T, const String &N) {
 void Context::sanitate() {
     // For each type result, try to resolve its concrete type from the pool.
     for (auto &[name, defer] : m_Deferred) {
-        Type *concrete = resolveType(name, defer->getScope(), defer->getMetadata());
+        Type *concrete = resolveType(name, defer->getScope(), defer->getMetadata(), false);
+        if (concrete)
+            defer->setUnderlying(concrete);
+    }
+
+    for (auto &[name, defer] : m_Deferred) {
+        Type *concrete = resolveType(name, defer->getScope(), defer->getMetadata(), true);
         if (!concrete)
             // If the type is not found, it is unresolved at this point.
             fatal("unresolved type: " + name, &defer->getMetadata());

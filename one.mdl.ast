@@ -1,0 +1,22 @@
+TranslationUnit (2) one.mdl
+  StructDecl (2) one.mdl<1:1> box
+    FieldDecl one.mdl<2:5> x 'T*'
+    FieldDecl one.mdl<3:5> y 'T'
+    StructSpecializationDecl<i32> 'box<i32>' box<i32>
+      FieldDecl one.mdl<2:5> x 'i32*'
+      FieldDecl one.mdl<3:5> y 'i32'
+  FunctionDecl one.mdl<6:1> '() -> i64' foo
+    CompoundStmt (2) one.mdl<6:16>
+      DeclStmt one.mdl<7:5>
+        VarDecl one.mdl<7:5> x 'box<i32>' 
+          InitExpr (2) one.mdl<7:23>
+            FieldInitExpr one.mdl<7:34> 'i32*' x
+              CastExpr one.mdl<7:37> 'i32*'
+                NilLiteral one.mdl<7:37>
+            FieldInitExpr one.mdl<7:42> 'i32' y
+              CastExpr one.mdl<7:45> 'i32'
+                IntegerLiteral one.mdl<7:45> 1
+      RetStmt one.mdl<8:5>
+        CastExpr one.mdl<8:10> 'i64'
+          AccessExpr one.mdl<8:10> 'i32' y
+            RefExpr one.mdl<8:9> 'box<i32>' x

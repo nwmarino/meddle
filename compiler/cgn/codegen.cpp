@@ -764,7 +764,7 @@ void CGN::cgn_aggregate_init(mir::Value *base, Expr *expr, Type *ty) {
 			FieldDecl *fld = static_cast<FieldDecl *>(fld_init->getRef());
 
 			mir::Value *field = m_Builder.build_ap(
-				mir::PointerType::get(m_Segment, cgn_type(fld->getType())),
+				mir::PointerType::get(m_Segment, cgn_type(fld_init->getType())),
 				base, 
 				mir::ConstantInt::get(m_Segment, m_Builder.get_i64_ty(), fld->getIndex()),
 				m_Opts.NamedMIR ? "agg.field" : ""

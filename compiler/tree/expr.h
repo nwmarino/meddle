@@ -5,6 +5,7 @@
 #include "visitor.h"
 
 #include <cassert>
+#include <ostream>
 
 namespace meddle {
 
@@ -47,6 +48,8 @@ public:
 	virtual bool isConstant() const { return false; }
 
 	virtual bool isAggregateInit() const { return false; }
+
+	virtual void print(std::ostream &OS) const = 0;
 };
 
 class BoolLiteral final : public Expr {
@@ -64,6 +67,8 @@ public:
 	bool getValue() const { return m_Value; }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class IntegerLiteral final : public Expr {
@@ -82,6 +87,8 @@ public:
     long getValue() const { return m_Value; }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class FloatLiteral final : public Expr {
@@ -100,6 +107,8 @@ public:
 	double getValue() const { return m_Value; }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class CharLiteral final : public Expr {
@@ -118,6 +127,8 @@ public:
 	char getValue() const { return m_Value; }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class StringLiteral final : public Expr {
@@ -136,6 +147,8 @@ public:
 	String getValue() const { return m_Value; }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class NilLiteral final : public Expr {
@@ -149,6 +162,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	bool isConstant() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class ArrayExpr final : public Expr {
@@ -181,6 +196,8 @@ public:
 	}
 
 	bool isAggregateInit() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class BinaryExpr final : public Expr {
@@ -304,6 +321,8 @@ public:
 	}
 
 	bool isDirectAssignment() const { return m_Kind == Kind::Assign; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class CastExpr final : public Expr {
@@ -327,6 +346,8 @@ public:
 	Type *getCast() const { return m_Type; }
 
 	bool isConstant() const override { return m_Expr->isConstant(); }
+
+	void print(std::ostream &OS) const override;
 };
 
 class ParenExpr final : public Expr {
@@ -348,6 +369,8 @@ public:
 	Expr *getExpr() const { return m_Expr; }
 
 	bool isConstant() const override { return m_Expr->isConstant(); }
+
+	void print(std::ostream &OS) const override;
 };
 
 class RefExpr : public Expr {
@@ -368,6 +391,8 @@ public:
 	String getName() const { return m_Name;}
 
 	NamedDecl *getRef() const { return m_Ref; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class AccessExpr final : public RefExpr {
@@ -388,6 +413,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	Expr *getBase() const { return m_Base; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class CallExpr : public RefExpr {
@@ -431,6 +458,8 @@ public:
 	unsigned getNumTypeArgs() const { return m_TypeArgs.size(); }
 
 	FunctionDecl *getCallee() const;
+
+	void print(std::ostream &OS) const override;
 };
 
 class MethodCallExpr final : public CallExpr {
@@ -453,6 +482,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	Expr *getBase() const { return m_Base; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class FieldInitExpr final : public RefExpr {
@@ -475,6 +506,8 @@ public:
 	Expr *getExpr() const { return m_Expr; }
 
 	bool isConstant() const override { return m_Expr->isConstant(); }
+
+	void print(std::ostream &OS) const override;
 };
 
 class InitExpr final : public Expr {
@@ -507,6 +540,8 @@ public:
 	}
 
 	bool isAggregateInit() const override { return true; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class SizeofExpr final : public Expr {
@@ -523,6 +558,8 @@ public:
 	void accept(Visitor *V) override { V->visit(this); }
 
 	Type *getTarget() const { return m_Target; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class SubscriptExpr final : public Expr {
@@ -550,6 +587,8 @@ public:
 
 	bool isConstant() const override
 	{ return m_Base->isConstant() && m_Index->isConstant(); }
+
+	void print(std::ostream &OS) const override;
 };
 
 class TypeSpecExpr final : public RefExpr {
@@ -572,6 +611,8 @@ public:
 	RefExpr *getExpr() const { return m_Expr; }
 
 	TypeDecl *getTypeDecl() const;
+
+	void print(std::ostream &OS) const override;
 };
 
 /// Represents specifiers used to access scopes of imported units.
@@ -609,6 +650,8 @@ public:
 	void setUnit(TranslationUnit *U) { m_Unit = U; }
 
 	String getName() const;
+
+	void print(std::ostream &OS) const override;
 };
 
 class UnaryExpr final : public Expr {
@@ -665,6 +708,8 @@ public:
 	bool isAddressOf() const { return m_Kind == Kind::Address_Of; }
 
 	bool isDereference() const { return m_Kind == Kind::Dereference; }
+
+	void print(std::ostream &OS) const override;
 };
 
 class RuneSyscallExpr final : public Expr {
@@ -691,6 +736,8 @@ public:
 	unsigned getSyscallNum() const { return m_Num; }
 
 	const std::vector<Expr *> &getArgs() const { return m_Args; }
+
+	void print(std::ostream &OS) const override;
 };
 
 } // namespace meddle

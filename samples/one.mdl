@@ -1,12 +1,9 @@
-box<T> :: { 
-    x: T, 
-    
-    $associated 
-    foo<U> :: (y: U) U { 
-        ret y + 1; 
-    } 
+box<T> { 
+    x: T*, 
+    y: T 
 } 
 
-test :: () { 
-    mut x: i32 = box<i64>::foo<i32>(5); 
+foo :: () -> i64 { 
+    mut x: box<i32> = box<i32> { x: nil, y: 1 }; 
+    ret x.y; 
 }

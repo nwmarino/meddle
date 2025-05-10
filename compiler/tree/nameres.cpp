@@ -278,7 +278,7 @@ void NameResolution::visit(SubscriptExpr *expr) {
 }
 
 void NameResolution::visit(TypeSpecExpr *expr) {
-    Type *T = m_Unit->getContext()->resolveType(expr->getName(), m_Scope, expr->getMetadata());
+    Type *T = m_Unit->getContext()->resolveType(expr->getName(), m_Scope, expr->getMetadata(), true);
     if (!T)
         fatal("unresolved type reference: " + expr->getName(), 
             &expr->getMetadata());
