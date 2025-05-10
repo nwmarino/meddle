@@ -4,6 +4,10 @@
 #include "substenv.h"
 #include "type.h"
 #include "unit.h"
+#include "../core/logger.h"
+
+#include <iostream>
+#include <unordered_map>
 
 using namespace meddle;
 
@@ -87,7 +91,7 @@ FunctionDecl::createSpecialization(const std::vector<Type *> &args) {
     // Create a mapping between the parameterized types and the concrete type
     // arguments for the new specialization. This is for substituting types.
     SubstEnv *env = new SubstEnv(getMapping(m_TemplateParams, args));
-    
+
     // Specialize the function type with the concrete arguments.
     Type *concreteRetTy = env->substType(m_PUnit->getContext(), 
         m_Type->getReturnType());
@@ -124,6 +128,7 @@ FunctionDecl::createSpecialization(const std::vector<Type *> &args) {
         args,
         env->getMapping()
     );
+    specialization->setPUnit(m_PUnit);
 
     delete env;
     m_TemplateSpecs.push_back(specialization);
@@ -295,13 +300,23 @@ StructDecl::createSpecialization(const std::vector<Type *> &args) {
             concreteParams,
             nullptr // body
         );
+        concFunction->setPUnit(m_PUnit);
 
         concreteFunctions.push_back(concFunction);
         structScope->addDecl(concFunction);
+
+        if (env->getParent()) {
+            SubstEnv *old = env;
+            env = env->getParent();
+            delete old;
+        }
     }
 
+    String name = getConcreteName(args);
+
     TemplateStructType *concTy = TemplateStructType::create(
-        m_PUnit->getContext(), concreteFieldTys, nullptr, args);
+        m_PUnit->getContext(), name, concreteFieldTys, args);
+
     auto specialization = new StructTemplateSpecializationDecl(
         this,
         getConcreteName(args),
@@ -312,6 +327,8 @@ StructDecl::createSpecialization(const std::vector<Type *> &args) {
         args,
         env->getMapping()
     );
+    specialization->setPUnit(m_PUnit);
+
     concTy->setDecl(specialization);
     delete env;
     m_TemplateSpecs.push_back(specialization);

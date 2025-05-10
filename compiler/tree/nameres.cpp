@@ -278,45 +278,26 @@ void NameResolution::visit(SubscriptExpr *expr) {
 }
 
 void NameResolution::visit(TypeSpecExpr *expr) {
-    NamedDecl *named = m_Scope->lookup(expr->getName());
-    if (!named)
+    Type *T = m_Unit->getContext()->resolveType(expr->getName(), m_Scope, expr->getMetadata());
+    if (!T)
         fatal("unresolved type reference: " + expr->getName(), 
             &expr->getMetadata());
 
-    TypeDecl *tyDecl = dynamic_cast<TypeDecl *>(named);
-    if (!tyDecl)
-        fatal("reference exists, but is not a type: " + expr->getName(), 
+    if (!T->isStruct())
+        fatal("expected struct type for type specifier", 
+            &expr->getMetadata());
+    
+    StructDecl *_struct = T->asStruct()->getDecl();
+    expr->m_Ref = _struct; 
+
+    if (!dynamic_cast<CallExpr *>(expr->getExpr()))
+        fatal("expected call expression after '::' operator on structure", 
             &expr->getMetadata());
 
-    if (auto *_enum = dynamic_cast<EnumDecl *>(tyDecl)) {
-        expr->m_Ref = _enum;
-
-        auto *ref = dynamic_cast<RefExpr *>(expr->getExpr());
-        if (!ref)
-            fatal("expected reference expression after '::' operator", 
-                &expr->getMetadata());
-
-        ref->m_Ref = _enum->getVariant(ref->getName());
-        if (!ref->m_Ref)
-            fatal("unresolved enum variant: " + ref->getName(), 
-                &expr->getMetadata());
-
-        expr->getExpr()->accept(this);
-    } else if (auto *_struct = dynamic_cast<StructDecl *>(tyDecl)) {
-        expr->m_Ref = _struct; 
-
-        if (!dynamic_cast<CallExpr *>(expr->getExpr()))
-            fatal("expected call expression after '::' operator on structure", 
-                &expr->getMetadata());
-
-        Scope *old_scope = m_Scope;
-        m_Scope = _struct->getScope();
-        expr->getExpr()->accept(this);
-        m_Scope = old_scope;
-    } else {
-        fatal("invalid type specifier: " + expr->getName(), 
-            &expr->getMetadata());
-    }
+    Scope *old_scope = m_Scope;
+    m_Scope = _struct->getScope();
+    expr->getExpr()->accept(this);
+    m_Scope = old_scope;
     
     expr->m_Type = expr->getExpr()->getType();
 }

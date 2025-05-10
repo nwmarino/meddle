@@ -23,6 +23,7 @@ class Context final {
     friend class StructType;
     friend class TemplateStructType;
     friend class DependentTemplateStructType;
+    friend class NameResolution;
 
     TranslationUnit *m_Unit;
     std::unordered_map<String, PrimitiveType *> m_Primitives;

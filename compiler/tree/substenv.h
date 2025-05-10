@@ -1,9 +1,11 @@
 #ifndef MEDDLE_SUBSTENV_H
 #define MEDDLE_SUBSTENV_H
 
+#include "../core/logger.h"
 #include "../tree/type.h"
 
 #include <cassert>
+#include <iostream>
 #include <unordered_map>
 
 namespace meddle {
@@ -34,7 +36,8 @@ public:
         if (m_Parent)
             return m_Parent->substParam(param);
 
-        assert(false && "Parameter type not found in substitution environment.");
+        std::cout << "param " << param->getName() << " " << param->getDecl() << " unfound" << "\n";
+        exit(1);
     }
 };
 

@@ -5,6 +5,7 @@
 Sun. May 11
 
 Templates
+- Cast Injection
 Cross-Module Global Variable References
 - Chronological comparison of declaration versus. reference for locals.
 New/Delete

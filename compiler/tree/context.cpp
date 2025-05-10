@@ -133,6 +133,10 @@ Type *Context::resolveType(const String &name, const Scope *scope,
     if (struct_it != m_Structs.end())
         return struct_it->second;
 
+    auto spec_it = m_StructSpecs.find(name);
+    if (spec_it != m_StructSpecs.end())
+        return spec_it->second;
+
     auto ext_it = m_Externals.find(name);
     if (ext_it != m_Externals.end())
         return ext_it->second;

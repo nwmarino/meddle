@@ -1,7 +1,12 @@
-Colors :: i64 { 
-    COLORS_RED 
-} 
+box<T> :: { 
+    x: T, 
     
+    $associated 
+    foo<U> :: (y: U) U { 
+        ret y + 1; 
+    } 
+} 
+
 test :: () { 
-    mut x: Colors = COLORS_RED; 
+    mut x: i32 = box<i64>::foo<i32>(5); 
 }

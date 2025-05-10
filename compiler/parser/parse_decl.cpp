@@ -328,38 +328,7 @@ StructDecl *Parser::parse_struct(const Token &name, std::vector<TemplateParamDec
             fatal("expected named declaration", &m_Current->md);
 
         Token member_name = *m_Current;
-        std::vector<TemplateParamDecl *> templateParams;
         next();
-
-        if (match(TokenKind::Left)) {
-            next(); // '<'
-        
-            while (!match(TokenKind::Right)) {
-                expect(TokenKind::Identifier, "expected parameter name");
-
-                Metadata paramMd = m_Current->md;
-                String paramName = m_Current->value;
-                next(); // identifier
-    
-                templateParams.push_back(new TemplateParamDecl(
-                    Runes(),
-                    paramMd,
-                    paramName,
-                    templateParams.size()
-                ));
-    
-                if (match(TokenKind::Right))
-                    break;
-    
-                expect_and_eat(TokenKind::Comma, 
-                    "expected ',' in template parameter list");
-            }
-
-            if (templateParams.empty())
-                fatal("template must have at least one parameter", &name.md);
-
-            next(); // '>'
-        }
 
         if (match(TokenKind::Colon)) {
             next(); // ':'
@@ -390,7 +359,7 @@ StructDecl *Parser::parse_struct(const Token &name, std::vector<TemplateParamDec
         } else if (match(TokenKind::Path)) {
             next(); // '::'
             
-            FunctionDecl *F = parse_function(member_name, templateParams);
+            FunctionDecl *F = parse_function(member_name, {});
             if (!F)
                 fatal("expected function declaration", &m_Current->md);
 

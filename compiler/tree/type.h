@@ -431,9 +431,10 @@ class TemplateStructType final : public StructType {
 public:
     static TemplateStructType *get(Context *ctx, StructDecl *tmpl,
                                    std::vector<Type *> args);
-    static TemplateStructType *create(Context *ctx, std::vector<Type *> fields, 
-                                      StructTemplateSpecializationDecl *decl,
-                                      std::vector<Type *> args);
+    static TemplateStructType *create(Context *ctx, const String &name, 
+                                      std::vector<Type *> fields, 
+                                      std::vector<Type *> args, 
+                                      StructTemplateSpecializationDecl *decl = nullptr);
 
     bool compare(Type *T) const override;
 

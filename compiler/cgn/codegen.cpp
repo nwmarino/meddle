@@ -395,6 +395,13 @@ void CGN::visit(VarDecl *decl) {
 }
 
 void CGN::visit(StructDecl *decl) {
+	if (decl->isTemplate()) {
+		for (auto &spec : decl->m_TemplateSpecs)
+			spec->accept(this);
+
+		return;
+	}
+
 	if (m_Phase == Phase::Declare) {
 		std::vector<mir::Type *> memberTys;
 		memberTys.reserve(decl->getNumFields());
@@ -413,13 +420,15 @@ void CGN::visit(StructDecl *decl) {
 }
 
 void CGN::visit(FunctionTemplateSpecializationDecl *decl) {
+	push_subst_env(decl->m_Mapping);
+
 	if (m_Phase == Phase::Declare)
 		declare_function(decl);
 	else if (m_Phase == Phase::Define) {
-		push_subst_env(decl->m_Mapping);
 		define_function(decl, decl->getTemplateFunction());
-		pop_subst_env();
 	}
+	
+	pop_subst_env();
 }
 
 void CGN::visit(StructTemplateSpecializationDecl *decl) {

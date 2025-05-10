@@ -384,7 +384,7 @@ unsigned TemplateParamType::getIndex() const {
 TemplateStructType::TemplateStructType(const String &N, std::vector<Type *> F, 
                                        std::vector<Type *> A, 
                                        StructTemplateSpecializationDecl *D)
-  : StructType(N, F, D), m_Args(A) { D->setDefinedType(this); }
+  : StructType(N, F, D), m_Args(A) { if (D) D->setDefinedType(this); }
 
 TemplateStructType *TemplateStructType::get(Context *ctx, StructDecl *tmpl,
                                             std::vector<Type *> args) {
@@ -403,19 +403,19 @@ TemplateStructType *TemplateStructType::get(Context *ctx, StructDecl *tmpl,
         tmpl->fetchSpecialization(args)->getDefinedType());
 }
 
-TemplateStructType *TemplateStructType::create(Context *ctx, std::vector<Type *> fields, 
-                                               StructTemplateSpecializationDecl *decl,
-                                               std::vector<Type *> args) {
+TemplateStructType *TemplateStructType::create(Context *ctx, const String &name, 
+                                               std::vector<Type *> fields, 
+                                               std::vector<Type *> args, 
+                                               StructTemplateSpecializationDecl *decl) {
     assert(ctx && "Context cannot be null.");
-    assert(decl && "Template struct specialization declaration cannot be null.");
+    //assert(decl && "Template struct specialization declaration cannot be null.");
     assert(!args.empty() && "Template type arguments cannot be empty.");
 
-    if (get(ctx, decl->getTemplateStruct(), args))
-        fatal("duplicate template specialization: " + decl->getName(), 
-            &decl->getMetadata());
+    //if (get(ctx, decl->getTemplateStruct(), args))
+    //    fatal("duplicate template specialization: " + decl->getName(), 
+    //        &decl->getMetadata());
 
-    return ctx->m_StructSpecs[decl->getName()] = 
-        new TemplateStructType(decl->getName(), fields, args, decl);
+    return ctx->m_StructSpecs[name] = new TemplateStructType(name, fields, args, decl);
 }
 
 bool TemplateStructType::compare(Type *T) const {
